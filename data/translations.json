@@ -1,0 +1,286 @@
+{
+  "_설명": "다국어(en·ja·zh) 내용 번역. 한국어 원문은 places.csv · courses.json · story_pieces.json · stories.json에 있어요. 원문을 고치면 여기 번역도 같이 고쳐 주세요. 영어 사찰 이름·소개는 places.csv의 name_en · desc_en을 써요.",
+  "places": {
+    "campus": {"ja": ["東国大学 WISEキャンパス", "学生向け全コースの出発点。"], "zh": ["东国大学 WISE校区", "所有学生路线的出发点。"]},
+    "seokjangsaji": {"ja": ["錫杖寺址", "新羅の伝説的な彫刻僧・良志が住んだ寺の跡。"], "zh": ["锡杖寺址", "新罗传奇雕塑僧良志曾居住的寺院遗址。"]},
+    "geumjangdae": {"ja": ["金丈台・石丈洞岩刻画", "青銅器時代の岩刻画が残り、慶州を見渡せる川辺の楼亭。"], "zh": ["金丈台·石丈洞岩刻画", "江边亭台，有青铜时代岩刻画，可眺望庆州。"]},
+    "samnangsaji": {"ja": ["三郎寺址 幢竿支柱", "三郎寺の唯一の名残である、新羅時代の石造幢竿支柱一対。"], "zh": ["三郎寺址幢竿支柱", "新罗时代的一对石造幢竿支柱，是三郎寺仅存的遗迹。"]},
+    "kimyusin": {"ja": ["金庾信将軍墓", "十二支像の彫刻に囲まれた、新羅の名将・金庾信の墓。"], "zh": ["金庾信将军墓", "新罗名将金庾信之墓，周围环绕十二生肖浮雕。"]},
+    "heungnyunsa": {"ja": ["興輪寺", "527年の仏教公認後に建てられた、新羅最初の国家寺院とされる寺。"], "zh": ["兴轮寺", "被视为新罗第一座国家寺院，建于527年佛教获承认之后。"]},
+    "cheongwansaji": {"ja": ["天官寺址", "金庾信と天官の恋物語にまつわる寺の跡。"], "zh": ["天官寺址", "与金庾信和天官爱情故事相关的寺院遗址。"]},
+    "seoak_pagoda": {"ja": ["西岳洞三層石塔", "王陵に囲まれて立つ、守護像が刻まれた珍しい新羅の石塔。"], "zh": ["西岳洞三层石塔", "坐落于王陵之间、刻有守护神像的独特新罗石塔。"]},
+    "muyeol": {"ja": ["太宗武烈王陵", "亀の台座をもつ有名な碑がある、武烈王の陵。"], "zh": ["太宗武烈王陵", "武烈王陵，以龟趺碑闻名。"]},
+    "seoak_maae": {"ja": ["西岳洞磨崖如来三尊立像", "仙桃山の頂上近くに刻まれた、7世紀の巨大な三尊仏。"], "zh": ["西岳洞摩崖如来三尊立像", "刻于仙桃山山顶附近的7世纪巨大三尊佛像。"]},
+    "gulbulsaji": {"ja": ["掘仏寺址 石造四面仏像", "景徳王が見つけたと伝わる、四面に仏が刻まれた岩。"], "zh": ["掘佛寺址石造四面佛像", "相传由景德王发现、四面刻有佛像的巨石。"]},
+    "baengnyulsa": {"ja": ["栢栗寺", "527年の殉教で新羅の仏教受容を導いた異次頓をまつる寺。"], "zh": ["栢栗寺", "供奉异次顿的寺院，他于527年殉教，促成新罗接受佛教。"]},
+    "bunhwangsa": {"ja": ["芬皇寺", "634年、善徳女王の時代に建立。レンガのように積んだ石塔（国宝）で知られる。"], "zh": ["芬皇寺", "634年善德女王时期建成，以砖状石塔（国宝）闻名。"]},
+    "hwangnyongsaji": {"ja": ["皇龍寺址", "新羅最大の国家寺院と、高さ約80mの九層木塔があった場所。"], "zh": ["皇龙寺址", "新罗最大国家寺院及约80米高九层木塔的遗址。"]},
+    "mitansaji": {"ja": ["味呑寺址 三層石塔", "皇龍寺の南の野原にひとり立つ新羅の石塔。"], "zh": ["味吞寺址三层石塔", "独自矗立在皇龙寺南边田野中的新罗石塔。"]},
+    "museum": {"ja": ["国立慶州博物館", "聖徳大王神鐘（エミレの鐘）と、順礼路沿いの寺の遺物が集まる博物館。"], "zh": ["国立庆州博物馆", "收藏圣德大王神钟（埃米勒钟）及沿线寺院文物的博物馆。"]},
+    "hwangboksaji": {"ja": ["皇福寺址 三層石塔", "692年に建てられ、金製の小さな仏像が見つかった石塔。"], "zh": ["皇福寺址三层石塔", "建于692年的石塔，塔内发现了金制小佛像。"]},
+    "nangsan_maae": {"ja": ["狼山 磨崖菩薩三尊坐像", "守護像に囲まれた、珍しい岩刻の菩薩三尊像。"], "zh": ["狼山摩崖菩萨三尊坐像", "罕见的摩崖菩萨三尊像，两侧有守护神像。"]},
+    "seondeok": {"ja": ["善徳女王陵", "忉利天についての予言で知られる善徳女王の陵。"], "zh": ["善德女王陵", "善德女王陵，以关于忉利天的预言闻名。"]},
+    "sacheonwangsaji": {"ja": ["四天王寺址", "679年の護国寺院の跡。施釉の神将像塼は良志の作とも言われる。"], "zh": ["四天王寺址", "679年的护国寺院遗址，其釉面神将像砖可能出自良志之手。"]},
+    "mangdeoksaji": {"ja": ["望徳寺址", "四天王寺のことで唐の使者をあざむくために建てたと伝わる寺の跡。"], "zh": ["望德寺址", "相传为蒙骗唐朝使者、掩饰四天王寺而建的寺院遗址。"]},
+    "bulgok_maae": {"ja": ["南山 仏谷磨崖如来坐像", "岩をくりぬいた龕に座る穏やかな仏で、「龕室仏」とも呼ばれる。"], "zh": ["南山佛谷摩崖如来坐像", "端坐于岩石佛龛中的温和佛像，俗称“龛室佛”。"]},
+    "tapgok_maae": {"ja": ["南山 塔谷磨崖仏像群", "巨大な岩の四面に仏・僧・塔が刻まれている。"], "zh": ["南山塔谷摩崖佛像群", "巨石四面刻满佛像、僧人和佛塔。"]},
+    "borisa": {"ja": ["菩提寺 石造如来坐像", "菩提寺の境内にある、南山で最も完全な形の石仏のひとつ。"], "zh": ["菩提寺石造如来坐像", "位于菩提寺内，是南山保存最完整的石佛之一。"]},
+    "baedong_samjon": {"ja": ["拝洞 石造如来三尊立像", "子どものような顔でほほえむ7世紀の三尊仏。"], "zh": ["拜洞石造如来三尊立像", "面容如孩童般微笑的7世纪三尊佛像。"]},
+    "samneung": {"ja": ["拝洞 三陵", "霧の松林で有名な三基の王陵。南山への入り口。"], "zh": ["拜洞三陵", "以雾中松林闻名的三座王陵，是登南山的入口。"]},
+    "samneunggye_buddha": {"ja": ["三陵渓 石造如来坐像", "三陵渓谷の巡礼の中心となる、堂々とした座像の石仏。"], "zh": ["三陵溪石造如来坐像", "庄重的石造坐佛，是三陵溪谷巡礼的核心。"]},
+    "yongjang_pagoda": {"ja": ["茸長寺谷 三層石塔", "山全体を基壇とする、旧茸長寺の上に立つ石塔。"], "zh": ["茸长寺谷三层石塔", "以整座山为基座、矗立在茸长寺旧址上方的石塔。"]},
+    "yongjang_buddha": {"ja": ["茸長寺谷 石造如来坐像", "独特な三段の円形台座に座る、頭部のない石仏。"], "zh": ["茸长寺谷石造如来坐像", "坐在独特三层圆形台座上的无头石佛。"]},
+    "yongjang_maae": {"ja": ["茸長寺址 磨崖如来坐像", "茸長寺の台座の石仏のそばに細く線刻された座像の仏。"], "zh": ["茸长寺址摩崖如来坐像", "位于茸长寺台座石佛旁、线刻精美的摩崖坐佛。"]},
+    "chilbulam": {"ja": ["七仏庵 磨崖仏像群", "岩に刻まれた七体の仏。南山の仏像で唯一の国宝。"], "zh": ["七佛庵摩崖佛像群", "岩上刻有七尊佛像，是南山佛像中唯一的国宝。"]},
+    "bulguksa": {"ja": ["仏国寺", "ユネスコ世界遺産（1995年）。多宝塔と釈迦塔がある寺。"], "zh": ["佛国寺", "联合国教科文组织世界遗产（1995年），有多宝塔和释迦塔。"]},
+    "seokguram": {"ja": ["石窟庵", "ユネスコ世界遺産の人工石窟。本尊は東海の方を向いている。"], "zh": ["石窟庵", "联合国教科文组织世界遗产人工石窟，主佛面朝东海。"]},
+    "golgulsa": {"ja": ["骨窟寺", "禅武道のテンプルステイで有名な、崖の洞窟寺院。"], "zh": ["骨窟寺", "以禅武道寺院寄宿体验闻名的崖壁石窟寺。"]},
+    "girimsa": {"ja": ["祇林寺", "朝鮮時代の堂がよく残る大きな山寺。"], "zh": ["祇林寺", "保存完好朝鲜时代殿堂的大型山寺。"]}
+  },
+  "eras": {
+    "1945년 개관": {"en": "Opened 1945", "ja": "1945年開館", "zh": "1945年开馆"},
+    "1978년 개교": {"en": "Founded 1978", "ja": "1978年開校", "zh": "1978年建校"},
+    "신라": {"en": "Silla", "ja": "新羅", "zh": "新罗"},
+    "신라 (전 자추사)": {"en": "Silla (formerly Jachusa)", "ja": "新羅（旧 自楸寺）", "zh": "新罗（原自楸寺）"},
+    "신라 (전)": {"en": "Silla (traditionally)", "ja": "新羅（伝）", "zh": "新罗（传）"},
+    "신라 527~544년": {"en": "Silla, 527–544", "ja": "新羅 527〜544年", "zh": "新罗 527—544年"},
+    "신라 553~645년": {"en": "Silla, 553–645", "ja": "新羅 553〜645年", "zh": "新罗 553—645年"},
+    "신라 597년 창건": {"en": "Silla, founded 597", "ja": "新羅 597年創建", "zh": "新罗 597年创建"},
+    "신라 634년": {"en": "Silla, 634", "ja": "新羅 634年", "zh": "新罗 634年"},
+    "신라 647년": {"en": "Silla, 647", "ja": "新羅 647年", "zh": "新罗 647年"},
+    "신라 661년": {"en": "Silla, 661", "ja": "新羅 661年", "zh": "新罗 661年"},
+    "신라 679년": {"en": "Silla, 679", "ja": "新羅 679年", "zh": "新罗 679年"},
+    "신라 685년경": {"en": "Silla, c. 685", "ja": "新羅 685年頃", "zh": "新罗 约685年"},
+    "신라 6세기(전)": {"en": "Silla, 6th c. (traditionally)", "ja": "新羅 6世紀（伝）", "zh": "新罗 6世纪（传）"},
+    "신라 751년": {"en": "Silla, 751", "ja": "新羅 751年", "zh": "新罗 751年"},
+    "신라 751년 중창": {"en": "Silla, rebuilt 751", "ja": "新羅 751年重創", "zh": "新罗 751年重建"},
+    "신라 7세기": {"en": "Silla, 7th c.", "ja": "新羅 7世紀", "zh": "新罗 7世纪"},
+    "청동기 / 정자 복원": {"en": "Bronze Age / pavilion restored", "ja": "青銅器時代／楼亭復元", "zh": "青铜时代／亭台复原"},
+    "통일신라": {"en": "Unified Silla", "ja": "統一新羅", "zh": "统一新罗"},
+    "통일신라 692년": {"en": "Unified Silla, 692", "ja": "統一新羅 692年", "zh": "统一新罗 692年"},
+    "통일신라 8세기": {"en": "Unified Silla, 8th c.", "ja": "統一新羅 8世紀", "zh": "统一新罗 8世纪"},
+    "통일신라 9세기": {"en": "Unified Silla, 9th c.", "ja": "統一新羅 9世紀", "zh": "统一新罗 9世纪"}
+  },
+  "courses": {
+    "s1_first_step": {"en": ["First Step Path", "A loop around Seokjangsa site and Geumjangdae behind campus"], "ja": ["はじめの一歩の道", "キャンパス裏の錫杖寺址と金丈台をひと回り"], "zh": ["第一步之路", "环绕校园后方的锡杖寺址与金丈台一圈"]},
+    "s2_transmission": {"en": ["Path of Arrival", "Along Seocheon stream to Heungnyunsa, Silla's first temple"], "ja": ["伝来の道", "西川に沿って新羅最初の寺・興輪寺へ"], "zh": ["传入之路", "沿西川前往新罗第一座寺院兴轮寺"]},
+    "s3_protection": {"en": ["Path of Protection", "From General Kim Yu-sin's tomb to the Seoak pagoda"], "ja": ["護国の道", "金庾信将軍墓から西岳の石塔まで"], "zh": ["护国之路", "从金庾信将军墓到西岳石塔"]},
+    "s4_martyrdom": {"en": ["Path of Martyrdom", "Baengnyulsa on Mt. Sogeumgang, honoring Ichadon"], "ja": ["殉教の道", "異次頓をしのぶ小金剛山の栢栗寺"], "zh": ["殉教之路", "纪念异次顿的小金刚山栢栗寺"]},
+    "s5_diligence": {"en": ["Path of Devotion", "Climb to the 7 m rock-carved Buddha triad atop Mt. Seondosan"], "ja": ["精進の道", "仙桃山頂上の7m磨崖三尊仏に挑戦"], "zh": ["精进之路", "挑战仙桃山顶的7米摩崖三尊佛"]},
+    "s6_prosperity": {"en": ["Path of Prosperity", "A downtown walk around Hwangnyongsa site and Bunhwangsa"], "ja": ["繁栄の道", "皇龍寺址・芬皇寺の市内さんぽ"], "zh": ["繁荣之路", "皇龙寺址·芬皇寺市区漫步"]},
+    "s7_prophecy": {"en": ["Path of Prophecy", "Queen Seondeok and the temple sites of Nangsan"], "ja": ["予言の道", "善徳女王と狼山の寺跡"], "zh": ["预言之路", "善德女王与狼山的寺院遗址"]},
+    "f1_world_heritage": {"en": ["World Heritage Path", "A day from Bulguksa and Seokguram to downtown sites"], "ja": ["世界遺産の道", "仏国寺・石窟庵から市内の遺跡まで1日"], "zh": ["世界遗产之路", "从佛国寺、石窟庵到市区遗迹的一日游"]},
+    "b1_practice": {"en": ["Path of Practice", "Namsan pilgrimage from Samneung Valley to the Yongjang rock Buddhas"], "ja": ["修行の道", "南山・三陵渓谷から茸長谷の磨崖仏へ"], "zh": ["修行之路", "南山三陵溪谷至茸长谷摩崖佛巡礼"]}
+  },
+  "tags": {
+    "신라": {"en": "Silla", "ja": "新羅", "zh": "新罗"},
+    "통일신라": {"en": "Unified Silla", "ja": "統一新羅", "zh": "统一新罗"},
+    "불교 예술": {"en": "Buddhist art", "ja": "仏教美術", "zh": "佛教艺术"},
+    "강 풍경": {"en": "riverside views", "ja": "川の風景", "zh": "江景"},
+    "학교 주변": {"en": "near campus", "ja": "大学周辺", "zh": "校园周边"},
+    "불교 전래": {"en": "arrival of Buddhism", "ja": "仏教伝来", "zh": "佛教传入"},
+    "현존 사찰": {"en": "living temples", "ja": "現存する寺", "zh": "现存寺院"},
+    "삼국통일": {"en": "unification", "ja": "三国統一", "zh": "三国统一"},
+    "왕릉": {"en": "royal tombs", "ja": "王陵", "zh": "王陵"},
+    "석탑": {"en": "stone pagodas", "ja": "石塔", "zh": "石塔"},
+    "불상": {"en": "Buddha statues", "ja": "仏像", "zh": "佛像"},
+    "수행": {"en": "practice", "ja": "修行", "zh": "修行"},
+    "선덕여왕": {"en": "Queen Seondeok", "ja": "善徳女王", "zh": "善德女王"},
+    "절터": {"en": "temple sites", "ja": "寺跡", "zh": "寺院遗址"},
+    "박물관": {"en": "museum", "ja": "博物館", "zh": "博物馆"},
+    "호국": {"en": "protecting the nation", "ja": "護国", "zh": "护国"},
+    "세계유산": {"en": "World Heritage", "ja": "世界遺産", "zh": "世界遗产"},
+    "남산": {"en": "Namsan", "ja": "南山", "zh": "南山"}
+  },
+  "bridges": {
+    "bunhwangsa>hwangnyongsaji": {
+      "en": "Queen Seondeok, who built Bunhwangsa, also raised a towering nine-story wooden pagoda at Hwangnyongsa, where you're walking now. This path links two temples left by the same queen.",
+      "ja": "いま見た芬皇寺を建てた善徳女王は、これから向かう皇龍寺にとても高い九層木塔も建てました。同じ女王が残した二つの寺を歩いてつなぐ道です。",
+      "zh": "建造芬皇寺的善德女王，也在你正走向的皇龙寺建起了高耸的九层木塔。这条路连接着同一位女王留下的两座寺院。"},
+    "hwangnyongsaji>mitansaji": {
+      "en": "Walk about 250 m along the paddy path south of Hwangnyongsa and you'll see a lone pagoda in the fields — all that remains of a small temple beside the great one.",
+      "ja": "皇龍寺址の南の田んぼ道を250mほど歩くと、野原の真ん中に塔がひとつ見えます。大きな寺跡のそばに残る小さな寺の跡です。",
+      "zh": "沿皇龙寺址南边的田间小路走约250米，就能看到田野中央的一座塔，那是大寺旁小寺留下的痕迹。"},
+    "mitansaji>museum": {
+      "en": "Gyeongju National Museum surveyed the area around the Mitansa pagoda in 1980. Now walk to that museum to meet the relics found at temple sites.",
+      "ja": "味呑寺の石塔の周りは1980年に国立慶州博物館が調査しました。今度はその博物館へ歩いて、寺跡から出た遺物に会いに行きましょう。",
+      "zh": "1980年国立庆州博物馆调查了味吞寺石塔周边。现在步行前往这座博物馆，去看看寺院遗址出土的文物吧。"},
+    "hwangnyongsaji>museum": {
+      "en": "Walk to the museum, where relics from Hwangnyongsa and temple sites across Gyeongju are gathered. You can picture how the vanished temples once looked.",
+      "ja": "皇龍寺址の遺物や慶州各地の寺跡の遺物が集まる博物館へ歩きます。跡だけが残る寺の元の姿を思い浮かべてみましょう。",
+      "zh": "步行前往博物馆，那里汇集了皇龙寺址及庆州各地寺院遗址的文物，可以想象只剩遗址的寺院原本的样子。"},
+    "hwangnyongsaji>bunhwangsa": {
+      "en": "Queen Seondeok, who built the nine-story pagoda at Hwangnyongsa, also built Bunhwangsa right next door. This path links two temples left by the same queen.",
+      "ja": "皇龍寺に九層木塔を建てた善徳女王は、すぐ隣の芬皇寺も建てました。同じ女王が残した二つの寺を歩いてつなぐ道です。",
+      "zh": "在皇龙寺建起九层木塔的善德女王，也建造了旁边的芬皇寺。这条路连接着同一位女王留下的两座寺院。"},
+    "bunhwangsa>museum": {
+      "en": "Walk to the museum, where real relics from temple sites like Bunhwangsa are gathered.",
+      "ja": "芬皇寺のような寺跡から出た本物の遺物が集まる博物館へ歩きます。",
+      "zh": "步行前往博物馆，那里汇集了芬皇寺等寺院遗址出土的真实文物。"}
+  },
+  "pieces": {
+    "bunhwangsa": {
+      "en": {
+        "title": "Piece 1 · The first temple the queen built",
+        "story": {
+          "역사": "Bunhwangsa was built in 634, the third year of Queen Seondeok's reign. The monks Jajang and Wonhyo stayed here, and Wonhyo is said to have laid down his brush here while writing a commentary on the Avatamsaka Sutra.",
+          "건축": "The mojeon stone pagoda in the courtyard is built from stones carved one by one into brick shapes. From afar it looks like a brick pagoda, but up close it's all stone. It is a National Treasure.",
+          "사진": "The pagoda is made of stones carved into brick shapes, so close-up shots show the texture of each stone. The temple was built in 634 under Queen Seondeok.",
+          "쉼": "A guardian dragon was said to live in this temple's well. One story tells of a Tang envoy who tried to turn the dragon into a fish and sneak it away. Take a short rest by the well."
+        },
+        "teaser": "Eleven years after building this temple, Queen Seondeok built something far bigger. The story continues at Hwangnyongsa Temple Site.",
+        "mission": {"기본": "Count 10 stones that look like bricks on one face of the pagoda", "아이와 함께": "Find the well and take turns with your child imagining what the guardian dragon looked like"}
+      },
+      "ja": {
+        "title": "かけら1 · 女王が建てた最初の寺",
+        "story": {
+          "역사": "芬皇寺は634年、善徳女王3年に建てられた寺です。慈蔵と元暁がここに滞在し、元暁はここで華厳経の注釈書を書いている途中で筆を置いたと伝えられます。",
+          "건축": "境内の模塼石塔は、石をレンガの形にひとつずつ削って積み上げた塔です。遠くから見るとレンガの塔のようですが、近づくとすべて石です。国宝に指定されています。",
+          "사진": "模塼石塔は石をレンガの形に削って積んだ塔なので、近づいて撮ると石ひとつひとつの質感がよく写ります。634年、善徳女王の時代に建てられた寺です。",
+          "쉼": "この寺の井戸には国を守る護国龍が住んでいたそうです。唐の使者がこの龍を魚に変えてこっそり連れ去ろうとした話も伝わっています。井戸のそばで少し休みましょう。"
+        },
+        "teaser": "善徳女王はこの寺を建てた11年後、もっと大きなものを建てます。続きは皇龍寺址で。",
+        "mission": {"기본": "塔の一面で「レンガに見える石」を10個数えてみよう", "아이와 함께": "井戸を見つけて、護国龍がどんな姿だったか子どもと一言ずつ話してみよう"}
+      },
+      "zh": {
+        "title": "碎片1 · 女王建的第一座寺",
+        "story": {
+          "역사": "芬皇寺建于634年，即善德女王三年。慈藏和元晓两位高僧曾在此居住，相传元晓在这里撰写《华严经》注疏时搁下了笔。",
+          "건축": "院中的模砖石塔是把石头一块块凿成砖的形状堆砌而成。远看像砖塔，走近看全是石头。它被指定为国宝。",
+          "사진": "模砖石塔由凿成砖形的石块砌成，近距离拍摄能清楚看到每块石头的纹理。这座寺建于634年善德女王时期。",
+          "쉼": "传说这座寺的井里住着守护国家的护国龙。还有故事说，唐朝使者曾想把龙变成鱼偷偷带走。在井边稍作休息吧。"
+        },
+        "teaser": "善德女王建成这座寺11年后，又建了更宏大的东西。故事在皇龙寺址继续。",
+        "mission": {"기본": "在塔的一面数出10块“看起来像砖”的石头", "아이와 함께": "找到那口井，和孩子轮流说说护国龙长什么样"}
+      }
+    },
+    "hwangnyongsaji": {
+      "en": {
+        "title": "Piece 2 · Where the 80 m wooden pagoda stood",
+        "diff_from_prev": "Bunhwangsa still stands as a temple, but only a wide site and foundation stones remain of Hwangnyongsa.",
+        "story": {
+          "역사": "In 553, King Jinheung began building a palace here, but after hearing a yellow dragon had appeared, he built a temple instead. In 645, at the monk Jajang's urging, Queen Seondeok invited the Baekje craftsman Abiji to build a nine-story wooden pagoda.",
+          "건축": "The nine-story wooden pagoda is said to have been about 80 m tall. It burned down during the Mongol invasion of 1238, and today only the foundation stones hint at its size.",
+          "사진": "This is where the nine-story wooden pagoda, about 80 m tall, once stood. Only the site and foundation stones remain, so shoot from low with lots of sky to feel the height of the vanished pagoda.",
+          "쉼": "This is the site of Silla's largest temple, begun under King Jinheung and completed over about 90 years. There's almost no shade, so wear a hat and stroll slowly across the wide grounds."
+        },
+        "teaser": "In the fields south of this great temple lies the story of the old home of Silla's greatest scholar. The next piece is at Mitansa.",
+        "mission": {"기본": "Look up at the sky from where the 80 m pagoda stood and take a photo", "아이와 함께": "Count the foundation stones with your child (how far can you count?)"}
+      },
+      "ja": {
+        "title": "かけら2 · 80mの木塔があった場所",
+        "diff_from_prev": "芬皇寺は今も寺が残っていますが、皇龍寺は広い跡地と礎石だけが残りました。",
+        "story": {
+          "역사": "553年、真興王がここに宮殿を建てようとしたところ黄龍が現れたと聞き、寺を建てました。645年には慈蔵の勧めで、善徳女王が百済の工匠・阿非知を招いて九層木塔を建てました。",
+          "건축": "九層木塔の高さは約80mだったといわれます。1238年のモンゴル侵攻ですべて焼け、今は礎石だけが塔の大きさを想像させてくれます。",
+          "사진": "高さ約80mの九層木塔が立っていた場所です。今は跡地と礎石だけなので、低い位置から空を大きく入れて撮ると、消えた塔の高さが感じられます。",
+          "쉼": "真興王の時代に建て始め、約90年かけて完成した新羅最大の寺の跡です。日陰がほとんどないので帽子をかぶって、広い跡地をゆっくり歩いてみましょう。"
+        },
+        "teaser": "この大きな寺の南の野原に、新羅最高の学者の旧宅の話が残っています。次のかけらは味呑寺址で。",
+        "mission": {"기본": "80mの木塔があった場所で空を見上げて写真を1枚撮ろう", "아이와 함께": "礎石を子どもと一緒に数えてみよう（いくつまで数えられるかな？）"}
+      },
+      "zh": {
+        "title": "碎片2 · 80米木塔曾经矗立的地方",
+        "diff_from_prev": "芬皇寺至今仍是寺院，而皇龙寺只剩下宽阔的遗址和础石。",
+        "story": {
+          "역사": "553年，真兴王想在这里建宫殿，听说出现了黄龙，便改建为寺院。645年，在慈藏的建议下，善德女王请来百济工匠阿非知建造了九层木塔。",
+          "건축": "据说九层木塔高约80米。1238年蒙古入侵时全部被烧毁，如今只剩础石让人想象塔的规模。",
+          "사진": "这里曾矗立着高约80米的九层木塔。现在只剩遗址和础石，从低处把天空大面积拍进画面，就能感受到消失的木塔有多高。",
+          "쉼": "这里是从真兴王时期开始兴建、历时约90年完成的新罗最大寺院遗址。几乎没有树荫，戴上帽子在宽阔的遗址上慢慢走走吧。"
+        },
+        "teaser": "在这座大寺南边的田野里，留着新罗最伟大学者旧居的故事。下一块碎片在味吞寺址。",
+        "mission": {"기본": "在80米木塔曾矗立的地方抬头望天，拍一张照片", "아이와 함께": "和孩子一起数数础石（能数到多少呢？）"}
+      }
+    },
+    "mitansaji": {
+      "en": {
+        "title": "Piece 3 · The pagoda standing alone in the fields",
+        "diff_from_prev": "Hwangnyongsa left only a wide site, while at Mitansa a single pagoda stands alone in the middle of the fields.",
+        "story": {
+          "역사": "The Samguk Yusa records that the old home of the Silla scholar Choe Chi-won stood south of Mitansa. Roof tiles inscribed with the characters 'Mitan' were found during excavation, confirming this was the temple in the record.",
+          "건축": "About 250 m south of Hwangnyongsa, a three-story stone pagoda stands in the fields. It is designated a Treasure.",
+          "사진": "With just one pagoda in the fields, leave plenty of space around it and it will stand out clearly. This spot is especially photogenic around sunset.",
+          "쉼": "A quiet field just a 5-minute walk along the paddy path from the great temple site. With only a pagoda standing here, it's a nice place to pause and rest."
+        },
+        "teaser": "Gyeongju National Museum surveyed this temple site in 1980. The last piece is waiting at that museum.",
+        "mission": {"기본": "Fit the pagoda and the fields into one photo", "아이와 함께": "Count how many stories the pagoda has with your child"}
+      },
+      "ja": {
+        "title": "かけら3 · 野原にひとり立つ塔",
+        "diff_from_prev": "皇龍寺址は広い跡地だけが残ったのに対し、味呑寺址は野原の真ん中に塔がひとつだけ立っています。",
+        "story": {
+          "역사": "『三国遺事』には、味呑寺の南に新羅の学者・崔致遠の旧宅があったと記されています。発掘で「味呑」の文字が刻まれた瓦が出たことで、ここが記録の味呑寺だと確認されました。",
+          "건축": "皇龍寺址から南へ250mほど下った野原に、三層石塔がひとつ立っています。宝物に指定された塔です。",
+          "사진": "野原の真ん中に塔がひとつだけなので、周りを広く空けて撮ると塔がくっきり写ります。夕暮れどきの写真がきれいな場所です。",
+          "쉼": "大きな寺跡のそば、田んぼ道を5分歩けば着く静かな野原です。塔がひとつ立っているだけなので、少し立ち止まって休むのにぴったりです。"
+        },
+        "teaser": "この寺跡は1980年に国立慶州博物館が調査しました。最後のかけらはその博物館で開きます。",
+        "mission": {"기본": "塔と野原を1枚の写真に収めよう", "아이와 함께": "塔が何層か子どもと一緒に数えてみよう"}
+      },
+      "zh": {
+        "title": "碎片3 · 独立田野的塔",
+        "diff_from_prev": "皇龙寺址只剩宽阔的遗址，而味吞寺址的田野中央独自矗立着一座塔。",
+        "story": {
+          "역사": "《三国遗事》记载，味吞寺南边有新罗学者崔致远的旧居。发掘时出土了刻有“味吞”二字的瓦片，证实这里就是记载中的味吞寺。",
+          "건축": "从皇龙寺址往南约250米的田野里，矗立着一座三层石塔，被指定为宝物。",
+          "사진": "田野中央只有一座塔，四周多留些空间来拍，塔会格外清晰。这里傍晚时分拍照很好看。",
+          "쉼": "这片安静的田野就在大寺遗址旁，沿田间小路走5分钟即到。只有一座塔立在这里，很适合停下来歇一歇。"
+        },
+        "teaser": "1980年国立庆州博物馆调查了这处寺院遗址。最后一块碎片就在那座博物馆里。",
+        "mission": {"기본": "把塔和田野拍进同一张照片", "아이와 함께": "和孩子一起数数这座塔有几层"}
+      }
+    },
+    "museum": {
+      "en": {
+        "title": "Piece 4 · The original owners of the temple sites",
+        "diff_from_prev": "At the temple sites you saw only where things stood; at the museum you see the real relics found there.",
+        "story": {
+          "역사": "Gyeongju National Museum gathers real relics from all over Gyeongju, such as the Sacred Bell of King Seongdeok, the gilt-bronze Medicine Buddha of Baengnyulsa, and the gold crown from Geumgwanchong. It holds 13 National Treasures.",
+          "건축": "Here you'll find relics that help you imagine how the temple sites and pagodas you walked past once looked. There are 13 National Treasures.",
+          "사진": "You can see iconic Gyeongju relics such as the Sacred Bell of King Seongdeok up close. Put them next to today's photos of the temple sites and your pilgrimage journal is complete.",
+          "쉼": "It's indoors, so you can finish comfortably even on rainy or cold days. Take your time meeting the original owners of today's temple sites."
+        },
+        "teaser": "",
+        "mission": {"기본": "In front of the Sacred Bell of King Seongdeok, sum up today's walk in one line", "아이와 함께": "Find one relic that looks like it came from a temple site you saw today"}
+      },
+      "ja": {
+        "title": "かけら4 · 寺跡のもとの主たち",
+        "diff_from_prev": "寺跡では場所だけを見ましたが、博物館ではその場所から出た本物の遺物を見ます。",
+        "story": {
+          "역사": "国立慶州博物館には、聖徳大王神鐘、栢栗寺金銅薬師如来立像、金冠塚の金冠など、慶州の各地から出た本物の遺物が集まっています。国宝だけで13点あります。",
+          "건축": "今日歩きながら見た寺跡や塔の元の姿を思い浮かべられる遺物が集まっている場所です。国宝だけで13点あります。",
+          "사진": "聖徳大王神鐘のような慶州を代表する遺物を直接見られます。今日歩いた寺跡の写真と並べれば、順礼日誌の完成です。",
+          "쉼": "屋内なので、雨の日や寒い日でも気軽に締めくくれます。今日歩いた寺跡のもとの主たちにゆっくり会ってみましょう。"
+        },
+        "teaser": "",
+        "mission": {"기본": "聖徳大王神鐘の前で、今日歩いた道を一行で残そう", "아이와 함께": "今日見た寺跡から来たような遺物を1つ探してみよう"}
+      },
+      "zh": {
+        "title": "碎片4 · 寺院遗址原本的主人",
+        "diff_from_prev": "在寺院遗址只看到了位置，在博物馆则能看到从那里出土的真实文物。",
+        "story": {
+          "역사": "国立庆州博物馆汇集了圣德大王神钟、栢栗寺金铜药师如来立像、金冠冢金冠等来自庆州各地的真实文物，仅国宝就有13件。",
+          "건축": "这里汇集了能让你想象今天走过的寺院遗址和佛塔原貌的文物，仅国宝就有13件。",
+          "사진": "可以亲眼看到圣德大王神钟等庆州代表性文物。和今天拍的寺院遗址照片放在一起，巡礼日志就完成了。",
+          "쉼": "因为在室内，下雨或寒冷的日子也能舒适地结束行程。慢慢去见见今天走过的寺院遗址原本的主人吧。"
+        },
+        "teaser": "",
+        "mission": {"기본": "在圣德大王神钟前，用一句话记下今天走过的路", "아이와 함께": "找一件看起来像来自今天所见寺院遗址的文物"}
+      }
+    }
+  },
+  "seasons": [
+    {"en": ["Spring piece", "Spring-only piece: capture the green barley field in front of Bunhwangsa together with the stone pagoda."],
+     "ja": ["春のかけら", "春だけのかけら：芬皇寺前の青麦畑と石塔を1枚に収めよう。"],
+     "zh": ["春季碎片", "春季限定碎片：把芬皇寺前的青麦田和石塔拍进同一张照片。"]},
+    {"en": ["Autumn piece", "Autumn-only piece: find where the wooden pagoda stood among the cosmos and silver grass of Hwangnyongsa."],
+     "ja": ["秋のかけら", "秋だけのかけら：皇龍寺址のコスモスとススキの間から木塔の跡を探そう。"],
+     "zh": ["秋季碎片", "秋季限定碎片：在皇龙寺址的波斯菊和芒草间寻找木塔的位置。"]},
+    {"en": ["Summer piece", "Summer-only piece: at sunset, photograph the pagoda's long shadow across the fields."],
+     "ja": ["夏のかけら", "夏だけのかけら：夕暮れどき、野原に長く伸びる塔の影を撮ろう。"],
+     "zh": ["夏季碎片", "夏季限定碎片：傍晚时分，拍下塔在田野上拉长的影子。"]},
+    {"en": ["Winter piece", "Winter-only piece: spend five quiet minutes at the empty temple site."],
+     "ja": ["冬のかけら", "冬だけのかけら：人のいない寺跡で5分間、静かに過ごしてみよう。"],
+     "zh": ["冬季碎片", "冬季限定碎片：在空无一人的寺院遗址静静待上5分钟。"]}
+  ]
+}

@@ -1,0 +1,315 @@
+"""i18n.py — 화면 문구 사전 (한국어 · English · 日本語 · 中文)
+
+문구를 고치려면 아래 S 사전에서 해당 줄을 찾아 바꾸면 돼요.
+사찰 이름·소개, 코스, 이야기 조각 번역은 data/translations.json에 있어요.
+"""
+LANGS = ["ko", "en", "ja", "zh"]
+LANG_NAMES = {"ko": "한국어", "en": "English", "ja": "日本語", "zh": "中文"}
+TTS_LANG = {"ko": "ko-KR", "en": "en-US", "ja": "ja-JP", "zh": "zh-CN"}
+LLM_LANG = {"ko": "한국어(해요체)", "en": "English", "ja": "日本語(です・ます調)", "zh": "简体中文"}
+
+
+def _(ko, en, ja, zh):
+    return {"ko": ko, "en": en, "ja": ja, "zh": zh}
+
+
+S = {
+    # ---------- 머리 · 탭
+    "tag": _("AI가 짜 주는 경주 사찰 순례길", "AI-planned temple walks in Gyeongju", "AIがつくる慶州のお寺めぐり", "AI规划的庆州寺院巡礼路"),
+    "tab_walk": _("🚶 순례", "🚶 Walk", "🚶 順礼", "🚶 巡礼"),
+    "tab_map": _("🗺️ 사찰 지도", "🗺️ Temple map", "🗺️ 寺マップ", "🗺️ 寺院地图"),
+    "tab_log": _("📊 순례 기록", "📊 Records", "📊 記録", "📊 巡礼记录"),
+    "weather_na": _("날씨 확인 안 됨", "Weather N/A", "天気 取得できず", "天气暂无"),
+    "sunset": _("일몰 {t}", "Sunset {t}", "日没 {t}", "日落 {t}"),
+    # ---------- 1) 고르기
+    "where_qr": _("📍 QR로 찾아오셨어요", "📍 You scanned the QR here", "📍 QRから来られました", "📍 您通过二维码来到这里"),
+    "where_here": _("📍 여기서 시작해요", "📍 Start here", "📍 ここから始めます", "📍 从这里出发"),
+    "ask4": _("네 가지만 골라 주세요 · 기본값이 골라져 있어서 바로 눌러도 돼요",
+              "Just pick four things · defaults are set, so you can tap right away",
+              "4つだけ選んでください · 初期値が入っているのでそのまま押してもOK",
+              "只需选四项 · 已有默认选项，可以直接点击"),
+    "q_who": _("누구랑 걸어요?", "Who are you walking with?", "誰と歩きますか？", "和谁一起走？"),
+    "q_time": _("시간은 얼마나 있어요?", "How much time do you have?", "時間はどのくらい？", "有多少时间？"),
+    "q_level": _("얼마나 걸을까요?", "How much walking?", "どのくらい歩きますか？", "想走多少？"),
+    "q_int": _("무엇이 궁금해요?", "What interests you?", "何に興味がありますか？", "对什么感兴趣？"),
+    "btn_plan": _("✨ AI에게 순례길 부탁하기", "✨ Ask AI for a route", "✨ AIにルートをお願いする", "✨ 请AI规划路线"),
+    "spinner": _("날씨와 해 지는 시각, 길을 살펴보는 중이에요…", "Checking the weather, sunset and paths…",
+                 "天気と日没、道を確認しています…", "正在查看天气、日落时间和路线…"),
+    # ---------- 2) 추천
+    "plan_title": _("오늘의 순례길", "Today's route", "今日の順礼路", "今天的巡礼路"),
+    "stat_dist": _("걷는 거리", "walking", "歩く距離", "步行距离"),
+    "stat_total": _("둘러보기 포함", "incl. visits", "見学込み", "含参观"),
+    "stat_pieces": _("이야기 조각", "story pieces", "物語のかけら", "故事碎片"),
+    "min": _("{n}분", "{n} min", "{n}分", "{n}分钟"),
+    "count": _("{n}개", "{n}", "{n}個", "{n}块"),
+    "chip_agent": _("🤖 Claude 에이전트가 골랐어요", "🤖 Picked by the Claude agent", "🤖 Claudeエージェントが選びました", "🤖 由Claude智能体选择"),
+    "chip_rule": _("🧭 규칙 기반 추천", "🧭 Rule-based pick", "🧭 ルールベースの推薦", "🧭 基于规则的推荐"),
+    "legs_title": _("구간별 걷는 시간 (토블러 보행 함수)", "Walking time per leg (Tobler's hiking function)",
+                    "区間ごとの歩行時間（トブラーの歩行関数）", "各段步行时间（托布勒步行函数）"),
+    "leg_line": _("{km}km · 약 {m}분 · {grade}", "{km} km · ~{m} min · {grade}", "{km}km · 約{m}分 · {grade}", "{km}公里 · 约{m}分钟 · {grade}"),
+    "guess": _("(경사는 어림값)", "(slope estimated)", "（傾斜は推定）", "（坡度为估算）"),
+    "other_routes": _("다른 길도 있어요", "Other routes", "ほかのルート", "其他路线"),
+    "alt_line": _("약 {m}분 · {km}km", "~{m} min · {km} km", "約{m}分 · {km}km", "约{m}分钟 · {km}公里"),
+    "switch": _("이 길로 바꾸기", "Use this route", "このルートにする", "换成这条路线"),
+    "btn_start": _("🚶 이 길로 걷기 시작", "🚶 Start walking", "🚶 このルートで歩き始める", "🚶 开始走这条路"),
+    "btn_back": _("다시 고르기", "Choose again", "選び直す", "重新选择"),
+    # ---------- 3) 걷기
+    "piece_n": _("조각 {n} · {name}", "Piece {n} · {name}", "かけら{n} · {name}", "碎片{n} · {name}"),
+    "dots": _("이야기 조각 {a}/{b}", "Story pieces {a}/{b}", "物語のかけら {a}/{b}", "故事碎片 {a}/{b}"),
+    "here": _("지금 여기", "You are here", "いまここ", "当前位置"),
+    "interest_story": _("{i} 이야기", "{i} story", "{i}の話", "{i}故事"),
+    "st_ok": _("✔ 출처 확인", "✔ Source checked", "✔ 出典確認済み", "✔ 已核对出处"),
+    "st_review": _("검수 중", "Under review", "確認中", "审核中"),
+    "st_pending": _("출처 확인 중", "Source pending", "出典確認中", "出处核对中"),
+    "diff": _("🔍 차이 한 줄", "🔍 One-line difference", "🔍 違いをひとこと", "🔍 一句话看不同"),
+    "encyk": _("한국민족문화대백과사전", "Encyclopedia of Korean Culture", "韓国民族文化大百科事典", "韩国民族文化大百科辞典"),
+    "in_korean": _("", " (in Korean)", "（韓国語）", "（韩语）"),
+    "sources": _("📚 출처", "📚 Sources", "📚 出典", "📚 出处"),
+    "speak": _("🔊 들려주기", "🔊 Listen", "🔊 聞く", "🔊 收听"),
+    "mission": _("🎯 현장 미션", "🎯 On-site mission", "🎯 現地ミッション", "🎯 现场任务"),
+    "mission_done": _("미션 완료!", "Mission done!", "ミッション完了！", "任务完成！"),
+    "season_open": _("🌸 {label}이 열렸어요", "🌸 {label} unlocked", "🌸 {label}が開きました", "🌸 {label}已解锁"),
+    "season_later": _("🔒 {months}에 다시 오면 여기서 '{label}'이 열려요.", "🔒 Come back in {months} to unlock the '{label}' here.",
+                      "🔒 {months}にまた来ると、ここで「{label}」が開きます。", "🔒 {months}再来，这里会解锁“{label}”。"),
+    "next": _("다음 장소", "Next stop", "次の場所", "下一站"),
+    "next_generic": _("다음 이야기 조각은 {n}에서 열려요.", "The next story piece opens at {n}.", "次の物語のかけらは{n}で開きます。", "下一块故事碎片在{n}解锁。"),
+    "boost_interest": _("🛠 보완된 구간: 가는 길에 오늘 본 곳과 다른 점 하나를 찾아 말해 보세요.",
+                        "🛠 Improved leg: on the way, find one thing that's different from what you saw today.",
+                        "🛠 改善された区間：道すがら、今日見た場所との違いをひとつ見つけて話してみましょう。",
+                        "🛠 已优化路段：途中找出一处与今天所见不同的地方说一说。"),
+    "boost_rest": _("🛠 보완된 구간: 아래 쉼터에서 한 번 쉬어 가는 걸 추천해요.", "🛠 Improved leg: we suggest a break at a rest stop below.",
+                    "🛠 改善された区間：下の休憩所でひと休みするのがおすすめです。", "🛠 已优化路段：建议在下方休息点歇一歇。"),
+    "kakao_walk": _("🧭 카카오맵으로 걷는 길 보기", "🧭 See walking route in Kakao Map", "🧭 カカオマップで道を見る", "🧭 在Kakao地图查看步行路线"),
+    "arrive": _("📍 {n}에 도착했어요", "📍 I've arrived at {n}", "📍 {n}に着きました", "📍 我到{n}了"),
+    "tired": _("😮‍💨 힘들어요, 줄여 주세요", "😮‍💨 Too tiring, shorten it", "😮‍💨 疲れたので短くして", "😮‍💨 太累了，缩短一点"),
+    "quit": _("그만둘래요", "Stop here", "やめます", "不走了"),
+    "quit_q": _("왜 멈추셨어요? (코스를 고치는 데 써요)", "Why are you stopping? (helps us improve routes)",
+                "やめる理由は？（コース改善に使います）", "为什么停下？（用于改进路线）"),
+    "quit_ok": _("여기서 마칠게요", "Finish here", "ここで終わります", "就到这里"),
+    "last_title": _("🎉 마지막 조각까지 모았어요", "🎉 You collected every piece", "🎉 最後のかけらまで集めました", "🎉 集齐了所有碎片"),
+    "last_body": _("오늘의 이야기를 순례 일지로 정리해 드릴게요.", "We'll turn today's story into your pilgrimage journal.",
+                   "今日の物語を順礼日誌にまとめます。", "我们会把今天的故事整理成巡礼日志。"),
+    "finish": _("📔 순례 마치고 일지 보기", "📔 Finish and see journal", "📔 順礼を終えて日誌を見る", "📔 结束巡礼，查看日志"),
+    "toast_skip": _("{a}을(를) 건너뛰고 {b}(으)로 바로 가는 길로 다시 짰어요. 걸음도 천천히 잡았어요.",
+                    "Skipping {a} and heading straight to {b}, at a slower pace.",
+                    "{a}を飛ばして{b}へ直接向かうルートに変えました。歩く速さもゆっくりにしました。",
+                    "已跳过{a}，直接前往{b}，并放慢了步行速度。"),
+    "toast_slow": _("마지막 구간이에요. 걸음을 천천히 잡아 시간을 넉넉하게 다시 계산했어요.",
+                    "This is the last leg. We recalculated with a slower, relaxed pace.",
+                    "最後の区間です。ゆっくりのペースで時間を計算し直しました。",
+                    "这是最后一段，已按较慢的步速重新计算时间。"),
+    "rest_soon": _("제휴 예정", "partner soon", "提携予定", "即将合作"),
+    "rest_partner": _("제휴", "partner", "提携", "合作店"),
+    "rest_dir": _("길찾기", "Directions", "道案内", "导航"),
+    # ---------- 4) 일지
+    "journal": _("📔 나의 순례 일지", "📔 My pilgrimage journal", "📔 わたしの順礼日誌", "📔 我的巡礼日志"),
+    "speak_journal": _("🔊 일지 들려주기", "🔊 Read my journal", "🔊 日誌を聞く", "🔊 收听日志"),
+    "rec_title": _("다음 순례 추천 (코스 태그 유사도)", "Next walk for you (course tag similarity)",
+                   "次の順礼のおすすめ（コースタグの類似度）", "下次巡礼推荐（路线标签相似度）"),
+    "rec_similar": _("비슷한 코스", "Similar route", "似ているコース", "相似路线"),
+    "rec_new": _("새로운 코스", "Something new", "新しいコース", "全新路线"),
+    "rec_go": _("다음엔 '{t}' 걸어보기", "Walk '{t}' next time", "次は「{t}」を歩く", "下次走“{t}”"),
+    "rec_shared": _("겹치는 주제: {x}", "Shared themes: {x}", "共通のテーマ：{x}", "共同主题：{x}"),
+    "rec_diff": _("오늘과 다른 주제: {x}", "Different themes: {x}", "今日と違うテーマ：{x}", "不同的主题：{x}"),
+    "rest_after": _("☕ 순례 끝난 곳 주변 쉼터", "☕ Rest stops near the finish", "☕ ゴール周辺の休憩所", "☕ 终点附近的休息点"),
+    "home": _("처음으로", "Back to start", "最初に戻る", "回到首页"),
+    "j_title": _("{date} {season}, {who} 걸은 순례길", "Walk on {date} ({season}), {who}", "{date} {season}、{who}歩いた順礼路", "{date} {season}，{who}走的巡礼路"),
+    "j_stats": _("걸은 거리 약 {km}km · 모은 이야기 조각 {a}/{b}개 · 현장 미션 {m}개 완료",
+                 "Walked about {km} km · {a}/{b} story pieces · {m} missions done",
+                 "歩いた距離 約{km}km · 集めたかけら {a}/{b}個 · ミッション {m}個完了",
+                 "步行约{km}公里 · 收集故事碎片{a}/{b}块 · 完成任务{m}个"),
+    "j_stopped": _("오늘은 '{r}' 때문에 여기까지 걸었어요. 남은 조각은 다음 순례에서 만나요.",
+                   "Today you stopped here because of '{r}'. The remaining pieces will wait for your next walk.",
+                   "今日は「{r}」のためここまで歩きました。残りのかけらは次の順礼で。",
+                   "今天因为“{r}”走到这里。剩下的碎片下次巡礼再见。"),
+    "j_done": _("모든 조각을 모아 오늘의 이야기를 완성했어요.", "You collected every piece and completed today's story.",
+                "すべてのかけらを集めて、今日の物語が完成しました。", "集齐了所有碎片，完成了今天的故事。"),
+    "date_fmt": _("{y}년 {m}월 {d}일", "{mon} {d}, {y}", "{y}年{m}月{d}日", "{y}年{m}月{d}日"),
+    # ---------- 추천 이유 · 날씨 안내
+    "r_budget": _("남은 {b}분 안에 다녀올 수 있어요 (예상 {t}분, 걷기 {km}km)", "Fits in your {b} minutes (about {t} min, {km} km walking)",
+                  "残り{b}分で回れます（予想{t}分、徒歩{km}km）", "可在{b}分钟内完成（预计{t}分钟，步行{km}公里）"),
+    "r_diverse": _("앞 장소와 볼거리가 달라요 ({x})", "Each stop shows something different ({x})", "前の場所と見どころが違います（{x}）", "每一站看点都不同（{x}）"),
+    "r_pieces": _("'{i}' 관심사 이야기 조각이 준비된 곳 {n}곳", "{n} stops have '{i}' story pieces ready", "「{i}」の物語のかけらがある場所 {n}か所", "有{n}处准备了“{i}”故事碎片"),
+    "r_light": _("'가볍게'라서 오르막 없는 평지 길만 골랐어요", "You chose 'Easy', so only flat paths without climbs",
+                 "「軽めに」なので上りのない平らな道だけを選びました", "您选了“轻松”，所以只选没有上坡的平路"),
+    "r_rain_end": _("비가 와도 박물관(실내)에서 마무리해요", "Ends indoors at the museum, even if it rains", "雨でも博物館（屋内）で締めくくります", "即使下雨也能在博物馆（室内）结束"),
+    "r_cold_end": _("추운 날이라 따뜻한 박물관(실내)에서 마무리해요", "It's cold, so it ends in the warm museum", "寒い日なので暖かい博物館（屋内）で締めくくります", "天冷，所以在温暖的博物馆（室内）结束"),
+    "r_nearest": _("시간이 빠듯해서 가장 가까운 한 곳만 이어요", "Time is tight, so just the nearest stop", "時間が少ないので一番近い1か所だけにしました", "时间紧张，只连接最近的一处"),
+    "n_sunset": _("🌇 오늘 해 지는 시각이 {t}이라 해 지기 20분 전에 끝나도록 맞췄어요.", "🌇 Sunset is at {t} today, so the walk ends 20 minutes before.",
+                  "🌇 今日の日没は{t}なので、日没20分前に終わるよう調整しました。", "🌇 今天日落时间是{t}，已调整为日落前20分钟结束。"),
+    "n_rain": _("☔ 비 소식이 있어서 실내에서 마무리하는 길을 먼저 골랐어요.", "☔ Rain is expected, so routes ending indoors come first.",
+                "☔ 雨の予報なので、屋内で締めくくるルートを優先しました。", "☔ 预报有雨，优先选择在室内结束的路线。"),
+    "n_cold": _("🧣 기온이 0도 이하라 1~2곳만 잇는 짧은 순례로 줄이고, 따뜻한 쉼터를 넣었어요.",
+                "🧣 It's 0°C or below, so the walk is shortened to 1–2 stops with a warm rest stop.",
+                "🧣 気温が0度以下なので1〜2か所の短い順礼にし、暖かい休憩所を入れました。",
+                "🧣 气温在0度以下，已缩短为1～2处的短途巡礼，并加入温暖的休息点。"),
+    "diff_generic": _("{a}이 {pa}였다면, {b}은 {pb}예요.", "{a} was {pa}; {b} is {pb}.", "{a}が{pa}だったのに対し、{b}は{pb}です。", "如果说{a}是{pa}，那么{b}就是{pb}。"),
+    "diff_same": _("{a}과 같은 {c}지만, 시대와 이야기가 달라요: {e}.", "Like {a}, it's a {c}, but from another time with another story: {e}.",
+                   "{a}と同じ{c}ですが、時代と物語が違います：{e}。", "和{a}一样是{c}，但时代和故事不同：{e}。"),
+    "example_spot": _("예시 쉼터 {x} (실제 가게 아님)", "Sample rest stop {x} (not a real shop)", "サンプル休憩所{x}（実在の店ではありません）", "示例休息点{x}（非真实店铺）"),
+    # ---------- 지도 탭
+    "map_caption": _("사찰·유적 {n}곳 · 좌표: 국가유산청 OpenAPI", "{n} temples & sites · coordinates: Korea Heritage Service OpenAPI",
+                     "寺・遺跡 {n}か所 · 座標：国家遺産庁 OpenAPI", "寺院·遗迹{n}处 · 坐标：韩国国家遗产厅 OpenAPI"),
+    "kakao_dir": _("카카오맵 길찾기", "Kakao Map directions", "カカオマップで道案内", "Kakao地图导航"),
+    # ---------- 기록 탭
+    "v_virtual": _("가상 기록 (발표용)", "Simulated data (demo)", "仮想データ（発表用）", "模拟数据（演示用）"),
+    "v_real": _("실제 기록", "Real records", "実際の記録", "真实记录"),
+    "real_caption": _("이 앱에서 실제로 시작·도착·멈춘 기록이에요. (Streamlit Cloud는 앱이 다시 켜지면 기록이 지워져요)",
+                      "Real start/arrive/stop records from this app. (Streamlit Cloud clears them when the app restarts.)",
+                      "このアプリで実際に記録された開始・到着・中断です。（Streamlit Cloudは再起動で消えます）",
+                      "本应用中真实的开始、到达、中断记录。（Streamlit Cloud重启后会清空）"),
+    "real_empty": _("아직 실제 기록이 없어요. 순례를 시작하고 도착·멈춤을 누르면 여기에 모여요.",
+                    "No real records yet. Start a walk and tap arrive/stop to collect them here.",
+                    "まだ実際の記録はありません。順礼を始めて到着・中断を押すとここに集まります。",
+                    "还没有真实记录。开始巡礼并点击到达或停止后，记录会汇集到这里。"),
+    "v_banner": _("🧪 가상 데이터예요 · 분석과 자동 보완이 어떻게 돌아가는지 보여 주는 시연용",
+                  "🧪 Simulated data · a demo of how analysis and auto-improvement work",
+                  "🧪 仮想データです · 分析と自動改善の仕組みを見せるデモ用",
+                  "🧪 这是模拟数据 · 用于演示分析与自动优化如何运作"),
+    "btn_virtual": _("가상 기록 80건 만들기", "Generate 80 simulated walks", "仮想記録を80件つくる", "生成80条模拟记录"),
+    "s_starts": _("순례 시작", "walks started", "順礼開始", "开始巡礼"),
+    "s_rate": _("완주율", "completion", "完歩率", "完成率"),
+    "s_stops": _("중간에 멈춤", "stopped midway", "途中で中断", "中途停止"),
+    "times": _("{n}번", "{n}", "{n}回", "{n}次"),
+    "no_seg": _("아직 구간 기록이 없어요.", "No leg records yet.", "まだ区間の記録がありません。", "还没有路段记录。"),
+    "seg_title": _("구간별 완주율 · 낮은 순", "Completion by leg · lowest first", "区間ごとの完歩率 · 低い順", "各路段完成率 · 从低到高"),
+    "seg_line": _("{a}명 진입 · {b}명 도착", "{a} entered · {b} arrived", "{a}人が進入 · {b}人が到着", "{a}人进入 · {b}人到达"),
+    "seg_why": _(" · 멈춘 이유 1위 {r}", " · top reason: {r}", " · 中断理由1位：{r}", " · 首要停止原因：{r}"),
+    "table": _("표로 보기", "View as table", "表で見る", "以表格查看"),
+    "worst": _("🔎 가장 많이 멈춘 구간", "🔎 Leg where most people stop", "🔎 最も中断が多い区間", "🔎 停止最多的路段"),
+    "worst_line": _("완주율 <b>{r}%</b> · 멈춘 이유 1위 <b>{w}</b>", "Completion <b>{r}%</b> · top reason <b>{w}</b>",
+                    "完歩率 <b>{r}%</b> · 中断理由1位 <b>{w}</b>", "完成率 <b>{r}%</b> · 首要原因 <b>{w}</b>"),
+    "fix_sugg": _("🛠 자동 보완 제안: {t}", "🛠 Suggested fix: {t}", "🛠 自動改善の提案：{t}", "🛠 自动优化建议：{t}"),
+    "btn_fix": _("🛠 보완 적용하기", "🛠 Apply fix", "🛠 改善を適用", "🛠 应用优化"),
+    "btn_unfix": _("보완 되돌리기", "Undo fix", "改善を元に戻す", "撤销优化"),
+    "cmp_title": _("보완 전후 비교 (가상)", "Before vs after (simulated)", "改善前後の比較（仮想）", "优化前后对比（模拟）"),
+    "cmp_seg": _("이 구간 완주율 ({d}%p)", "this leg ({d} pts)", "この区間の完歩率（{d}pt）", "该路段完成率（{d}个百分点）"),
+    "cmp_all": _("전체 완주율 ({d}%p)", "overall ({d} pts)", "全体の完歩率（{d}pt）", "整体完成率（{d}个百分点）"),
+    "fixed_note": _("보완된 구간은 순례 화면에서도 '🛠 보완된 구간' 안내가 붙어요.", "Improved legs also show a '🛠 Improved leg' note on the walk screen.",
+                    "改善した区間は順礼画面にも「🛠 改善された区間」の案内が出ます。", "已优化的路段在巡礼画面中也会显示“🛠 已优化路段”提示。"),
+    "col_leg": _("구간", "Leg", "区間", "路段"),
+    "col_in": _("진입", "Entered", "進入", "进入"),
+    "col_arr": _("도착", "Arrived", "到着", "到达"),
+    "col_rate": _("완주율", "Completion %", "完歩率", "完成率"),
+    "col_why": _("멈춘 이유 1위", "Top reason", "中断理由1位", "首要原因"),
+}
+
+LABELS = {
+    "who": {"혼자·친구": _("혼자·친구", "Solo / friends", "一人・友だちと", "独自/朋友"),
+            "아이와 함께": _("아이와 함께", "With kids", "子どもと", "带孩子"),
+            "어르신과 함께": _("어르신과 함께", "With seniors", "お年寄りと", "和长辈"),
+            "외국인 친구와": _("외국인 친구와", "With foreign friends", "外国の友だちと", "和外国朋友")},
+    "who_j": {"혼자·친구": _("혼자·친구와", "solo or with friends", "一人・友だちと", "独自或和朋友"),
+              "아이와 함께": _("아이와 함께", "with kids", "子どもと", "带着孩子"),
+              "어르신과 함께": _("어르신과 함께", "with seniors", "お年寄りと", "和长辈一起"),
+              "외국인 친구와": _("외국인 친구와", "with foreign friends", "外国の友だちと", "和外国朋友一起")},
+    "time": {"1시간": _("1시간", "1 hour", "1時間", "1小时"), "2시간": _("2시간", "2 hours", "2時間", "2小时"),
+             "반나절": _("반나절", "Half a day", "半日", "半天")},
+    "level": {"가볍게": _("가볍게", "Easy", "軽めに", "轻松"), "보통": _("보통", "Moderate", "ふつう", "适中"),
+              "산길도 좋아요": _("산길도 좋아요", "Trails OK", "山道もOK", "山路也行")},
+    "interest": {"역사": _("역사", "History", "歴史", "历史"), "건축": _("건축", "Architecture", "建築", "建筑"),
+                 "사진": _("사진", "Photos", "写真", "摄影"), "쉼": _("쉼", "Rest", "休憩", "休息")},
+    "category": {"현존 사찰": _("현존 사찰", "Living temple", "現存する寺", "现存寺院"),
+                 "절터": _("절터", "Temple site", "寺跡", "寺院遗址"),
+                 "불상·석탑": _("불상·석탑", "Buddha & pagoda", "仏像・石塔", "佛像·石塔"),
+                 "명소": _("명소", "Landmark", "名所", "名胜"),
+                 "출발점": _("출발점", "Starting point", "出発点", "出发点")},
+    "phrase": {"현존 사찰": _("지금도 스님들이 지내는 절", "a temple where monks still live", "今も僧侶が暮らす寺", "至今仍有僧人居住的寺院"),
+               "절터": _("건물 없이 터와 주춧돌만 남은 곳", "a site where only the ground and foundation stones remain",
+                       "建物がなく跡地と礎石だけが残る場所", "没有建筑、只剩遗址和础石的地方"),
+               "불상·석탑": _("돌에 새긴 부처님이나 탑을 가까이 보는 곳", "a place to see stone Buddhas or pagodas up close",
+                          "石に刻まれた仏や塔を近くで見る場所", "近距离欣赏石刻佛像或佛塔的地方"),
+               "명소": _("절 밖에서 신라 이야기를 만나는 곳", "a place to meet Silla stories outside the temples",
+                       "寺の外で新羅の物語に出会う場所", "在寺院之外了解新罗故事的地方"),
+               "출발점": _("순례를 시작하는 곳", "where the walk begins", "順礼を始める場所", "巡礼的起点")},
+    "grade": {"평지": _("평지", "flat", "平地", "平路"),
+              "완만한 오르막": _("완만한 오르막", "gentle uphill", "ゆるやかな上り", "缓上坡"),
+              "가파른 오르막": _("가파른 오르막", "steep uphill", "急な上り", "陡上坡"),
+              "완만한 내리막": _("완만한 내리막", "gentle downhill", "ゆるやかな下り", "缓下坡"),
+              "가파른 내리막": _("가파른 내리막", "steep downhill", "急な下り", "陡下坡")},
+    "season": {"봄": _("봄", "spring", "春", "春季"), "여름": _("여름", "summer", "夏", "夏季"),
+               "가을": _("가을", "autumn", "秋", "秋季"), "겨울": _("겨울", "winter", "冬", "冬季")},
+    "reason": {"시간": _("시간", "time", "時間", "时间"), "체력": _("체력", "stamina", "体力", "体力"),
+               "흥미": _("흥미", "interest", "興味", "兴趣"), "날씨": _("날씨", "weather", "天気", "天气"),
+               "동행": _("동행", "group", "同行者", "同伴"), "기타": _("기타", "other", "その他", "其他")},
+    "stop": {"시간": _("⏱️ 시간이 모자라요", "⏱️ Not enough time", "⏱️ 時間が足りない", "⏱️ 时间不够"),
+             "체력": _("😮‍💨 너무 힘들어요", "😮‍💨 Too tiring", "😮‍💨 疲れた", "😮‍💨 太累了"),
+             "흥미": _("😐 볼거리가 없어요", "😐 Nothing to see", "😐 見どころがない", "😐 没什么可看的"),
+             "날씨": _("🌧️ 날씨·해 질 녘", "🌧️ Weather / sunset", "🌧️ 天気・日暮れ", "🌧️ 天气·天快黑了"),
+             "동행": _("👨‍👩‍👧 일행이 힘들어해요", "👨‍👩‍👧 My group is tired", "👨‍👩‍👧 同行者がつらそう", "👨‍👩‍👧 同伴累了"),
+             "기타": _("🤔 다른 이유", "🤔 Other reason", "🤔 その他", "🤔 其他原因")},
+    "fix": {"흥미": _("이 구간에 현장 미션과 이야기 조각을 하나 더 넣어요 (볼거리 보강)",
+                    "Add another on-site mission and story piece to this leg (more to see)",
+                    "この区間に現地ミッションと物語のかけらをもうひとつ加えます（見どころ強化）",
+                    "在该路段再加一个现场任务和故事碎片（增加看点）"),
+            "체력": _("중간 쉼터를 넣고, 걸음이 느린 일행에겐 이 구간 시간을 넉넉히 잡아요",
+                    "Add a rest stop midway and allow more time on this leg for slower walkers",
+                    "途中に休憩所を入れ、歩くのがゆっくりな人にはこの区間の時間を多めに取ります",
+                    "中途加入休息点，并为步速较慢的人预留更多时间"),
+            "시간": _("기본 추천에서 이 구간을 선택 사항으로 돌려 전체 길이를 줄여요",
+                    "Make this leg optional in the default route to shorten the whole walk",
+                    "標準ルートでこの区間を任意にして、全体を短くします", "在默认路线中把该路段设为可选，缩短全程"),
+            "날씨": _("비·추위·해 질 녘엔 이 구간 전에 실내 쉼터를 먼저 추천해요",
+                    "Suggest an indoor rest stop before this leg on rainy, cold or late days",
+                    "雨・寒さ・日暮れのときは、この区間の前に屋内の休憩所をすすめます",
+                    "下雨、寒冷或傍晚时，在该路段前先推荐室内休息点"),
+            "동행": _("아이·어르신 일행이면 이 구간을 건너뛰는 짧은 길을 먼저 보여 줘요",
+                    "For groups with kids or seniors, show a shorter route that skips this leg first",
+                    "子どもやお年寄りと一緒なら、この区間を飛ばす短いルートを先に見せます",
+                    "如果有孩子或长辈同行，优先显示跳过该路段的短路线"),
+            "기타": _("멈춘 이유를 더 모은 뒤 다시 확인해요", "Collect more stop reasons, then check again",
+                    "中断理由をもっと集めてから再確認します", "收集更多停止原因后再确认")},
+}
+
+GENERIC_MISSION = {
+    "현존 사찰": (_("이 절에서 가장 오래돼 보이는 것 하나 찾아보기", "Find the oldest-looking thing in this temple",
+                   "この寺でいちばん古そうなものをひとつ探そう", "找出这座寺里看起来最古老的东西"),
+               _("아이와 함께 절에서 동물 그림이나 조각 찾아보기", "Look for animal paintings or carvings with your child",
+                 "子どもと一緒に寺の動物の絵や彫刻を探そう", "和孩子一起在寺里找动物图案或雕刻")),
+    "절터": (_("터의 끝에서 끝까지 몇 걸음인지 세어 보기", "Count your steps from one end of the site to the other",
+              "跡地の端から端まで何歩か数えてみよう", "数一数从遗址一端走到另一端要多少步"),
+           _("주춧돌을 아이와 함께 세어 보기", "Count the foundation stones with your child", "礎石を子どもと一緒に数えよう", "和孩子一起数础石")),
+    "불상·석탑": (_("정면과 옆에서 한 장씩 찍어 모습 비교하기", "Take one photo from the front and one from the side to compare",
+                 "正面と横から1枚ずつ撮って見比べよう", "从正面和侧面各拍一张对比"),
+              _("부처님 표정을 아이와 따라 해 보기", "Copy the Buddha's expression with your child", "仏さまの表情を子どもとまねしてみよう", "和孩子一起模仿佛像的表情")),
+    "명소": (_("이곳을 한 문장으로 순례 일지에 남기기", "Describe this place in one sentence for your journal",
+              "この場所をひとことで順礼日誌に残そう", "用一句话把这里写进巡礼日志"),
+           _("이곳에서 가장 큰 것 하나 찾아보기", "Find the biggest thing here", "ここでいちばん大きなものを探そう", "找出这里最大的东西")),
+    "출발점": (_("오늘 걸을 길을 지도에서 한 번 따라가 보기", "Trace today's route on the map once",
+               "今日歩く道を地図で一度たどってみよう", "在地图上先把今天的路线走一遍"),
+            _("오늘 몇 곳을 갈지 아이와 손가락으로 세어 보기", "Count on your fingers how many stops you'll visit",
+              "今日いくつ行くか子どもと指で数えよう", "和孩子掰手指数数今天要去几个地方")),
+}
+
+SPOT_TYPE = {"카페": _("카페", "cafe", "カフェ", "咖啡馆"), "식당": _("식당", "restaurant", "食堂", "餐厅"),
+             "공방": _("공방", "craft studio", "工房", "工坊")}
+
+MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def t(key: str, lang: str, **kw) -> str:
+    d = S[key]
+    s = d.get(lang) or d["ko"]
+    return s.format(**kw) if kw else s
+
+
+def lab(group: str, value: str, lang: str) -> str:
+    d = LABELS.get(group, {}).get(value)
+    if not d:
+        return value
+    return d.get(lang) or d["ko"]
+
+
+def month_name(m: int, lang: str) -> str:
+    if lang == "en":
+        return MONTHS_EN[m - 1]
+    return f"{m}월" if lang == "ko" else f"{m}月"
+
+
+def join_list(items, lang: str) -> str:
+    sep = {"ko": "·", "en": ", ", "ja": "・", "zh": "、"}[lang]
+    return sep.join(items)
+
+
+def date_str(d, lang: str) -> str:
+    return t("date_fmt", lang, y=d.year, m=d.month, d=d.day, mon=MONTHS_EN[d.month - 1])

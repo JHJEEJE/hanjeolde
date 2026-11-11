@@ -1,4 +1,4 @@
-"""logic.py — 한 절 더의 '머리' 부분 (화면은 app.py)
+"""logic.py — 한 절 더의 '머리' 부분 (화면은 app.py, 문구는 i18n.py)
 
 참가서류 5번 'AI 기술 활용'과 이 파일의 연결
   ① AI 기반 순례길 추천      : plan_candidates (규칙으로 후보 계산) + agent_choose (Claude가 도구 호출로 고르기)
@@ -8,6 +8,7 @@
   ⑤ 순례 일지 · 다음 순례     : journal_lines · recommend (코스 태그 유사도)
   ⑥ 중단 이유 분석 · 보완     : log_event · make_virtual · segment_table · suggestion
 
+모든 함수의 lang 값: "ko" · "en" · "ja" · "zh"
 API 키가 없거나 인터넷이 끊겨도 모든 기능이 규칙 기반으로 돌아가요.
 """
 from __future__ import annotations
@@ -25,6 +26,8 @@ import pandas as pd
 import requests
 import streamlit as st
 
+import i18n as I
+
 KST = timezone(timedelta(hours=9))
 BASE = Path(__file__).parent
 DATA = BASE / "data"
@@ -32,42 +35,17 @@ LOG_FILE = BASE / "logs" / "pilgrim_log.json"
 FIX_FILE = BASE / "logs" / "fixes.json"
 GYEONGJU = (35.84, 129.22)
 
-# ---------------------------------------------------------------- 선택지
+# ---------------------------------------------------------------- 선택지 (값은 한국어, 화면 표시는 i18n.lab)
 WHO = ["혼자·친구", "아이와 함께", "어르신과 함께", "외국인 친구와"]
 TIMES = {"1시간": 60, "2시간": 120, "반나절": 240}
 LEVELS = ["가볍게", "보통", "산길도 좋아요"]
 INTERESTS = ["역사", "건축", "사진", "쉼"]
+STOP_KEYS = ["시간", "체력", "흥미", "날씨", "동행", "기타"]
 WHO_SPEED = {"아이와 함께": 0.75, "어르신과 함께": 0.75}
 STAY_MIN = {"museum": 30, "bulguksa": 40, "seokguram": 25}   # 둘러보는 시간(분)
 DEFAULT_STAY = 15
 MAX_LEG_KM = 3.0           # 직선거리로 이보다 먼 구간은 걷는 순례에서 뺌
 PATH_FACTOR = 1.3          # 길 데이터를 못 받을 때: 직선거리 × 1.3
-STOP_REASONS = {
-    "⏱️ 시간이 모자라요": "시간", "😮‍💨 너무 힘들어요": "체력", "😐 볼거리가 없어요": "흥미",
-    "🌧️ 날씨·해 질 녘": "날씨", "👨‍👩‍👧 일행이 힘들어해요": "동행", "🤔 다른 이유": "기타",
-}
-CATEGORY_PHRASE = {
-    "현존 사찰": "지금도 스님들이 지내는 절",
-    "절터": "건물 없이 터와 주춧돌만 남은 곳",
-    "불상·석탑": "돌에 새긴 부처님이나 탑을 가까이 보는 곳",
-    "명소": "절 밖에서 신라 이야기를 만나는 곳",
-    "출발점": "순례를 시작하는 곳",
-}
-GENERIC_MISSION = {
-    "현존 사찰": ("이 절에서 가장 오래돼 보이는 것 하나 찾아보기", "아이와 함께 절에서 동물 그림이나 조각 찾아보기"),
-    "절터": ("터의 끝에서 끝까지 몇 걸음인지 세어 보기", "주춧돌을 아이와 함께 세어 보기"),
-    "불상·석탑": ("정면과 옆에서 한 장씩 찍어 모습 비교하기", "부처님 표정을 아이와 따라 해 보기"),
-    "명소": ("이곳을 한 문장으로 순례 일지에 남기기", "이곳에서 가장 큰 것 하나 찾아보기"),
-    "출발점": ("오늘 걸을 길을 지도에서 한 번 따라가 보기", "오늘 몇 곳을 갈지 아이와 손가락으로 세어 보기"),
-}
-FIX_TEXT = {
-    "흥미": "이 구간에 현장 미션과 이야기 조각을 하나 더 넣어요 (볼거리 보강)",
-    "체력": "중간 쉼터를 넣고, 걸음이 느린 일행에겐 이 구간 시간을 넉넉히 잡아요",
-    "시간": "기본 추천에서 이 구간을 선택 사항으로 돌려 전체 길이를 줄여요",
-    "날씨": "비·추위·해 질 녘엔 이 구간 전에 실내 쉼터를 먼저 추천해요",
-    "동행": "아이·어르신 일행이면 이 구간을 건너뛰는 짧은 길을 먼저 보여 줘요",
-    "기타": "멈춘 이유를 더 모은 뒤 다시 확인해요",
-}
 
 
 # ---------------------------------------------------------------- 데이터
@@ -101,6 +79,7 @@ def load_all() -> dict:
         "stories": _json("stories.json", {}),
         "pieces": _json("story_pieces.json", {}),
         "tags": {k: v for k, v in _json("course_tags.json", {}).items() if not k.startswith("_")},
+        "tr": _json("translations.json", {}),
     }
 
 
@@ -117,17 +96,66 @@ def load_rest_spots() -> pd.DataFrame:
     return df.dropna(subset=["lat", "lon"])
 
 
-def example_rest_spots(places: pd.DataFrame, stop_ids: list) -> pd.DataFrame:
+def example_rest_spots(places: pd.DataFrame, stop_ids: list, lang: str = "ko") -> pd.DataFrame:
     """발표용 '예시 쉼터' (실제 가게 아님). rest_spots.csv가 비어 있을 때만 데모 설정에서 켜요."""
     rows = []
     for i, sid in enumerate(stop_ids):
         p = places.loc[sid]
         rows.append({
-            "id": f"ex{i}", "name": f"예시 쉼터 {chr(65 + i)} (실제 가게 아님)", "type": ["카페", "식당", "공방"][i % 3],
+            "id": f"ex{i}", "name": I.t("example_spot", lang, x=chr(65 + i)), "type": ["카페", "식당", "공방"][i % 3],
             "lat": p.lat + 0.0012, "lon": p.lon + 0.0010, "open": "09:00", "close": "21:00", "closed_day": "",
             "indoor": "Y", "near_poi": sid, "partner": "후보", "coupon": "", "source": "예시", "checked_date": "",
         })
     return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------- 번역된 이름 · 소개
+def _tr_place(data, pid, lang):
+    return data["tr"].get("places", {}).get(pid, {}).get(lang)
+
+
+def place_name(pid, places, data, lang) -> str:
+    if pid not in places.index:
+        return pid
+    p = places.loc[pid]
+    if lang == "en" and str(p.get("name_en", "")).strip() not in ("", "nan"):
+        return str(p["name_en"])
+    tr = _tr_place(data, pid, lang)
+    return tr[0] if tr else str(p["name"])
+
+
+def place_desc(pid, places, data, lang) -> str:
+    p = places.loc[pid]
+    if lang == "ko":
+        return str(p.story)
+    if lang == "en":
+        return str(p.desc_en)
+    tr = _tr_place(data, pid, lang)
+    return tr[1] if tr else str(p.desc_en)
+
+
+def era_text(era, data, lang) -> str:
+    if lang == "ko":
+        return str(era)
+    return data["tr"].get("eras", {}).get(str(era), {}).get(lang, str(era))
+
+
+def course_text(course: dict, data, lang) -> tuple[str, str]:
+    if lang == "ko":
+        return course["title"], course.get("subtitle", "")
+    tr = data["tr"].get("courses", {}).get(course["id"], {}).get(lang)
+    return tuple(tr) if tr else (course["title"], course.get("subtitle", ""))
+
+
+def tag_text(tag, data, lang) -> str:
+    if lang == "ko":
+        return tag
+    return data["tr"].get("tags", {}).get(tag, {}).get(lang, tag)
+
+
+def spot_type(t, lang) -> str:
+    d = I.SPOT_TYPE.get(t)
+    return (d.get(lang) or d["ko"]) if d else t
 
 
 # ---------------------------------------------------------------- 거리 · 링크
@@ -224,10 +252,10 @@ def get_conditions(demo_weather: str = "실시간", demo_month: int | None = Non
     return out
 
 
-def weather_label(c: dict) -> str:
+def weather_lines(c: dict, lang: str) -> list:
     icon = "🌧️" if c["rain"] else ("🥶" if c["cold"] else "☀️")
-    t = f"{c['temp']:.0f}°" if c["temp"] is not None else "날씨 확인 안 됨"
-    return f"{icon} {t} · 일몰 {c['sunset']:%H:%M}"
+    t = f"{icon} {c['temp']:.0f}°" if c["temp"] is not None else f"{icon} {I.t('weather_na', lang)}"
+    return [t, I.t("sunset", lang, t=f"{c['sunset']:%H:%M}")]
 
 
 # ---------------------------------------------------------------- ③ 고도 · 토블러
@@ -264,6 +292,7 @@ def tobler_kmh(slope: float) -> float:
 
 
 def grade_label(slope: float) -> str:
+    """한국어 키를 돌려줘요. 화면에선 i18n.lab('grade', ...)로 번역."""
     s = abs(slope)
     if s < 0.03:
         return "평지"
@@ -341,21 +370,22 @@ def evaluate(seq, places, who, elev, hills, speed_factor=1.0) -> dict:
             "hill": any(l["hill"] for l in legs), "guessed": any(l["guessed"] for l in legs)}
 
 
-def time_budget(user: dict, cond: dict) -> tuple[int, list]:
+def time_budget(user: dict, cond: dict, lang: str = "ko") -> tuple[int, list]:
     budget, notes = user["minutes"], []
     left = int((cond["sunset"] - cond["now"]).total_seconds() // 60) - 20
     if left < budget:
         budget = max(0, left)
-        notes.append(f"🌇 오늘 해 지는 시각이 {cond['sunset']:%H:%M}이라 해 지기 20분 전에 끝나도록 맞췄어요.")
+        notes.append(I.t("n_sunset", lang, t=f"{cond['sunset']:%H:%M}"))
     if cond["rain"]:
-        notes.append("☔ 비 소식이 있어서 실내에서 마무리하는 길을 먼저 골랐어요.")
+        notes.append(I.t("n_rain", lang))
     if cond["cold"]:
-        notes.append("🧣 기온이 0도 이하라 1~2곳만 잇는 짧은 순례로 줄이고, 따뜻한 쉼터를 넣었어요.")
+        notes.append(I.t("n_cold", lang))
     return budget, notes
 
 
-def plan_candidates(start: str, user: dict, cond: dict, places, data, elev, hills) -> tuple[list, int, list]:
-    budget, notes = time_budget(user, cond)
+def plan_candidates(start: str, user: dict, cond: dict, places, data, elev, hills,
+                    lang: str = "ko") -> tuple[list, int, list]:
+    budget, notes = time_budget(user, cond, lang)
     out = []
     for seq, cid in candidate_sequences(start, places, data["courses"]):
         if cond["cold"] and len(seq) > 3:
@@ -375,17 +405,17 @@ def plan_candidates(start: str, user: dict, cond: dict, places, data, elev, hill
             score += 3
         if user["level"] == "보통" and ev["hill"]:
             score -= 2
-        reasons = [f"남은 {budget}분 안에 다녀올 수 있어요 (예상 {ev['total_min']:.0f}분, 걷기 {ev['dist_m'] / 1000:.1f}km)"]
+        reasons = [I.t("r_budget", lang, b=budget, t=f"{ev['total_min']:.0f}", km=f"{ev['dist_m'] / 1000:.1f}")]
         if diverse:
-            reasons.append("앞 장소와 볼거리가 달라요 (" + " → ".join(dict.fromkeys(cats)) + ")")
+            reasons.append(I.t("r_diverse", lang, x=" → ".join(I.lab("category", c, lang) for c in dict.fromkeys(cats))))
         if pieces:
-            reasons.append(f"'{user['interest']}' 관심사 이야기 조각이 준비된 곳 {pieces}곳")
+            reasons.append(I.t("r_pieces", lang, i=I.lab("interest", user["interest"], lang), n=pieces))
         if user["level"] == "가볍게":
-            reasons.append("'가볍게'라서 오르막 없는 평지 길만 골랐어요")
+            reasons.append(I.t("r_light", lang))
         if cond["rain"] and indoor_end:
-            reasons.append("비가 와도 박물관(실내)에서 마무리해요")
+            reasons.append(I.t("r_rain_end", lang))
         elif cond["cold"] and indoor_end:
-            reasons.append("추운 날이라 따뜻한 박물관(실내)에서 마무리해요")
+            reasons.append(I.t("r_cold_end", lang))
         ev.update(id=f"P{len(out) + 1}", course_id=cid, score=round(score, 1), reasons=reasons)
         out.append(ev)
     out.sort(key=lambda x: -x["score"])
@@ -394,8 +424,7 @@ def plan_candidates(start: str, user: dict, cond: dict, places, data, elev, hill
     if not out:  # 아무것도 안 맞으면 가장 가까운 한 곳만
         near = sorted([p for p in places.index if p != start], key=lambda p: km_between(places, start, p))[0]
         ev = evaluate((start, near), places, user["who"], elev, hills)
-        ev.update(id="P1", course_id=None, score=0,
-                  reasons=["시간이 빠듯해서 가장 가까운 한 곳만 이어요"])
+        ev.update(id="P1", course_id=None, score=0, reasons=[I.t("r_nearest", lang)])
         out = [ev]
     return out[:3], budget, notes
 
@@ -449,27 +478,27 @@ AGENT_TOOLS = [
 ]
 
 
-def agent_choose(cands, budget, cond, user, places, data) -> dict | None:
+def agent_choose(cands, budget, cond, user, places, data, lang: str = "ko") -> dict | None:
     """① 에이전트: Claude가 도구를 불러 후보·조건·이야기를 확인하고 하나를 골라 이유를 써요."""
     if not llm_ready() or not cands:
         return None
 
     def run(name, args):
         if name == "find_routes":
-            return [{"plan_id": c["id"], "stops": [places.loc[p, "name"] for p in c["stops"]],
+            return [{"plan_id": c["id"], "stops": [place_name(p, places, data, lang) for p in c["stops"]],
                      "stop_ids": c["stops"], "minutes": round(c["total_min"]), "km": round(c["dist_m"] / 1000, 1),
                      "hill": c["hill"], "rule_reasons": c["reasons"]} for c in cands]
         if name == "get_conditions":
             return {"temp": cond["temp"], "rain": cond["rain"], "sunset": f"{cond['sunset']:%H:%M}",
                     "minutes_available": budget, "season": cond["season"]}
         if name == "get_story_preview":
-            text, _, _ = story_for(args.get("place_id", ""), args.get("interest", user["interest"]), places, data)
-            return {"preview": text.split(". ")[0][:120]}
+            text, _, _ = story_for(args.get("place_id", ""), args.get("interest", user["interest"]), places, data, lang)
+            return {"preview": text[:140]}
         return {"error": "unknown tool"}
 
     system = ("너는 경주 사찰 도보 순례길을 짜는 AI 에이전트야. 먼저 도구로 후보와 조건을 확인하고, "
               "필요하면 이야기 미리보기를 본 다음 후보 중 하나만 골라. 도구 결과에 없는 사실은 절대 지어내지 마. "
-              '마지막 답은 JSON 한 줄만: {"plan_id": "P1", "reason": "고른 이유 2문장, 해요체"}')
+              f'마지막 답은 JSON 한 줄만: {{"plan_id": "P1", "reason": "고른 이유 2문장, {I.LLM_LANG[lang]}로"}}')
     msgs = [{"role": "user", "content": f"일행: {user['who']}, 시간: {user['minutes']}분, 걷기: {user['level']}, "
                                          f"관심사: {user['interest']}, 시작: {places.loc[cands[0]['stops'][0], 'name']}"}]
     for _ in range(5):
@@ -493,13 +522,13 @@ def agent_choose(cands, budget, cond, user, places, data) -> dict | None:
     return None
 
 
-def retell(text: str, who: str) -> str:
+def retell(text: str, who: str, lang: str = "ko") -> str:
     """④ 말투 맞춤 (Haiku): 사실은 그대로, 말투만. 키가 없으면 원문."""
     if who == "혼자·친구" or not llm_ready():
         return text
     res = call_claude([{"role": "user", "content": text}],
                       f"아래 글을 '{who}' 일행에게 들려주듯 말투만 바꿔. 사실·숫자·이름은 그대로 두고 새 사실은 절대 더하지 마. "
-                      "3문장 이내, 해요체. 바꾼 글만 답해.",
+                      f"3문장 이내, {I.LLM_LANG[lang]}로. 바꾼 글만 답해.",
                       model=_secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=300)
     out = _text_of(res) if res else ""
     return out or text
@@ -510,61 +539,78 @@ def _piece(data, pid):
     return data["pieces"].get("pieces", {}).get(pid)
 
 
-def story_for(pid, interest, places, data) -> tuple[str, list, str]:
-    """(이야기, 출처, 상태) 상태: '출처 확인' / '검수 중' / '출처 확인 중'"""
-    pc = _piece(data, pid)
-    if pc and interest in pc.get("story", {}):
-        return pc["story"][interest], pc.get("sources", []), ("출처 확인" if pc.get("verified") else "검수 중")
+def _piece_tr(data, pid, lang):
+    """이야기 조각의 해당 언어판. 한국어면 원본, 번역이 없으면 None."""
+    if lang == "ko":
+        return _piece(data, pid)
+    return data["tr"].get("pieces", {}).get(pid, {}).get(lang)
+
+
+def story_for(pid, interest, places, data, lang: str = "ko") -> tuple[str, list, str]:
+    """(이야기, 출처, 상태) 상태: 'ok' 출처 확인 / 'review' 검수 중 / 'pending' 출처 확인 중"""
+    pc, tr = _piece(data, pid), _piece_tr(data, pid, lang)
+    if pc and tr and interest in tr.get("story", {}):
+        return tr["story"][interest], pc.get("sources", []), ("ok" if pc.get("verified") else "review")
     st_ = data["stories"].get(pid)
-    if isinstance(st_, dict) and st_.get("story"):
-        return st_["story"], st_.get("sources", []), "출처 확인"
+    if lang == "ko" and isinstance(st_, dict) and st_.get("story"):
+        return st_["story"], st_.get("sources", []), "ok"
     if pid in places.index:
-        return str(places.loc[pid, "story"]), [], "출처 확인 중"
-    return "", [], "출처 확인 중"
+        return place_desc(pid, places, data, lang), [], "pending"
+    return "", [], "pending"
 
 
-def piece_title(pid, places, data, n: int) -> str:
-    pc = _piece(data, pid)
-    return pc["title"] if pc else f"조각 {n} · {places.loc[pid, 'name']}"
+def piece_title(pid, places, data, n: int, lang: str = "ko") -> str:
+    tr = _piece_tr(data, pid, lang)
+    return tr["title"] if tr and tr.get("title") else I.t("piece_n", lang, n=n, name=place_name(pid, places, data, lang))
 
 
-def diff_line(prev, cur, places, data) -> str:
-    pc = _piece(data, cur)
-    pp = _piece(data, prev)
-    if pc and pp and pc.get("diff_from_prev") and pp.get("order", 0) == pc.get("order", 0) - 1:
-        return pc["diff_from_prev"]
+def diff_line(prev, cur, places, data, lang: str = "ko") -> str:
+    pc, pp, tr = _piece(data, cur), _piece(data, prev), _piece_tr(data, cur, lang)
+    if pc and pp and tr and tr.get("diff_from_prev") and pp.get("order", 0) == pc.get("order", 0) - 1:
+        return tr["diff_from_prev"]
     a, b = places.loc[prev], places.loc[cur]
+    an, bn = place_name(prev, places, data, lang), place_name(cur, places, data, lang)
     if a.category != b.category:
-        return f"{a['name']}이 {CATEGORY_PHRASE.get(a.category, a.category)}였다면, {b['name']}은 {CATEGORY_PHRASE.get(b.category, b.category)}예요."
-    return f"{a['name']}과 같은 {b.category}지만, 시대와 이야기가 달라요: {b.era}."
+        return I.t("diff_generic", lang, a=an, b=bn, pa=I.lab("phrase", a.category, lang), pb=I.lab("phrase", b.category, lang))
+    return I.t("diff_same", lang, a=an, c=I.lab("category", b.category, lang), e=era_text(b.era, data, lang))
 
 
-def teaser(cur, nxt, places, data) -> str:
-    pc, pn = _piece(data, cur), _piece(data, nxt)
-    if pc and pn and pc.get("teaser") and pn.get("order", 0) == pc.get("order", 0) + 1:
-        return pc["teaser"]
-    bridge = data["stories"].get("_bridges", {}).get(f"{cur}>{nxt}")
+def teaser(cur, nxt, places, data, lang: str = "ko") -> str:
+    pc, pn, tr = _piece(data, cur), _piece(data, nxt), _piece_tr(data, cur, lang)
+    if pc and pn and tr and tr.get("teaser") and pn.get("order", 0) == pc.get("order", 0) + 1:
+        return tr["teaser"]
+    key = f"{cur}>{nxt}"
+    if lang == "ko":
+        bridge = data["stories"].get("_bridges", {}).get(key)
+    else:
+        bridge = data["tr"].get("bridges", {}).get(key, {}).get(lang)
     if bridge:
         return bridge
-    return f"다음 이야기 조각은 {places.loc[nxt, 'name']}에서 열려요."
+    return I.t("next_generic", lang, n=place_name(nxt, places, data, lang))
 
 
-def mission_for(pid, who, places, data) -> str:
-    pc = _piece(data, pid)
-    if pc and pc.get("mission"):
-        m = pc["mission"]
+def mission_for(pid, who, places, data, lang: str = "ko") -> str:
+    tr = _piece_tr(data, pid, lang)
+    if tr and tr.get("mission"):
+        m = tr["mission"]
         return m.get(who) or m.get("기본")
-    basic, kid = GENERIC_MISSION.get(places.loc[pid, "category"], GENERIC_MISSION["명소"])
-    return kid if who == "아이와 함께" else basic
+    basic, kid = I.GENERIC_MISSION.get(places.loc[pid, "category"], I.GENERIC_MISSION["명소"])
+    d = kid if who == "아이와 함께" else basic
+    return d.get(lang) or d["ko"]
 
 
-def season_for(pid, month, data) -> tuple[list, list]:
-    """(지금 열린 계절 조각, 다른 계절에 열리는 조각)"""
+def season_for(pid, month, data, lang: str = "ko") -> tuple[list, list]:
+    """(지금 열린 계절 조각, 다른 계절에 열리는 조각) — 각 항목: {'months', 'label', 'text'}"""
     now, later = [], []
-    for s in data["pieces"].get("season_pieces", []):
+    trs = data["tr"].get("seasons", [])
+    for i, s in enumerate(data["pieces"].get("season_pieces", [])):
         if s["poi"] != pid:
             continue
-        (now if month in s["months"] else later).append(s)
+        label, text = s["label"], s["text"]
+        if lang != "ko" and i < len(trs) and lang in trs[i]:
+            label, text = trs[i][lang]
+        item = {"months": s["months"], "label": label, "text": text}
+        (now if month in s["months"] else later).append(item)
     return now, later
 
 
@@ -596,30 +642,39 @@ def rest_near(spots: pd.DataFrame, places, a, b, cond, limit=2, km=1.0) -> list:
 
 
 # ---------------------------------------------------------------- ⑤ 일지 · 다음 순례
-def journal_lines(walk: dict, places, data, cond) -> list:
-    names = [places.loc[p, "name"] for p in walk["arrived"]]
-    who = walk["user"]["who"]
-    with_whom = who if who.endswith(("함께", "와")) else who + "와"
-    lines = [f"{cond['now']:%Y년 %m월 %d일} {cond['season']}, {with_whom} 걸은 순례길",
+def _first_sentence(text: str, lang: str) -> str:
+    text = str(text).strip()
+    if len(text) <= 110:
+        return text
+    for mark in ("요.", ". ", "。"):
+        if mark in text:
+            i = text.index(mark) + len(mark.strip())
+            return text[:i]
+    return text[:80]
+
+
+def journal_lines(walk: dict, places, data, cond, lang: str = "ko") -> list:
+    names = [place_name(p, places, data, lang) for p in walk["arrived"]]
+    who = I.lab("who_j", walk["user"]["who"], lang)
+    lines = [I.t("j_title", lang, date=I.date_str(cond["now"], lang), season=I.lab("season", cond["season"], lang), who=who),
              " → ".join(names),
-             f"걸은 거리 약 {walk['walked_m'] / 1000:.1f}km · 모은 이야기 조각 {len(walk['arrived'])}/{len(walk['plan']['stops'])}개"
-             f" · 현장 미션 {len(walk['missions'])}개 완료"]
+             I.t("j_stats", lang, km=f"{walk['walked_m'] / 1000:.1f}", a=len(walk["arrived"]),
+                 b=len(walk["plan"]["stops"]), m=len(walk["missions"]))]
     for p in walk["arrived"]:
-        text, _, _ = story_for(p, walk["user"]["interest"], places, data)
-        first = text.split("요.")[0] + "요." if "요." in text else text[:60]
-        lines.append(f"· {places.loc[p, 'name']}: {first}")
+        text, _, _ = story_for(p, walk["user"]["interest"], places, data, lang)
+        lines.append(f"· {place_name(p, places, data, lang)}: {_first_sentence(text, lang)}")
     if walk.get("stopped"):
-        lines.append(f"오늘은 '{walk['stopped']}' 때문에 여기까지 걸었어요. 남은 조각은 다음 순례에서 만나요.")
+        lines.append(I.t("j_stopped", lang, r=I.lab("reason", walk["stopped"], lang)))
     elif len(walk["arrived"]) == len(walk["plan"]["stops"]):
-        lines.append("모든 조각을 모아 오늘의 이야기를 완성했어요.")
+        lines.append(I.t("j_done", lang))
     return lines
 
 
-def polish_journal(lines: list) -> str | None:
+def polish_journal(lines: list, lang: str = "ko") -> str | None:
     if not llm_ready():
         return None
     res = call_claude([{"role": "user", "content": "\n".join(lines)}],
-                      "아래 기록으로 따뜻한 순례 일지를 4문장으로 써. 기록에 없는 사실은 더하지 마. 해요체.",
+                      f"아래 기록으로 따뜻한 순례 일지를 4문장으로 써. 기록에 없는 사실은 더하지 마. {I.LLM_LANG[lang]}로.",
                       model=_secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=350)
     return _text_of(res) if res else None
 
@@ -633,7 +688,7 @@ def course_of(stops: list, courses: list) -> str | None:
     return best if score >= 2 else None
 
 
-def recommend(course_id, stops, data, places) -> dict:
+def recommend(course_id, stops, data, places, lang: str = "ko") -> dict:
     tags, courses = data["tags"], {c["id"]: c for c in data["courses"]}
     cur = course_id or course_of(stops, data["courses"])
     if cur not in tags:
@@ -648,16 +703,17 @@ def recommend(course_id, stops, data, places) -> dict:
         jac = len(me & th) / len(me | th) if me | th else 0
         scored.append((jac, cid, me & th, t.get("terrain", "")))
     out = {}
+    tt = lambda xs: I.join_list([tag_text(x, data, lang) for x in xs], lang)
     if scored:
         sim = max(scored, key=lambda x: (x[0], x[3] == terrain))
         if sim[0] > 0:
-            out["similar"] = {"course": courses[sim[1]], "reason": "겹치는 주제: " + "·".join(sorted(sim[2])),
+            out["similar"] = {"course": courses[sim[1]], "reason": I.t("rec_shared", lang, x=tt(sorted(sim[2]))),
                               "score": round(sim[0], 2)}
         new = [s for s in scored if s[0] == 0]
         if new:
             pick = sorted(new, key=lambda x: (("산" in x[3]) != ("산" in terrain), "버스" in x[3]))[0]
             out["new"] = {"course": courses[pick[1]],
-                          "reason": "오늘과 다른 주제: " + "·".join(tags[pick[1]]["theme"][:3]), "score": 0}
+                          "reason": I.t("rec_diff", lang, x=tt(tags[pick[1]]["theme"][:3])), "score": 0}
     return out
 
 
@@ -733,7 +789,8 @@ def make_virtual(n: int = 80, phase: str = "before", fixes: dict | None = None, 
     return out
 
 
-def segment_table(recs: list, places) -> pd.DataFrame:
+def segment_table(recs: list, places, data=None, lang: str = "ko") -> pd.DataFrame:
+    """열 이름은 코드용 한국어 키(구간·진입·도착·완주율·멈춘 수·멈춘 이유 1위). 화면 표시는 app.py에서 번역."""
     entered, arrived, reasons = {}, {}, {}
     by_sid = {}
     for r in recs:
@@ -755,13 +812,14 @@ def segment_table(recs: list, places) -> pd.DataFrame:
                 reasons.setdefault(seg, {})
                 reasons[seg][ev["reason"]] = reasons[seg].get(ev["reason"], 0) + 1
                 break
+    data = data or {"tr": {}}
     rows = []
     for seg, n in entered.items():
         a, b = seg.split(">")
         rs = reasons.get(seg, {})
         top = max(rs, key=rs.get) if rs else "-"
-        name = lambda x: places.loc[x, "name"] if x in places.index else x
-        rows.append({"seg": seg, "구간": f"{name(a)} → {name(b)}", "진입": n, "도착": arrived.get(seg, 0),
+        rows.append({"seg": seg, "구간": f"{place_name(a, places, data, lang)} → {place_name(b, places, data, lang)}",
+                     "진입": n, "도착": arrived.get(seg, 0),
                      "완주율": round(arrived.get(seg, 0) / n * 100, 1), "멈춘 수": sum(rs.values()),
                      "멈춘 이유 1위": top, "이유별": rs})
     df = pd.DataFrame(rows)
@@ -774,5 +832,6 @@ def overall(recs: list) -> dict:
     return {"starts": len(starts), "finish": len(fins), "rate": (len(fins) / len(starts) * 100) if starts else 0}
 
 
-def suggestion(row) -> str:
-    return FIX_TEXT.get(row["멈춘 이유 1위"], FIX_TEXT["기타"])
+def suggestion(row, lang: str = "ko") -> str:
+    key = row["멈춘 이유 1위"] if row["멈춘 이유 1위"] in I.LABELS["fix"] else "기타"
+    return I.lab("fix", key, lang)

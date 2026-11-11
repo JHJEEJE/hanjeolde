@@ -19,7 +19,8 @@
 }
 
 html, body, .stApp, .stMarkdown, button, input, textarea, select {
-  font-family: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif !important;
+  font-family: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic",
+    "Hiragino Sans", "Yu Gothic UI", "Meiryo", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK KR", sans-serif !important;
 }
 
 .stApp {
@@ -188,3 +189,6 @@ iframe { border-radius: 20px; }
   border-radius: 16px; padding: 10px 14px; font-weight: 700; color: #7A5C0C; margin: 6px 0 12px;
 }
 .src a { color: var(--sky-d); font-size: 0.8rem; text-decoration: none; }
+
+/* 제목 옆 링크 아이콘 숨기기 */
+[data-testid="stHeaderActionElements"], .stMarkdown h1 a, .stMarkdown h2 a, .stMarkdown h3 a { display: none !important; }
