@@ -131,7 +131,7 @@ def _tour(lat: float, lon: float, radius: int, key: str):
 
 def tour_spots(places: pd.DataFrame, stop_ids: list, radius: int = 1000) -> pd.DataFrame | None:
     """순례길 장소마다 반경 1km 음식점·카페. 키가 없거나 실패하면 None."""
-    key = data_key()
+    key = tour_key()
     if not key:
         return None
     rows, ok = {}, False
@@ -305,7 +305,13 @@ def latlon_to_grid(lat: float, lon: float) -> tuple[int, int]:
     return int(ra * math.sin(theta) + XO + 0.5), int(ro - ra * math.cos(theta) + YO + 0.5)
 
 
-KEY_NAMES = ("DATA_GO_KR_KEY", "SERVICE_KEY", "SERVICEKEY", "DATA_KEY", "KMA_KEY", "TOUR_KEY", "PUBLIC_DATA_KEY")
+# 키 이름: 서비스별 키가 있으면 그걸 먼저, 없으면 공통 키(DATA_GO_KR_KEY)를 써요.
+KEY_NAMES = {
+    "kma": ("KMA_API_KEY", "KMA_KEY", "WEATHER_KEY"),
+    "tour": ("TOUR_API_KEY", "TOUR_KEY", "TOURAPI_KEY"),
+    "common": ("DATA_GO_KR_KEY", "SERVICE_KEY", "SERVICEKEY", "DATA_KEY", "PUBLIC_DATA_KEY"),
+}
+SESSION_KEY = {"kma": "kma_key_input", "tour": "tour_key_input"}   # 사이드바 입력칸 (지금 접속에서만)
 
 
 def _walk_secrets(obj, prefix=""):
@@ -320,27 +326,40 @@ def _walk_secrets(obj, prefix=""):
             yield f"{prefix}{k}", v
 
 
-def secret_status() -> tuple[str | None, str]:
-    """(키, 상태 설명). Secrets에 [섹션] 아래 넣었거나 이름을 조금 다르게 써도 찾아요."""
+def secret_status(service: str = "common") -> tuple[str | None, str]:
+    """(키, 어디서 찾았는지). service: 'kma' · 'tour' · 'common'.
+    Secrets에 [섹션] 아래 넣었거나 이름을 조금 다르게 써도 찾아요."""
+    typed = str(st.session_state.get(SESSION_KEY.get(service, ""), "") or "").strip()
+    if typed:
+        return typed, "사이드바 입력칸"
+    order = (KEY_NAMES[service] + KEY_NAMES["common"]) if service in ("kma", "tour") else KEY_NAMES["common"]
     try:
         pairs = list(_walk_secrets(st.secrets))
-    except Exception as e:   # secrets.toml 형식 오류 (따옴표 빠짐 등)
-        env = os.environ.get("DATA_GO_KR_KEY")
-        return (env, "환경변수") if env else (None, f"Secrets 형식 오류: {type(e).__name__}")
-    for full, v in pairs:
-        if full.split(".")[-1].upper().replace("-", "_") in KEY_NAMES and str(v).strip():
-            return str(v).strip(), f"Secrets의 {full}"
-    env = os.environ.get("DATA_GO_KR_KEY")
-    if env:
-        return env, "환경변수"
-    if not pairs:
+    except Exception as e:   # secrets.toml 형식 오류
+        pairs, err = [], type(e).__name__
+    else:
+        err = None
+    found = {full.split(".")[-1].upper().replace("-", "_"): (full, str(v).strip()) for full, v in pairs if str(v).strip()}
+    for name in order:
+        if name in found:
+            return found[name][1], f"Secrets의 {found[name][0]}"
+        if os.environ.get(name):
+            return os.environ[name], f"환경변수 {name}"
+    if err or not pairs:
         return None, "Secrets가 비어 있거나 형식 오류 (키 값을 \"따옴표\"로 감쌌는지 확인)"
-    names = ", ".join(k for k, _ in pairs)
-    return None, f"DATA_GO_KR_KEY를 못 찾음 (지금 Secrets에 있는 이름: {names})"
+    return None, "키를 못 찾음 (지금 Secrets에 있는 이름: " + ", ".join(k for k, _ in pairs) + ")"
 
 
 def data_key() -> str | None:
-    return secret_status()[0]
+    return secret_status("common")[0]
+
+
+def kma_key() -> str | None:
+    return secret_status("kma")[0]
+
+
+def tour_key() -> str | None:
+    return secret_status("tour")[0]
 
 
 def _kma_items(op: str, base: datetime, nx: int, ny: int, key: str) -> list:
@@ -395,7 +414,7 @@ def _kma(ncst_iso: str, fc_iso: str, nx: int, ny: int, key: str, now_iso: str):
 
 
 def kma_now(now: datetime) -> dict | None:
-    key = data_key()
+    key = kma_key()
     if not key:
         return None
     nx, ny = latlon_to_grid(*GYEONGJU)

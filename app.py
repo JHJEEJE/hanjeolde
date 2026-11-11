@@ -112,19 +112,24 @@ with st.sidebar:
     t = st.selectbox("시각", t_opts, index=t_opts.index(t_q) if t_q in t_opts else 0,
                      help="발표가 늦은 오후면 해 질 녘 규칙 때문에 길이 짧아져요. 그럴 땐 10:00으로 바꿔 보세요.")
     real_spots = L.load_rest_spots()
-    key_val, key_note = L.secret_status()
-    has_key = bool(key_val)
-    use_tour = st.toggle("주변 가게: TourAPI 실데이터", value=has_key, disabled=not has_key,
-                         help="Secrets에 DATA_GO_KR_KEY가 있으면 한국관광공사 TourAPI로 반경 1km 음식점·카페를 불러와요.")
+    st.markdown("---")
+    st.markdown("**🔑 공공데이터포털 API 키**")
+    st.caption("보통은 Streamlit Secrets에 넣어요. 여기 칸에 붙여 넣으면 지금 접속에서만 쓰고 저장되지 않아요.")
+    st.text_input("기상청 단기예보 키", key="kma_key_input", type="password", placeholder="비워 두면 Secrets 값 사용")
+    st.text_input("TourAPI(국문 관광정보 GW) 키", key="tour_key_input", type="password", placeholder="비워 두면 Secrets 값 사용")
+    kma_val, kma_note = L.secret_status("kma")
+    tour_val, tour_note = L.secret_status("tour")
+    use_tour = st.toggle("주변 가게: TourAPI 실데이터", value=bool(tour_val), disabled=not tour_val,
+                         help="TourAPI 키가 있으면 한국관광공사 TourAPI로 반경 1km 음식점·카페를 불러와요.")
     show_example = False
     if real_spots.empty:
-        show_example = st.toggle("예시 쉼터 보기 (실제 가게 아님)", value=not has_key,
+        show_example = st.toggle("예시 쉼터 보기 (실제 가게 아님)", value=not tour_val,
                                  help="rest_spots.csv나 TourAPI 데이터가 없을 때만 예시가 나와요.")
     st.markdown("---")
     st.markdown("**🔌 연결 상태**")
     st.caption("🤖 Claude: " + ("연결됨 ✅" if L.llm_ready() else "키 없음 → 규칙 기반"))
-    st.caption("🔑 공공데이터포털 키: " + (f"있음 ✅ ({key_note}, {len(key_val)}자)" if has_key
-                                          else f"없음 → Open-Meteo·예시 쉼터 · {key_note}"))
+    st.caption("🌦️ 기상청 키: " + (f"있음 ✅ ({kma_note}, {len(kma_val)}자)" if kma_val else f"없음 → Open-Meteo · {kma_note}"))
+    st.caption("🏪 TourAPI 키: " + (f"있음 ✅ ({tour_note}, {len(tour_val)}자)" if tour_val else f"없음 → 예시 쉼터 · {tour_note}"))
     st.markdown("---")
     st.markdown("**🖨️ QR 만들기**")
     url = st.text_input("앱 주소", placeholder="https://○○○.streamlit.app")
@@ -148,6 +153,10 @@ if t != "지금":
 cond = L.get_conditions(demo_weather, demo_month, now)
 with st.sidebar:
     st.caption(f"🌤️ 날씨 출처: {cond['source']}")
+    if tour_val and use_tour:
+        probe = L.tour_spots(places, [SS.start])
+        st.caption("🏪 TourAPI 응답: " + (f"{len(probe)}곳 받음 ✅" if probe is not None
+                                         else "응답 없음 (발급 직후면 1시간쯤 뒤 다시 확인, 활용신청 여부도 확인)"))
 
 
 def spots_for(stop_ids):
