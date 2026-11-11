@@ -71,8 +71,16 @@ FIX_TEXT = {
 
 
 # ---------------------------------------------------------------- 데이터
+def data_path(name: str) -> Path:
+    """data 폴더 → 앱 폴더 바로 아래 순서로 찾아요. (GitHub에 data 폴더가 안 올라가도 파일만 있으면 동작)"""
+    for p in (DATA / name, BASE / name):
+        if p.exists():
+            return p
+    return DATA / name
+
+
 def _json(name: str, default):
-    p = DATA / name
+    p = data_path(name)
     if not p.exists():
         return default
     return json.loads(p.read_text(encoding="utf-8"))
@@ -80,7 +88,7 @@ def _json(name: str, default):
 
 @st.cache_data
 def load_places() -> pd.DataFrame:
-    df = pd.read_csv(DATA / "places.csv", encoding="utf-8-sig")
+    df = pd.read_csv(data_path("places.csv"), encoding="utf-8-sig")
     df["lat"] = df["lat"].astype(float)
     df["lon"] = df["lon"].astype(float)
     return df.set_index("id", drop=False)
@@ -97,7 +105,7 @@ def load_all() -> dict:
 
 
 def load_rest_spots() -> pd.DataFrame:
-    p = DATA / "rest_spots.csv"
+    p = data_path("rest_spots.csv")
     if not p.exists():
         return pd.DataFrame()
     df = pd.read_csv(p, encoding="utf-8-sig", dtype=str).fillna("")
