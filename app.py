@@ -17,8 +17,16 @@ import streamlit as st
 import streamlit.components.v1 as components
 from streamlit_folium import st_folium
 
+import importlib
+
 import i18n as I
 import logic as L
+
+# Streamlit Cloud가 업데이트 뒤에도 예전 logic.py / i18n.py를 기억하고 있으면 새로 불러와요
+if not hasattr(I, "LANGS") or not hasattr(I, "SPOT_TYPE"):
+    I = importlib.reload(I)
+if not hasattr(L, "place_name") or not hasattr(L, "STOP_KEYS"):
+    L = importlib.reload(L)
 
 st.set_page_config(page_title="한 절 더 · Han Jeol Deo", page_icon="🪷", layout="centered",
                    initial_sidebar_state="collapsed")
