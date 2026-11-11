@@ -96,6 +96,58 @@ def load_rest_spots() -> pd.DataFrame:
     return df.dropna(subset=["lat", "lon"])
 
 
+TOUR_URL = "https://apis.data.go.kr/B551011/KorService2/locationBasedList2"
+
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def _tour(lat: float, lon: float, radius: int, key: str):
+    """한국관광공사 TourAPI 위치기반 조회: 반경 안 음식점·카페(contentTypeId 39). 실패하면 None."""
+    try:
+        r = requests.get(TOUR_URL, timeout=6, params={
+            "serviceKey": key, "MobileOS": "ETC", "MobileApp": "HanJeolDeo", "_type": "json",
+            "mapX": f"{lon:.6f}", "mapY": f"{lat:.6f}", "radius": radius, "contentTypeId": 39,
+            "arrange": "E", "numOfRows": 30, "pageNo": 1})
+        body = r.json()["response"]
+        if str(body["header"]["resultCode"]) not in ("0000", "00"):
+            return None
+        items = body["body"]["items"]
+        items = items.get("item", []) if isinstance(items, dict) else []
+        if isinstance(items, dict):
+            items = [items]
+        rows = []
+        for it in items:
+            try:
+                rows.append({"id": f"tour_{it.get('contentid')}", "name": it.get("title", ""),
+                             "type": "카페" if it.get("cat3") == "A05020900" else "식당",
+                             "lat": float(it["mapy"]), "lon": float(it["mapx"]), "open": "", "close": "",
+                             "closed_day": "", "indoor": "Y", "near_poi": "", "partner": "", "coupon": "",
+                             "source": "TourAPI", "checked_date": "", "addr": it.get("addr1", "")})
+            except (KeyError, ValueError, TypeError):
+                continue
+        return rows
+    except Exception:
+        return None
+
+
+def tour_spots(places: pd.DataFrame, stop_ids: list, radius: int = 1000) -> pd.DataFrame | None:
+    """순례길 장소마다 반경 1km 음식점·카페. 키가 없거나 실패하면 None."""
+    key = data_key()
+    if not key:
+        return None
+    rows, ok = {}, False
+    for sid in dict.fromkeys(stop_ids):
+        p = places.loc[sid]
+        got = _tour(round(float(p.lat), 5), round(float(p.lon), 5), radius, key)
+        if got is None:
+            continue
+        ok = True
+        for r in got:
+            rows.setdefault(r["id"], r)
+    if not ok:
+        return None
+    return pd.DataFrame(list(rows.values()))
+
+
 def example_rest_spots(places: pd.DataFrame, stop_ids: list, lang: str = "ko") -> pd.DataFrame:
     """발표용 '예시 쉼터' (실제 가게 아님). rest_spots.csv가 비어 있을 때만 데모 설정에서 켜요."""
     rows = []
@@ -228,6 +280,96 @@ def _open_meteo():
         return None
 
 
+# ---- 기상청 단기예보 (공공데이터포털 키: Secrets의 DATA_GO_KR_KEY)
+KMA_URL = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0"
+SKY_ICON = {"1": "☀️", "3": "⛅", "4": "☁️"}
+
+
+def latlon_to_grid(lat: float, lon: float) -> tuple[int, int]:
+    """위경도 → 기상청 5km 격자(nx, ny). 기상청 활용가이드의 LCC 변환식."""
+    RE, GRID, SLAT1, SLAT2, OLON, OLAT, XO, YO = 6371.00877, 5.0, 30.0, 60.0, 126.0, 38.0, 43, 136
+    D = math.pi / 180.0
+    re = RE / GRID
+    s1, s2, olon, olat = SLAT1 * D, SLAT2 * D, OLON * D, OLAT * D
+    sn = math.log(math.cos(s1) / math.cos(s2)) / math.log(
+        math.tan(math.pi * 0.25 + s2 * 0.5) / math.tan(math.pi * 0.25 + s1 * 0.5))
+    sf = math.tan(math.pi * 0.25 + s1 * 0.5) ** sn * math.cos(s1) / sn
+    ro = re * sf / math.tan(math.pi * 0.25 + olat * 0.5) ** sn
+    ra = re * sf / math.tan(math.pi * 0.25 + lat * D * 0.5) ** sn
+    theta = lon * D - olon
+    if theta > math.pi:
+        theta -= 2 * math.pi
+    if theta < -math.pi:
+        theta += 2 * math.pi
+    theta *= sn
+    return int(ra * math.sin(theta) + XO + 0.5), int(ro - ra * math.cos(theta) + YO + 0.5)
+
+
+def data_key() -> str | None:
+    return _secret("DATA_GO_KR_KEY")
+
+
+def _kma_items(op: str, base: datetime, nx: int, ny: int, key: str) -> list:
+    r = requests.get(f"{KMA_URL}/{op}", timeout=6, params={
+        "serviceKey": key, "pageNo": 1, "numOfRows": 1000, "dataType": "JSON",
+        "base_date": f"{base:%Y%m%d}", "base_time": f"{base:%H%M}", "nx": nx, "ny": ny})
+    body = r.json()["response"]
+    if body["header"]["resultCode"] != "00":
+        raise ValueError(body["header"].get("resultMsg"))
+    items = body["body"]["items"]
+    return items.get("item", []) if isinstance(items, dict) else []
+
+
+def kma_bases(now: datetime) -> tuple[datetime, datetime]:
+    """(초단기실황 발표시각, 단기예보 발표시각). 실황은 매시 정각(약 40분 뒤 제공), 단기예보는 02·05·…·23시(약 10분 뒤 제공)."""
+    ncst = (now - timedelta(minutes=45)).replace(minute=0, second=0, microsecond=0)
+    t = now - timedelta(minutes=15)
+    hours = [h for h in (2, 5, 8, 11, 14, 17, 20, 23) if h <= t.hour]
+    if hours:
+        fc = t.replace(hour=hours[-1], minute=0, second=0, microsecond=0)
+    else:
+        fc = (t - timedelta(days=1)).replace(hour=23, minute=0, second=0, microsecond=0)
+    return ncst, fc
+
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def _kma(ncst_iso: str, fc_iso: str, nx: int, ny: int, key: str, now_iso: str):
+    """기상청 실황 + 단기예보 → {temp, pty, rain_now, pop_max, sky, tmx, tmn, pcp}. 실패하면 None."""
+    try:
+        now = datetime.fromisoformat(now_iso)
+        nc = {i["category"]: i["obsrValue"] for i in _kma_items("getUltraSrtNcst", datetime.fromisoformat(ncst_iso), nx, ny, key)}
+        fc = _kma_items("getVilageFcst", datetime.fromisoformat(fc_iso), nx, ny, key)
+        soon, sky, tmx, tmn = [], None, None, None
+        today = f"{now:%Y%m%d}"
+        for i in fc:
+            when = datetime.strptime(i["fcstDate"] + i["fcstTime"], "%Y%m%d%H%M").replace(tzinfo=KST)
+            if i["category"] == "TMX" and i["fcstDate"] == today:
+                tmx = float(i["fcstValue"])
+            if i["category"] == "TMN" and i["fcstDate"] == today:
+                tmn = float(i["fcstValue"])
+            if now - timedelta(minutes=59) <= when <= now + timedelta(hours=3):
+                soon.append(i)
+        pops = [int(i["fcstValue"]) for i in soon if i["category"] == "POP"]
+        skies = [i["fcstValue"] for i in soon if i["category"] == "SKY"]
+        sky = skies[0] if skies else None
+        pty = str(nc.get("PTY", "0"))
+        temp = float(nc["T1H"]) if "T1H" in nc else next((float(i["fcstValue"]) for i in soon if i["category"] == "TMP"), None)
+        return {"temp": temp, "pty": pty, "rain_now": pty not in ("0", ""), "pop_max": max(pops) if pops else None,
+                "sky": sky, "tmx": tmx, "tmn": tmn, "pcp": nc.get("RN1")}
+    except Exception:
+        return None
+
+
+def kma_now(now: datetime) -> dict | None:
+    key = data_key()
+    if not key:
+        return None
+    nx, ny = latlon_to_grid(*GYEONGJU)
+    ncst, fc = kma_bases(now)
+    return _kma(ncst.isoformat(), fc.isoformat(), nx, ny, key, now.replace(minute=(now.minute // 30) * 30, second=0,
+                                                                            microsecond=0).isoformat())
+
+
 def season_of(month: int) -> str:
     return {12: "겨울", 1: "겨울", 2: "겨울", 3: "봄", 4: "봄", 5: "봄",
             6: "여름", 7: "여름", 8: "여름"}.get(month, "가을")
@@ -243,18 +385,32 @@ def get_conditions(demo_weather: str = "실시간", demo_month: int | None = Non
         out.update(temp=preset[0], rain=preset[1], sunset=sunset_calc(now.date()), source="데모 날씨")
     else:
         om = _open_meteo()
-        if om:
-            out.update(temp=om["temp"], rain=om["rain"], sunset=datetime.fromisoformat(om["sunset"]),
-                       source="Open-Meteo")
+        sunset = datetime.fromisoformat(om["sunset"]) if om else sunset_calc(now.date())
+        kma = kma_now(now)
+        if kma and kma["temp"] is not None:
+            pop = kma["pop_max"]
+            out.update(temp=kma["temp"], rain=kma["rain_now"] or (pop is not None and pop >= 60), sunset=sunset,
+                       source="기상청 단기예보", pop=pop, sky=kma["sky"], pty=kma["pty"], tmx=kma["tmx"], tmn=kma["tmn"])
+        elif om:
+            out.update(temp=om["temp"], rain=om["rain"], sunset=sunset, source="Open-Meteo")
         else:
-            out.update(temp=None, rain=False, sunset=sunset_calc(now.date()), source="일몰 계산값 (날씨 연결 안 됨)")
+            out.update(temp=None, rain=False, sunset=sunset, source="일몰 계산값 (날씨 연결 안 됨)")
     out["cold"] = out["temp"] is not None and out["temp"] <= 0
     return out
 
 
 def weather_lines(c: dict, lang: str) -> list:
-    icon = "🌧️" if c["rain"] else ("🥶" if c["cold"] else "☀️")
+    if c.get("pty") in ("3", "7"):
+        icon = "🌨️"
+    elif c["rain"]:
+        icon = "🌧️"
+    elif c["cold"]:
+        icon = "🥶"
+    else:
+        icon = SKY_ICON.get(str(c.get("sky")), "☀️")
     t = f"{icon} {c['temp']:.0f}°" if c["temp"] is not None else f"{icon} {I.t('weather_na', lang)}"
+    if c.get("pop") is not None:
+        t += f" · ☔{c['pop']}%"
     return [t, I.t("sunset", lang, t=f"{c['sunset']:%H:%M}")]
 
 
@@ -376,7 +532,9 @@ def time_budget(user: dict, cond: dict, lang: str = "ko") -> tuple[int, list]:
     if left < budget:
         budget = max(0, left)
         notes.append(I.t("n_sunset", lang, t=f"{cond['sunset']:%H:%M}"))
-    if cond["rain"]:
+    if cond["rain"] and cond.get("pop") is not None and cond.get("pty") in (None, "0"):
+        notes.append(I.t("n_pop", lang, p=cond["pop"]))
+    elif cond["rain"]:
         notes.append(I.t("n_rain", lang))
     if cond["cold"]:
         notes.append(I.t("n_cold", lang))

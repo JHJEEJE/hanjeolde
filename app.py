@@ -101,13 +101,17 @@ with st.sidebar:
     t = st.selectbox("시각", t_opts, index=t_opts.index(t_q) if t_q in t_opts else 0,
                      help="발표가 늦은 오후면 해 질 녘 규칙 때문에 길이 짧아져요. 그럴 땐 10:00으로 바꿔 보세요.")
     real_spots = L.load_rest_spots()
+    has_key = bool(L.data_key())
+    use_tour = st.toggle("주변 가게: TourAPI 실데이터", value=has_key, disabled=not has_key,
+                         help="Secrets에 DATA_GO_KR_KEY가 있으면 한국관광공사 TourAPI로 반경 1km 음식점·카페를 불러와요.")
     show_example = False
     if real_spots.empty:
-        show_example = st.toggle("예시 쉼터 보기 (실제 가게 아님)", value=True,
-                                 help="rest_spots.csv를 채우면 이 설정은 사라지고 실제 쉼터가 나와요.")
+        show_example = st.toggle("예시 쉼터 보기 (실제 가게 아님)", value=not has_key,
+                                 help="rest_spots.csv나 TourAPI 데이터가 없을 때만 예시가 나와요.")
     st.markdown("---")
-    st.markdown("**🤖 AI 연결**")
-    st.caption("Claude 연결됨 ✅" if L.llm_ready() else "API 키 없음 → 규칙 기반으로 동작 중")
+    st.markdown("**🔌 연결 상태**")
+    st.caption("🤖 Claude: " + ("연결됨 ✅" if L.llm_ready() else "키 없음 → 규칙 기반"))
+    st.caption("🔑 공공데이터포털 키: " + ("있음 ✅" if has_key else "없음 → Open-Meteo·예시 쉼터"))
     st.markdown("---")
     st.markdown("**🖨️ QR 만들기**")
     url = st.text_input("앱 주소", placeholder="https://○○○.streamlit.app")
@@ -129,11 +133,22 @@ if t != "지금":
     hh, mm = map(int, t.split(":"))
     now = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
 cond = L.get_conditions(demo_weather, demo_month, now)
+with st.sidebar:
+    st.caption(f"🌤️ 날씨 출처: {cond['source']}")
 
 
 def spots_for(stop_ids):
-    if not real_spots.empty:
-        return real_spots
+    """쉼터 순서: 팀이 직접 확인한 rest_spots.csv → TourAPI 주변 가게 → (둘 다 없으면) 예시 쉼터"""
+    frames = [real_spots] if not real_spots.empty else []
+    if use_tour:
+        tour = L.tour_spots(places, stop_ids)
+        if tour is not None and not tour.empty:
+            if frames:
+                tour = tour[~tour["name"].isin(set(real_spots["name"]))]
+            frames.append(tour)
+    if frames:
+        import pandas as pd
+        return pd.concat(frames, ignore_index=True)
     return L.example_rest_spots(places, stop_ids, lang) if show_example else real_spots
 
 
@@ -207,6 +222,8 @@ def rest_html(spots):
         badge = f" · <b>{T('rest_soon')}</b>" if s.get("partner") == "후보" else \
             (f" · <b>{T('rest_partner')}</b>" if s.get("partner") == "제휴" else "")
         coupon = f" · 🎟️ {E(s['coupon'])}" if s.get("coupon") else ""
+        if s.get("source") == "TourAPI":
+            badge += f" · {T('tour_badge')}"
         link = L.kakao_to(s["name"], s["lat"], s["lon"])
         out.append(f"<span class='rest'>☕ {E(s['name'])} <span class='muted'>({E(L.spot_type(s.get('type', ''), lang))}, "
                    f"{s['dist_km'] * 1000:.0f}m{badge}{coupon})</span> <a href='{link}' target='_blank'>{T('rest_dir')}</a></span>")
