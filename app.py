@@ -112,7 +112,8 @@ with st.sidebar:
     t = st.selectbox("시각", t_opts, index=t_opts.index(t_q) if t_q in t_opts else 0,
                      help="발표가 늦은 오후면 해 질 녘 규칙 때문에 길이 짧아져요. 그럴 땐 10:00으로 바꿔 보세요.")
     real_spots = L.load_rest_spots()
-    has_key = bool(L.data_key())
+    key_val, key_note = L.secret_status()
+    has_key = bool(key_val)
     use_tour = st.toggle("주변 가게: TourAPI 실데이터", value=has_key, disabled=not has_key,
                          help="Secrets에 DATA_GO_KR_KEY가 있으면 한국관광공사 TourAPI로 반경 1km 음식점·카페를 불러와요.")
     show_example = False
@@ -122,7 +123,8 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("**🔌 연결 상태**")
     st.caption("🤖 Claude: " + ("연결됨 ✅" if L.llm_ready() else "키 없음 → 규칙 기반"))
-    st.caption("🔑 공공데이터포털 키: " + ("있음 ✅" if has_key else "없음 → Open-Meteo·예시 쉼터"))
+    st.caption("🔑 공공데이터포털 키: " + (f"있음 ✅ ({key_note}, {len(key_val)}자)" if has_key
+                                          else f"없음 → Open-Meteo·예시 쉼터 · {key_note}"))
     st.markdown("---")
     st.markdown("**🖨️ QR 만들기**")
     url = st.text_input("앱 주소", placeholder="https://○○○.streamlit.app")

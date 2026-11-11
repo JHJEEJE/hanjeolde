@@ -305,8 +305,42 @@ def latlon_to_grid(lat: float, lon: float) -> tuple[int, int]:
     return int(ra * math.sin(theta) + XO + 0.5), int(ro - ra * math.cos(theta) + YO + 0.5)
 
 
+KEY_NAMES = ("DATA_GO_KR_KEY", "SERVICE_KEY", "SERVICEKEY", "DATA_KEY", "KMA_KEY", "TOUR_KEY", "PUBLIC_DATA_KEY")
+
+
+def _walk_secrets(obj, prefix=""):
+    try:
+        items = obj.items()
+    except Exception:
+        return
+    for k, v in items:
+        if hasattr(v, "items"):
+            yield from _walk_secrets(v, f"{prefix}{k}.")
+        else:
+            yield f"{prefix}{k}", v
+
+
+def secret_status() -> tuple[str | None, str]:
+    """(키, 상태 설명). Secrets에 [섹션] 아래 넣었거나 이름을 조금 다르게 써도 찾아요."""
+    try:
+        pairs = list(_walk_secrets(st.secrets))
+    except Exception as e:   # secrets.toml 형식 오류 (따옴표 빠짐 등)
+        env = os.environ.get("DATA_GO_KR_KEY")
+        return (env, "환경변수") if env else (None, f"Secrets 형식 오류: {type(e).__name__}")
+    for full, v in pairs:
+        if full.split(".")[-1].upper().replace("-", "_") in KEY_NAMES and str(v).strip():
+            return str(v).strip(), f"Secrets의 {full}"
+    env = os.environ.get("DATA_GO_KR_KEY")
+    if env:
+        return env, "환경변수"
+    if not pairs:
+        return None, "Secrets가 비어 있거나 형식 오류 (키 값을 \"따옴표\"로 감쌌는지 확인)"
+    names = ", ".join(k for k, _ in pairs)
+    return None, f"DATA_GO_KR_KEY를 못 찾음 (지금 Secrets에 있는 이름: {names})"
+
+
 def data_key() -> str | None:
-    return _secret("DATA_GO_KR_KEY")
+    return secret_status()[0]
 
 
 def _kma_items(op: str, base: datetime, nx: int, ny: int, key: str) -> list:
