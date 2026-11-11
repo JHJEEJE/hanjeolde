@@ -22,11 +22,22 @@ import importlib
 import i18n as I
 import logic as L
 
-# Streamlit Cloud가 업데이트 뒤에도 예전 logic.py / i18n.py를 기억하고 있으면 새로 불러와요
-if not hasattr(I, "LANGS") or not hasattr(I, "SPOT_TYPE"):
-    I = importlib.reload(I)
-if not hasattr(L, "place_name") or not hasattr(L, "STOP_KEYS"):
-    L = importlib.reload(L)
+
+def _fresh(mod):
+    """Streamlit Cloud는 GitHub가 업데이트돼도 예전 logic.py · i18n.py를 기억하고 있을 때가 있어요.
+    파일이 바뀌었으면(수정 시각이 달라졌으면) 새로 불러와요."""
+    try:
+        mtime = Path(mod.__file__).stat().st_mtime
+    except OSError:
+        return mod
+    if getattr(mod, "_loaded_mtime", None) != mtime:
+        mod = importlib.reload(mod)
+        mod._loaded_mtime = mtime
+    return mod
+
+
+I = _fresh(I)
+L = _fresh(L)
 
 st.set_page_config(page_title="한 절 더 · Han Jeol Deo", page_icon="🪷", layout="centered",
                    initial_sidebar_state="collapsed")
