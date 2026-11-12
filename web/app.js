@@ -5,6 +5,7 @@
 const TX = {
   ko: {
     how: "이렇게 이용해요",
+    dir_t: "🧭 자세한 길 안내", dir_rough: "지도 데이터로 어림한 방향이에요. 정확한 길은 카카오맵 도보 길찾기로 확인해요.", from_here: "{n}에서 길찾기",
     map_big: "크게 보기", map_close: "닫기",
     how1: "QR 찍기",
     how1s: "사찰 입구에서",
@@ -65,6 +66,7 @@ const TX = {
   },
   en: {
     how: "How it works",
+    dir_t: "🧭 Step-by-step directions", dir_rough: "Rough direction only — check Kakao Map walking directions for the exact path.", from_here: "Directions from {n}",
     map_big: "Full screen", map_close: "Close",
     how1: "Scan the QR",
     how1s: "at the temple gate",
@@ -125,6 +127,7 @@ const TX = {
   },
   ja: {
     how: "使い方",
+    dir_t: "🧭 詳しい道案内", dir_rough: "おおよその方向です。正確な道はカカオマップの徒歩ルートで確認してください。", from_here: "{n}から道案内",
     map_big: "大きく見る", map_close: "閉じる",
     how1: "QRを読む",
     how1s: "寺の入口で",
@@ -185,6 +188,7 @@ const TX = {
   },
   zh: {
     how: "使用方法",
+    dir_t: "🧭 详细路线指引", dir_rough: "这是大致方向，准确路线请用Kakao地图步行导航确认。", from_here: "从{n}导航",
     map_big: "放大查看", map_close: "关闭",
     how1: "扫描二维码",
     how1s: "在寺院入口",
@@ -404,7 +408,12 @@ function shopCard(s) {
   return `<div class="shop"><div class="k">${KIND_EMOJI[s.kind] || "📍"}</div><div style="flex:1;min-width:0">
     <div class="nm">${esc(s.name)} <span class="muted small" style="font-weight:600">${esc(s.kindLabel)} · ${esc(s.src)}${badge}${coupon}</span></div>
     <div class="why">${(s.why || []).map(esc).join(" · ")}</div>
-    <div class="acts"><a class="mini" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(t("rest_dir"))} ›</a></div></div></div>`;
+    <div class="acts"><a class="mini sage" href="${esc(s.url)}" target="_blank" rel="noopener">🧭 ${esc(s.from ? x("from_here", { n: s.from }) : t("rest_dir"))} ›</a></div></div></div>`;
+}
+function stepsHtml(lg, open) {
+  if (!lg.steps || !lg.steps.length) return "";
+  const li = lg.steps.map((v, i) => `<li><span class="sn">${i + 1}</span><span>${esc(v)}</span></li>`).join("");
+  return `<details class="dirs" ${open ? "open" : ""}><summary>${esc(x("dir_t"))}</summary><ol>${li}</ol>${lg.detailed ? "" : `<div class="small muted">${esc(x("dir_rough"))}</div>`}</details>`;
 }
 function stopIcon(id, n) {
   const k = P(id).kind;
@@ -476,7 +485,7 @@ function planView() {
     if (i < c.legs.length) {
       const lg = c.legs[i];
       const sh = (c.legShops[i] || []).map(shopCard).join("");
-      tl.push(`<div class="leg"><span class="ln">🚶 ${esc(x("walk_leg", { m: Math.round(lg.min), km: (lg.dist / 1000).toFixed(1), g: lg.grade }))}</span>${lg.guessed ? ` <span class="muted">${esc(t("guess"))}</span>` : ""}${sh}</div>`);
+      tl.push(`<div class="leg"><span class="ln">🚶 ${esc(x("walk_leg", { m: Math.round(lg.min), km: (lg.dist / 1000).toFixed(1), g: lg.grade }))}</span>${lg.guessed ? ` <span class="muted">${esc(t("guess"))}</span>` : ""}${stepsHtml(lg, false)}${sh}</div>`);
     }
   });
   if (c.stops.length === 1) tl.push(`<div class="small muted" style="margin:4px 0 0 49px">${esc(x("one_place"))}</div>${(c.stops[0].near || []).map(shopCard).join("")}`);
@@ -541,7 +550,7 @@ function walkView() {
     next = `<div class="card next"><div class="eyebrow" style="color:#33658F">${esc(t("next"))}</div>
       <div class="row">${icon(P(n.id).kind, 26)}<h3>${esc(pname(n.id))}</h3></div>
       <div class="small" style="margin-top:4px">🚶 ${esc(x("walk_leg", { m: Math.round(lg.min), km: (lg.dist / 1000).toFixed(1), g: lg.grade }))}</div>
-      ${s.teaser ? `<div class="teaser">📖 ${esc(s.teaser)}</div>` : ""}${sh}
+      ${s.teaser ? `<div class="teaser">📖 ${esc(s.teaser)}</div>` : ""}${stepsHtml(lg, true)}${sh}
       <div class="src" style="margin-top:8px"><a href="${esc(r.kakaoLegs[i])}" target="_blank" rel="noopener">${esc(t("kakao_walk"))}</a></div></div>
       <div class="map" id="map-walk" style="height:210px"></div><div style="height:12px"></div>
       <button class="btn coral" data-act="arrive">${esc(t("arrive", { n: pname(n.id) }))}</button>

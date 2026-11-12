@@ -234,17 +234,107 @@ def kakao_from_to(a_name, a_lat, a_lon, b_name, b_lat, b_lon) -> str:
             f"/to/{quote(str(b_name))},{b_lat},{b_lon}")
 
 
+def kakao_walk(a_name, a_lat, a_lon, b_name, b_lat, b_lon) -> str:
+    """카카오맵 도보 길찾기 (출발지 → 도착지)"""
+    return (f"https://map.kakao.com/link/by/walk/{quote(str(a_name))},{a_lat},{a_lon}"
+            f"/{quote(str(b_name))},{b_lat},{b_lon}")
+
+
 @st.cache_data(ttl=86400, show_spinner=False)
 def walk_route(lat1, lon1, lat2, lon2):
-    """OpenStreetMap 도보 길찾기(FOSSGIS OSRM). 실패하면 None → 직선 × 1.3으로 어림."""
+    """OpenStreetMap 도보 길찾기(FOSSGIS OSRM). (거리 m, 좌표들, 갈림길 안내 steps) — 실패하면 None → 직선 × 1.3으로 어림."""
     url = f"https://routing.openstreetmap.de/routed-foot/route/v1/driving/{lon1},{lat1};{lon2},{lat2}"
     try:
-        r = requests.get(url, params={"overview": "full", "geometries": "geojson"}, timeout=6)
+        r = requests.get(url, params={"overview": "full", "geometries": "geojson", "steps": "true"}, timeout=6)
         route = r.json()["routes"][0]
         coords = [(c[1], c[0]) for c in route["geometry"]["coordinates"]]
-        return float(route["distance"]), coords
+        steps = []
+        for leg in route.get("legs", []):
+            for stp in leg.get("steps", []):
+                m = stp.get("maneuver", {})
+                steps.append({"type": m.get("type", ""), "mod": m.get("modifier", ""), "bearing": m.get("bearing_after", 0),
+                              "name": stp.get("name", ""), "dist": float(stp.get("distance", 0))})
+        return float(route["distance"]), coords, steps
     except Exception:
         return None
+
+
+DIR8 = {"ko": ["북", "북동", "동", "남동", "남", "남서", "서", "북서"], "en": ["north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"],
+        "ja": ["北", "北東", "東", "南東", "南", "南西", "西", "北西"], "zh": ["北", "东北", "东", "东南", "南", "西南", "西", "西北"]}
+TURN = {
+    "ko": {"left": "왼쪽으로 꺾어", "right": "오른쪽으로 꺾어", "slight left": "살짝 왼쪽으로", "slight right": "살짝 오른쪽으로",
+           "sharp left": "크게 왼쪽으로 돌아", "sharp right": "크게 오른쪽으로 돌아", "straight": "곧장", "uturn": "되돌아"},
+    "en": {"left": "Turn left", "right": "Turn right", "slight left": "Bear left", "slight right": "Bear right",
+           "sharp left": "Turn sharp left", "sharp right": "Turn sharp right", "straight": "Go straight", "uturn": "Make a U-turn"},
+    "ja": {"left": "左に曲がって", "right": "右に曲がって", "slight left": "やや左へ", "slight right": "やや右へ",
+           "sharp left": "大きく左に曲がって", "sharp right": "大きく右に曲がって", "straight": "まっすぐ", "uturn": "引き返して"},
+    "zh": {"left": "左转", "right": "右转", "slight left": "稍向左", "slight right": "稍向右",
+           "sharp left": "向左急转", "sharp right": "向右急转", "straight": "直行", "uturn": "掉头"},
+}
+
+
+def _dir8(bearing, lang):
+    return DIR8[lang][int(((bearing % 360) + 22.5) // 45) % 8]
+
+
+def _bearing(lat1, lon1, lat2, lon2):
+    y = math.sin(math.radians(lon2 - lon1)) * math.cos(math.radians(lat2))
+    x = math.cos(math.radians(lat1)) * math.sin(math.radians(lat2)) - math.sin(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.cos(math.radians(lon2 - lon1))
+    return (math.degrees(math.atan2(y, x)) + 360) % 360
+
+
+def _m(d, lang):
+    d = int(round(d / 10.0) * 10) or 10
+    return f"{d}m" if d < 1000 else f"{d / 1000:.1f}km"
+
+
+def directions(steps, a, b, dest_name, lang="ko") -> list:
+    """갈림길 안내 문장 목록. steps가 없으면 방향·거리로 한 줄 어림.
+    a, b = (위도, 경도)"""
+    road = {"ko": "골목길", "en": "the path", "ja": "小道", "zh": "小路"}[lang]
+    out = []
+    if not steps:
+        d = haversine_km(a[0], a[1], b[0], b[1]) * 1000
+        dr = _dir8(_bearing(a[0], a[1], b[0], b[1]), lang)
+        out.append({"ko": f"{dr}쪽으로 약 {_m(d * PATH_FACTOR, lang)} 걸어가요 (직선 {_m(d, lang)})",
+                    "en": f"Walk about {_m(d * PATH_FACTOR, lang)} heading {dr} ({_m(d, lang)} as the crow flies)",
+                    "ja": f"{dr}の方向へ約{_m(d * PATH_FACTOR, lang)}歩きます（直線{_m(d, lang)}）",
+                    "zh": f"向{dr}步行约{_m(d * PATH_FACTOR, lang)}（直线{_m(d, lang)}）"}[lang])
+        out.append({"ko": f"{dest_name}에 도착해요", "en": f"Arrive at {dest_name}", "ja": f"{dest_name}に到着",
+                    "zh": f"到达{dest_name}"}[lang])
+        return out
+    merged = []
+    for st_ in steps:   # 같은 길이 이어지거나 아주 짧은 꺾임은 합쳐요
+        if merged and st_["type"] in ("continue", "new name") and (st_["mod"] in ("straight", "", "slight left", "slight right")):
+            merged[-1]["dist"] += st_["dist"]
+            if not merged[-1]["name"]:
+                merged[-1]["name"] = st_["name"]
+            continue
+        if merged and st_["type"] not in ("arrive",) and st_["dist"] < 12 and merged[-1]["type"] != "depart":
+            merged[-1]["dist"] += st_["dist"]
+            continue
+        merged.append(dict(st_))
+    for st_ in merged[:9]:
+        nm = st_["name"] or road
+        t, mod, d = st_["type"], st_["mod"], _m(st_["dist"], lang)
+        if t == "depart":
+            dr = _dir8(st_["bearing"], lang)
+            txt = {"ko": f"{dr}쪽으로 출발해 {nm}을 따라 {d}", "en": f"Head {dr} along {nm} for {d}",
+                   "ja": f"{dr}へ出発し、{nm}に沿って{d}", "zh": f"向{dr}出发，沿{nm}走{d}"}[lang]
+        elif t == "arrive":
+            txt = {"ko": f"{dest_name}에 도착해요", "en": f"Arrive at {dest_name}", "ja": f"{dest_name}に到着",
+                   "zh": f"到达{dest_name}"}[lang]
+        else:
+            act = TURN[lang].get(mod, TURN[lang]["straight"])
+            pre = {"fork": {"ko": "갈림길에서 ", "en": "At the fork, ", "ja": "分かれ道で", "zh": "在岔路口"},
+                   "end of road": {"ko": "길 끝에서 ", "en": "At the end of the road, ", "ja": "突き当たりで", "zh": "在路尽头"},
+                   "roundabout": {"ko": "회전교차로에서 ", "en": "At the roundabout, ", "ja": "ロータリーで", "zh": "在环岛"}}.get(t, {}).get(lang, "")
+            if lang == "en" and pre:
+                act = act[0].lower() + act[1:]
+            txt = {"ko": f"{pre}{act} {nm}을 따라 {d}", "en": f"{pre}{act} onto {nm}, {d}",
+                   "ja": f"{pre}{act}{nm}を{d}", "zh": f"{pre}{act}，沿{nm}走{d}"}[lang]
+        out.append(I.josa(txt.replace("을 따라", "[을/를] 따라")) if lang == "ko" else txt)
+    return out
 
 
 # ---------------------------------------------------------------- ② 날씨 · 일몰

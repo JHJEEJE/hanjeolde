@@ -56,7 +56,8 @@ def _tour(lat, lon, radius, ctype, key):
         out = []
         for it in items:
             try:
-                kind = {39: "cafe" if it.get("cat3") == "A05020900" else "meal", 38: "craft", 14: "culture"}[ctype]
+                kind = classify(it.get("title", ""), {39: "meal", 38: "craft", 14: "culture"}[ctype], it.get("cat3", ""),
+                                it.get("lclsSystm2", ""))
                 out.append({"id": f"tour_{it.get('contentid')}", "name": it.get("title", ""), "kind": kind,
                             "lat": float(it["mapy"]), "lon": float(it["mapx"]), "rating": None, "reviews": None,
                             "open_now": None, "url": "", "img": it.get("firstimage", ""), "source": "tour",
@@ -68,11 +69,19 @@ def _tour(lat, lon, radius, ctype, key):
         return None
 
 
-@st.cache_data(ttl=21600, show_spinner=False)
 def _google(lat, lon, radius, key, lang):
+    """카페와 식당을 따로 물어요 (한 번에 물으면 식당만 잔뜩 와요)"""
+    out = []
+    for types in (("cafe", "coffee_shop", "bakery", "tea_house"), ("restaurant",)):
+        out += _google_q(lat, lon, radius, key, lang, types) or []
+    return out
+
+
+@st.cache_data(ttl=21600, show_spinner=False)
+def _google_q(lat, lon, radius, key, lang, types):
     try:
         r = requests.post(GOOGLE_URL, timeout=8, json={
-            "includedTypes": ["cafe", "bakery", "restaurant"], "maxResultCount": 20, "rankPreference": "POPULARITY",
+            "includedTypes": list(types), "maxResultCount": 12, "rankPreference": "POPULARITY",
             "languageCode": {"ko": "ko", "en": "en", "ja": "ja", "zh": "zh-CN"}[lang],
             "locationRestriction": {"circle": {"center": {"latitude": lat, "longitude": lon}, "radius": float(radius)}}},
             headers={"X-Goog-Api-Key": key, "Content-Type": "application/json",
@@ -85,6 +94,7 @@ def _google(lat, lon, radius, key, lang):
         for p in r.json().get("places", []):
             types = set(p.get("types", [])) | {p.get("primaryType", "")}
             kind = "cafe" if types & {"cafe", "coffee_shop", "tea_house", "bakery", "dessert_shop"} else "meal"
+            kind = classify(p.get("displayName", {}).get("text", ""), kind)
             out.append({"id": f"g_{p.get('id')}", "name": p.get("displayName", {}).get("text", ""), "kind": kind,
                         "lat": p["location"]["latitude"], "lon": p["location"]["longitude"],
                         "rating": p.get("rating"), "reviews": p.get("userRatingCount"),
@@ -93,6 +103,19 @@ def _google(lat, lon, radius, key, lang):
         return out
     except Exception:
         return None
+
+
+import re as _re
+CAFE_RE = _re.compile(r"카페|커피|cafe|coffee|다방|찻집|다원|티하우스|티룸|tea|베이커리|bakery|빵|디저트|dessert|로스터|roaster|브루|젤라또|한옥카페|스타벅스|starbucks|투썸|이디야|메가커피|빽다방|폴바셋|할리스|엔제리너스|파스쿠찌|커피빈|블루보틀|tea house|茶|咖啡", _re.I)
+
+
+def classify(name, kind, cat3="", lcls2=""):
+    """이름·분류 코드로 카페/식사 다시 가르기 (TourAPI 음식점 안에 카페가 섞여 와요)"""
+    if kind in ("craft", "culture"):
+        return kind
+    if cat3 == "A05020900" or str(lcls2).startswith("FD05") or CAFE_RE.search(str(name or "")):
+        return "cafe"
+    return kind
 
 
 def _norm(s):
@@ -104,7 +127,7 @@ def gather(places, stop_ids, lang, use_tour=True, use_google=True, example=False
     shops, stat = [], {"csv": 0, "tour": 0, "google": 0, "example": 0}
     if csv is not None and not csv.empty:
         for _, s in csv.iterrows():
-            shops.append({"id": f"csv_{s.get('id')}", "name": s["name"], "kind": CSV_KIND.get(s.get("type", ""), "cafe"),
+            shops.append({"id": f"csv_{s.get('id')}", "name": s["name"], "kind": classify(s["name"], CSV_KIND.get(s.get("type", ""), "meal")),
                           "lat": float(s["lat"]), "lon": float(s["lon"]), "rating": None, "reviews": None,
                           "open_now": L.open_now(s, L.datetime.now(L.KST)) if s.get("open") else None, "url": "",
                           "img": "", "source": "csv", "partner": s.get("partner", ""), "coupon": s.get("coupon", "")})
@@ -220,11 +243,14 @@ def assign(shops, places, stops, ctx, lang, per_leg=2, max_m=700) -> dict:
             cands.append(dict(s, score=sc, why=why, dist_m=seg_dist_m(s["lat"], s["lon"], A, B)))
         cands.sort(key=lambda x: -x["score"])
         pick = []
-        if cands:
-            pick.append(cands[0])
-            other = next((c for c in cands[1:] if c["kind"] != cands[0]["kind"]), None)
-            if other and per_leg > 1:
-                pick.append(other)
+        cafe = next((c for c in cands if c["kind"] == "cafe"), None)   # 쉬어 갈 카페·찻집은 꼭 하나
+        if cafe:
+            pick.append(cafe)
+        for c in cands:
+            if len(pick) >= per_leg:
+                break
+            if c not in pick and all(c["kind"] != q["kind"] for q in pick):
+                pick.append(c)
         for p in pick:
             used.add(p["id"])
         out[i] = pick
@@ -243,6 +269,10 @@ def around(shops, places, pid, ctx, lang, exclude=(), limit=3, kinds=None) -> li
         sc, why = score(s, A, A, ctx, lang)
         cands.append(dict(s, score=sc, why=why, dist_m=L.haversine_km(p.lat, p.lon, s["lat"], s["lon"]) * 1000))
     cands.sort(key=lambda x: -x["score"])
+    cafe = next((c for c in cands if c["kind"] == "cafe"), None)
+    if cafe:   # 카페를 맨 앞에
+        cands.remove(cafe)
+        cands.insert(0, cafe)
     out, seen_kind = [], set()
     for c in cands:   # 종류가 다양하게
         if c["kind"] in seen_kind and len(cands) > limit:

@@ -273,3 +273,10 @@ details.proc summary{font-weight:900;font-size:13.5px;cursor:pointer;color:var(-
 .map.full .mapbtn{top:auto;bottom:calc(20px + env(safe-area-inset-bottom));right:50%;transform:translateX(50%);padding:10px 20px;font-size:15px}
 .leaflet-touch .leaflet-bar a{width:38px;height:38px;line-height:38px;font-size:20px}
 @media (max-width:560px){.map{height:300px}.map.tall{height:520px}}
+
+/* 길 안내 */
+details.dirs{margin:8px 0 2px;padding:8px 10px;border-radius:12px;background:#fff;border:1px solid #EADFD8}
+details.dirs summary{font-weight:800;font-size:12.5px;color:#3B6E99;cursor:pointer}
+details.dirs ol{list-style:none;margin:8px 0 4px;padding:0;display:flex;flex-direction:column;gap:6px}
+details.dirs li{display:flex;gap:8px;font-size:12.5px;line-height:1.45;color:var(--ink)}
+details.dirs .sn{flex:none;width:18px;height:18px;border-radius:50%;background:#E8F1FA;color:#33658F;font-size:10.5px;font-weight:900;display:grid;place-items:center}

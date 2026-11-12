@@ -119,12 +119,14 @@ def _shops(places, stops, lang, keys):
     return cache[key]
 
 
-def _shop_json(s, lang):
+def _shop_json(s, lang, origin=None):
     src = {"google": "src_google", "tour": "src_tour", "csv": "src_csv", "example": "src_example"}[s["source"]]
     return {"id": s.get("id"), "name": s["name"], "kind": s["kind"], "kindLabel": I.lab("shop_kind", s["kind"], lang),
             "lat": s["lat"], "lon": s["lon"], "why": s.get("why", []), "src": I.t(src, lang), "rating": s.get("rating"),
             "reviews": s.get("reviews"), "partner": s.get("partner"), "coupon": s.get("coupon"),
-            "url": s.get("url") or L.kakao_to(s["name"], s["lat"], s["lon"])}
+            "url": (L.kakao_walk(origin["name"], origin["lat"], origin["lon"], s["name"], s["lat"], s["lon"]) if origin
+                    else s.get("url") or L.kakao_to(s["name"], s["lat"], s["lon"])),
+            "from": origin["label"] if origin else None, "gmap": s.get("url") or ""}
 
 
 def shop_ctx(cond, prefs, who, extra=None):
@@ -145,11 +147,18 @@ def route_json(stops, who, story_interest, prefs, cond, lang, keys, with_paths=T
         lg = L.leg_info(places, a, b, who, elev, hills, prefs.get("speed", 1.0), dist_m=r[0] if r else None)
         if lg["guessed"]:
             lg["hill"] = bool(P.tags_of(data, a).get("hill") or P.tags_of(data, b).get("hill"))
+        steps = L.directions(r[2] if r and len(r) > 2 else None, (float(pa.lat), float(pa.lon)), (float(pb.lat), float(pb.lon)),
+                             L.place_name(b, places, data, lang), lang)
         legs.append({"from": a, "to": b, "dist": round(lg["dist_m"]), "min": round(lg["minutes"], 1), "hill": lg["hill"],
+                     "steps": steps, "detailed": bool(r and len(r) > 2 and r[2]),
                      "grade": I.lab("grade", lg["grade"], lang), "guessed": lg["guessed"],
                      "coords": [[round(x, 6), round(y, 6)] for x, y in r[1]] if r else None})
     shop_list = _shops(places, stops, lang, keys)
     ctx = shop_ctx(cond, prefs, who)
+
+    def origin(pid):   # 가게 길찾기 출발점 = 지금 서 있는(도착한) 장소
+        pp = places.loc[pid]
+        return {"name": pp["name"], "lat": float(pp.lat), "lon": float(pp.lon), "label": L.place_name(pid, places, data, lang)}
     assigned = SH.assign(shop_list, places, stops, ctx, lang)
     used = {s.get("id") for v in assigned.values() for s in v}
     st_json = []
@@ -164,12 +173,12 @@ def route_json(stops, who, story_interest, prefs, cond, lang, keys, with_paths=T
                         "seasonNow": now_s, "seasonLater": [{"label": s["label"], "months": I.join_list([I.month_name(m, lang) for m in s["months"]], lang)} for s in later_s],
                         "diff": L.diff_line(stops[i - 1], p, places, data, lang) if i else "",
                         "teaser": L.teaser(p, stops[i + 1], places, data, lang) if i < len(stops) - 1 else "",
-                        "near": [_shop_json(s, lang) for s in near]})
+                        "near": [_shop_json(s, lang, origin(p)) for s in near]})
     walk_min = sum(l["min"] for l in legs)
     total = walk_min + sum(P.stay_min(data, p, who) for p in stops)
     return {"stops": st_json, "legs": legs, "dist": sum(l["dist"] for l in legs), "walkMin": round(walk_min),
-            "totalMin": round(total), "legShops": [[_shop_json(s, lang) for s in assigned.get(i, [])] for i in range(len(legs))],
-            "kakaoLegs": [L.kakao_from_to(places.loc[a, "name"], places.loc[a, "lat"], places.loc[a, "lon"],
+            "totalMin": round(total), "legShops": [[_shop_json(s, lang, origin(stops[i])) for s in assigned.get(i, [])] for i in range(len(legs))],
+            "kakaoLegs": [L.kakao_walk(places.loc[a, "name"], places.loc[a, "lat"], places.loc[a, "lon"],
                                           places.loc[b, "name"], places.loc[b, "lat"], places.loc[b, "lon"]) for a, b in zip(stops, stops[1:])]}
 
 
@@ -232,7 +241,8 @@ def do_alts(payload, cond, lang):
     near = SH.around(shop_list, places, cur, shop_ctx(cond, prefs, payload.get("who")), lang, limit=3,
                      kinds=("craft", "culture", "cafe"))
     return {"alts": [{"id": a["pid"], "km": round(a["km"], 2), "theme": I.lab("theme", a["top"], lang) if a["top"] else ""} for a in alts],
-            "near": [_shop_json(s, lang) for s in near]}
+            "near": [_shop_json(s, lang, {"name": places.loc[cur, "name"], "lat": float(places.loc[cur, "lat"]),
+                                          "lon": float(places.loc[cur, "lon"]), "label": L.place_name(cur, places, data, lang)}) for s in near]}
 
 
 def do_finish(payload, cond, lang):
@@ -266,7 +276,9 @@ def do_finish(payload, cond, lang):
         pass
     return {"story": polished or story, "byClaude": bool(polished), "stats": s,
             "badges": [{"key": b, "label": I.lab("badge", b, lang), "emoji": I.BADGE_EMOJI.get(b, "")} for b in bs],
-            "recs": recs, "near": [_shop_json(x, lang) for x in near]}
+            "recs": recs, "near": [_shop_json(x, lang, {"name": places.loc[w["arrived"][-1], "name"], "lat": float(places.loc[w["arrived"][-1], "lat"]),
+                                                  "lon": float(places.loc[w["arrived"][-1], "lon"]),
+                                                  "label": L.place_name(w["arrived"][-1], places, data, lang)}) for x in near]}
 
 
 CMP_QR = ["bunhwangsa", "hwangnyongsaji", "mitansaji", "museum", "seondeok", "heungnyunsa",
