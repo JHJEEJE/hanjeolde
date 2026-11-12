@@ -8,6 +8,7 @@ kind: plan · route · alts · finish · compare · lang · demo
 from __future__ import annotations
 
 import math
+from urllib.parse import quote
 from datetime import datetime
 from pathlib import Path
 
@@ -120,13 +121,16 @@ def _shops(places, stops, lang, keys):
 
 
 def _shop_json(s, lang, origin=None):
-    src = {"google": "src_google", "tour": "src_tour", "csv": "src_csv", "example": "src_example"}[s["source"]]
+    src = {"google": "src_google", "tour": "src_tour", "csv": "src_csv", "example": "src_example", "naver": "src_naver"}[s["source"]]
     return {"id": s.get("id"), "name": s["name"], "kind": s["kind"], "kindLabel": I.lab("shop_kind", s["kind"], lang),
             "lat": s["lat"], "lon": s["lon"], "why": s.get("why", []), "src": I.t(src, lang), "rating": s.get("rating"),
             "reviews": s.get("reviews"), "partner": s.get("partner"), "coupon": s.get("coupon"),
             "url": (L.kakao_walk(origin["name"], origin["lat"], origin["lon"], s["name"], s["lat"], s["lon"]) if origin
                     else s.get("url") or L.kakao_to(s["name"], s["lat"], s["lon"])),
-            "from": origin["label"] if origin else None, "gmap": s.get("url") or ""}
+            "from": origin["label"] if origin else None, "gmap": s.get("url") or "",
+            "naver": "https://map.naver.com/p/search/" + quote("경주 " + str(s["name"])),
+            "walkMin": round(L.haversine_km(origin["lat"], origin["lon"], s["lat"], s["lon"]) * 1000 * L.PATH_FACTOR / 75) if origin else None,
+            "distM": round(L.haversine_km(origin["lat"], origin["lon"], s["lat"], s["lon"]) * 1000) if origin else None}
 
 
 def shop_ctx(cond, prefs, who, extra=None):
@@ -153,19 +157,19 @@ def route_json(stops, who, story_interest, prefs, cond, lang, keys, with_paths=T
                      "steps": steps, "detailed": bool(r and len(r) > 2 and r[2]),
                      "grade": I.lab("grade", lg["grade"], lang), "guessed": lg["guessed"],
                      "coords": [[round(x, 6), round(y, 6)] for x, y in r[1]] if r else None})
-    shop_list = _shops(places, stops, lang, keys)
+    shop_list = []
     ctx = shop_ctx(cond, prefs, who)
 
     def origin(pid):   # 가게 길찾기 출발점 = 지금 서 있는(도착한) 장소
         pp = places.loc[pid]
         return {"name": pp["name"], "lat": float(pp.lat), "lon": float(pp.lon), "label": L.place_name(pid, places, data, lang)}
-    assigned = SH.assign(shop_list, places, stops, ctx, lang)
-    used = {s.get("id") for v in assigned.values() for s in v}
+    assigned = {}   # 걷는 동안에는 가게를 권하지 않아요 (끝났거나 그만둘 때 둘레 가게를 보여 줘요)
+    used = set()
     st_json = []
     for i, p in enumerate(stops):
         text, sources, status = L.story_for(p, story_interest, places, data, lang)
         now_s, later_s = L.season_for(p, cond["month"], data, lang)
-        near = SH.around(shop_list, places, p, ctx, lang, exclude=used, limit=3)
+        near = []
         st_json.append({"id": p, "title": L.piece_title(p, places, data, i + 1, lang), "story": text,
                         "sources": [{"title": (s["title"] if lang == "ko" else s["title"].replace("한국민족문화대백과사전", I.t("encyk", lang)) + I.t("in_korean", lang)),
                                      "url": s["url"]} for s in sources],
@@ -237,9 +241,7 @@ def do_alts(payload, cond, lang):
     cur, stops = payload["cur"], payload["stops"]
     alts = SH.alternatives(cur, stops, prefs, cond, places, data, lang)
     keys = keys_status()
-    shop_list = _shops(places, stops, lang, keys)
-    near = SH.around(shop_list, places, cur, shop_ctx(cond, prefs, payload.get("who")), lang, limit=3,
-                     kinds=("craft", "culture", "cafe"))
+    near = []
     return {"alts": [{"id": a["pid"], "km": round(a["km"], 2), "theme": I.lab("theme", a["top"], lang) if a["top"] else ""} for a in alts],
             "near": [_shop_json(s, lang, {"name": places.loc[cur, "name"], "lat": float(places.loc[cur, "lat"]),
                                           "lon": float(places.loc[cur, "lon"]), "label": L.place_name(cur, places, data, lang)}) for s in near]}
@@ -267,8 +269,9 @@ def do_finish(payload, cond, lang):
             title, sub = L.course_text(c, data, lang)
             recs.append({"kind": k, "title": title, "sub": sub, "stops": c["stops"], "reason": rec[k]["reason"]})
     prefs = st.session_state.get("prefs") or {}
-    near = SH.around(_shops(places, w["stops"], lang, keys_status()), places, w["arrived"][-1],
-                     shop_ctx(cond, prefs, walk["user"]["who"]), lang, limit=3)
+    end = w["arrived"][-1]
+    near = SH.around(_shops(places, [end], lang, keys_status()), places, end,
+                     shop_ctx(cond, prefs, walk["user"]["who"]), lang, limit=8, radius_km=0.5)
     try:
         L.log_event(st.session_state.get("sid", "web"), "finish" if not w.get("stopped") else "stop",
                     stops=w["stops"], arrived=w["arrived"], reason=w.get("stopped"), lang=lang)
@@ -276,6 +279,7 @@ def do_finish(payload, cond, lang):
         pass
     return {"story": polished or story, "byClaude": bool(polished), "stats": s,
             "badges": [{"key": b, "label": I.lab("badge", b, lang), "emoji": I.BADGE_EMOJI.get(b, "")} for b in bs],
+            "end": {"id": end, "lat": float(places.loc[end, "lat"]), "lon": float(places.loc[end, "lon"]), "radius": 500},
             "recs": recs, "near": [_shop_json(x, lang, {"name": places.loc[w["arrived"][-1], "name"], "lat": float(places.loc[w["arrived"][-1], "lat"]),
                                                   "lon": float(places.loc[w["arrived"][-1], "lon"]),
                                                   "label": L.place_name(w["arrived"][-1], places, data, lang)}) for x in near]}

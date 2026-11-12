@@ -5,6 +5,7 @@
 const TX = {
   ko: {
     how: "이렇게 이용해요",
+    end_t: "순례가 끝난 곳에서 걸어갈 만한 가게", end_s: "{n}에서 반경 500m · 걸어서 7분 안쪽", nv: "네이버 리뷰 보기", walkd: "걸어서 {m}분 · {d}m", all: "전체",
     dir_t: "🧭 자세한 길 안내", dir_rough: "지도 데이터로 어림한 방향이에요. 정확한 길은 카카오맵 도보 길찾기로 확인해요.", from_here: "{n}에서 길찾기",
     map_big: "크게 보기", map_close: "닫기",
     how1: "QR 찍기",
@@ -66,6 +67,7 @@ const TX = {
   },
   en: {
     how: "How it works",
+    end_t: "Shops within walking distance of where you finished", end_s: "Within 500 m of {n} · about 7 min on foot", nv: "Naver reviews", walkd: "{m} min walk · {d} m", all: "All",
     dir_t: "🧭 Step-by-step directions", dir_rough: "Rough direction only — check Kakao Map walking directions for the exact path.", from_here: "Directions from {n}",
     map_big: "Full screen", map_close: "Close",
     how1: "Scan the QR",
@@ -127,6 +129,7 @@ const TX = {
   },
   ja: {
     how: "使い方",
+    end_t: "巡礼を終えた場所から歩いて行ける店", end_s: "{n}から半径500m・徒歩7分以内", nv: "NAVERのレビュー", walkd: "徒歩{m}分 · {d}m", all: "すべて",
     dir_t: "🧭 詳しい道案内", dir_rough: "おおよその方向です。正確な道はカカオマップの徒歩ルートで確認してください。", from_here: "{n}から道案内",
     map_big: "大きく見る", map_close: "閉じる",
     how1: "QRを読む",
@@ -188,6 +191,7 @@ const TX = {
   },
   zh: {
     how: "使用方法",
+    end_t: "从巡礼终点步行可达的店", end_s: "{n}周边500米 · 步行7分钟内", nv: "NAVER评价", walkd: "步行{m}分钟 · {d}米", all: "全部",
     dir_t: "🧭 详细路线指引", dir_rough: "这是大致方向，准确路线请用Kakao地图步行导航确认。", from_here: "从{n}导航",
     map_big: "放大查看", map_close: "关闭",
     how1: "扫描二维码",
@@ -407,8 +411,10 @@ function shopCard(s) {
   const coupon = s.coupon ? ` · 🎟️ ${esc(s.coupon)}` : "";
   return `<div class="shop"><div class="k">${KIND_EMOJI[s.kind] || "📍"}</div><div style="flex:1;min-width:0">
     <div class="nm">${esc(s.name)} <span class="muted small" style="font-weight:600">${esc(s.kindLabel)} · ${esc(s.src)}${badge}${coupon}</span></div>
-    <div class="why">${(s.why || []).map(esc).join(" · ")}</div>
-    <div class="acts"><a class="mini sage" href="${esc(s.url)}" target="_blank" rel="noopener">🧭 ${esc(s.from ? x("from_here", { n: s.from }) : t("rest_dir"))} ›</a></div></div></div>`;
+    ${s.walkMin != null ? `<div class="why" style="font-weight:800;color:#3B312D">🚶 ${esc(x("walkd", { m: Math.max(1, s.walkMin), d: s.distM }))}</div>` : ""}
+    <div class="why">${(s.why || []).filter((w) => !/^길에서|m from|からの|米$/.test(w)).map(esc).join(" · ")}</div>
+    <div class="acts"><a class="mini sage" href="${esc(s.url)}" target="_blank" rel="noopener">🧭 ${esc(s.from ? x("from_here", { n: s.from }) : t("rest_dir"))} ›</a>
+      ${s.naver ? `<a class="mini" href="${esc(s.naver)}" target="_blank" rel="noopener">N ${esc(x("nv"))} ›</a>` : ""}</div></div></div>`;
 }
 function stepsHtml(lg, open) {
   if (!lg.steps || !lg.steps.length) return "";
@@ -673,8 +679,16 @@ function doneView() {
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:10px"><button class="btn coral sm" data-act="pcdl">${esc(x("pc_dl"))}</button><button class="btn ghost sm" data-act="pcshare">${esc(x("pc_share"))}</button></div>
     <p class="sub" style="margin-top:6px">${esc(x("pc_hold"))}</p><img id="pcimg" style="display:none;width:100%;margin-top:8px;border-radius:10px" alt=""></div>
   ${recs ? `<div class="step">${esc(x("rec"))}</div>${recs}` : ""}
-  ${d.near.length ? `<div class="card"><h2>${esc(x("near_end"))}</h2>${d.near.map(shopCard).join("")}</div>` : ""}
+  ${d.near.length ? endShops(d) : ""}
   <button class="btn ghost" data-act="home">${esc(x("home"))}</button><div style="height:8px"></div>`;
+}
+function endShops(d) {
+  const kinds = ["all"].concat(["cafe", "meal", "craft", "culture"].filter((k) => d.near.some((s) => s.kind === k)));
+  const f = S.endKind || "all";
+  const list = d.near.filter((s) => f === "all" || s.kind === f).sort((a, b) => (a.walkMin || 0) - (b.walkMin || 0));
+  return `<div class="card"><h2>${esc(x("end_t"))}</h2><p class="sub">${esc(x("end_s", { n: pname(d.end.id) }))}</p>
+    <div class="chips" style="margin:8px 0">${kinds.map((k) => `<button class="chip sm ${f === k ? "on" : ""}" data-act="endkind" data-v="${k}">${k === "all" ? esc(x("all")) : (KIND_EMOJI[k] + " " + esc(lab("shop_kind", k)))}</button>`).join("")}</div>
+    <div class="map" id="map-end" style="height:260px"></div>${list.map(shopCard).join("")}</div>`;
 }
 async function drawCard() {
   const cv = $("#pc");
@@ -817,6 +831,7 @@ function afterRender() {
   if ($("#map-plan") && S.plan) { const c = S.plan.cands[S.cand]; routeMap("map-plan", c, null, c.legShops.flat()); }
   if ($("#map-walk") && S.walk) { const r = S.walk.route; routeMap("map-walk", r, S.walk.arrived, r.legShops[S.walk.idx] || [], S.walk.idx); }
   if ($("#map-all")) allMap();
+  if ($("#map-end") && S.done) endMap();
   if ($("#pc")) drawCard();
 }
 function baseMap(id) {
@@ -847,6 +862,21 @@ function routeMap(id, r, done, shops, focusLeg) {
   });
   document.getElementById(id)._pts = pts;
   if (pts.length === 1) m.setView(pts[0], 16); else m.fitBounds(pts, { padding: [36, 36] });
+}
+function endMap() {
+  const d = S.done, e = d.end, p = P(e.id);
+  const m = baseMap("map-end");
+  L.circle([e.lat, e.lon], { radius: e.radius, color: "#E8795A", weight: 2, dashArray: "6 6", fillColor: "#E8795A", fillOpacity: 0.07 }).addTo(m);
+  const f = S.endKind || "all";
+  const pts = [[e.lat, e.lon]];
+  d.near.filter((s) => f === "all" || s.kind === f).forEach((s) => {
+    pts.push([s.lat, s.lon]);
+    L.marker([s.lat, s.lon], { icon: L.divIcon({ html: `<div class="shopdot">${KIND_EMOJI[s.kind] || "📍"}</div>`, className: "", iconSize: [22, 22], iconAnchor: [11, 11] }) })
+      .bindTooltip(`${s.name} · ${x("walkd", { m: Math.max(1, s.walkMin || 1), d: s.distM || 0 })}`).addTo(m);
+  });
+  L.marker([e.lat, e.lon], { icon: L.divIcon({ html: pinHtml(p.kind, null, false), className: "", iconSize: [34, 44], iconAnchor: [17, 43] }) }).bindTooltip(p.name).addTo(m);
+  document.getElementById("map-end")._pts = pts;
+  m.fitBounds(L.latLng(e.lat, e.lon).toBounds(e.radius * 2.05), { padding: [4, 4] });
 }
 function allMap() {
   const kinds = S.mapKinds || B.pins.legend;
@@ -911,6 +941,7 @@ document.addEventListener("click", (e) => {
     case "mapstart": S.tab = "walk"; S.screen = "setup"; S.qr = v; S.plan = null; scrollTop(); break;
     case "compare": ask("compare", { choice: c, start: v, month: DEMO.month || null, mode: S.cmpMode }); return;
     case "cmpmode": S.cmpMode = v; break;
+    case "endkind": S.endKind = v; break;
     case "mapfull": {
       const box = el.closest(".map");
       const on = !box.classList.contains("full");

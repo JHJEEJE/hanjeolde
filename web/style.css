@@ -280,3 +280,5 @@ details.dirs summary{font-weight:800;font-size:12.5px;color:#3B6E99;cursor:point
 details.dirs ol{list-style:none;margin:8px 0 4px;padding:0;display:flex;flex-direction:column;gap:6px}
 details.dirs li{display:flex;gap:8px;font-size:12.5px;line-height:1.45;color:var(--ink)}
 details.dirs .sn{flex:none;width:18px;height:18px;border-radius:50%;background:#E8F1FA;color:#33658F;font-size:10.5px;font-weight:900;display:grid;place-items:center}
+.shop .acts{flex-wrap:wrap}
+.shop .acts .mini{white-space:nowrap}

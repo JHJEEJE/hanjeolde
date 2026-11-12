@@ -422,6 +422,7 @@ S.update({
     "src_google": _("Google 지도", "Google Maps", "Google マップ", "Google 地图"),
     "src_tour": _("관광공사", "KTO", "観光公社", "观光公社"),
     "src_csv": _("팀 조사", "team-checked", "チーム調査", "团队调查"),
+    "src_naver": _("네이버", "Naver", "NAVER", "NAVER"),
     "src_example": _("예시", "sample", "サンプル", "示例"),
     "memo_ph": _("이곳에서 한 줄 남기기 (일지에 들어가요)", "Leave a line here (goes into your journal)", "ここでひとこと（日誌に入ります）", "在这里留一句话（会写进日志）"),
     "mood_q": _("지금 기분은?", "How do you feel?", "今の気分は？", "现在心情如何？"),

@@ -38,6 +38,40 @@ def google_key():
     return None, "없음"
 
 
+NAVER_URL = "https://openapi.naver.com/v1/search/local.json"
+
+
+def naver_keys():
+    """네이버 검색 API (developers.naver.com) Client ID · Secret — 선택"""
+    try:
+        pairs = dict((k.split(".")[-1].upper(), str(v).strip()) for k, v in L._walk_secrets(st.secrets))
+    except Exception:
+        pairs = {}
+    cid = str(st.session_state.get("naver_id_input", "") or "").strip() or pairs.get("NAVER_CLIENT_ID")
+    sec = str(st.session_state.get("naver_secret_input", "") or "").strip() or pairs.get("NAVER_CLIENT_SECRET")
+    return (cid, sec) if cid and sec else (None, None)
+
+
+@st.cache_data(ttl=21600, show_spinner=False)
+def _naver(query, cid, sec):
+    """네이버 지역 검색: 평점·리뷰 수는 주지 않지만 sort=comment로 '리뷰 많은 순' 상위 5곳을 줘요."""
+    try:
+        r = requests.get(NAVER_URL, timeout=6, params={"query": query, "display": 5, "sort": "comment"},
+                         headers={"X-Naver-Client-Id": cid, "X-Naver-Client-Secret": sec})
+        out = []
+        for rank, it in enumerate(r.json().get("items", [])):
+            name = _re.sub(r"<[^>]+>", "", it.get("title", ""))
+            lon, lat = float(it["mapx"]) / 1e7, float(it["mapy"]) / 1e7
+            cat = it.get("category", "")
+            kind = classify(name + " " + cat, "cafe" if ("카페" in cat or "디저트" in cat or "베이커리" in cat) else "meal")
+            out.append({"id": f"nv_{_norm(name)}_{lat:.4f}", "name": name, "kind": kind, "lat": lat, "lon": lon,
+                        "rating": None, "reviews": None, "open_now": None, "url": it.get("link", ""), "img": "",
+                        "source": "naver", "partner": "", "coupon": "", "rank": rank, "cat": cat})
+        return out
+    except Exception:
+        return None
+
+
 # ---------------------------------------------------------------- 1) 모으기
 @st.cache_data(ttl=86400, show_spinner=False)
 def _tour(lat, lon, radius, ctype, key):
@@ -122,9 +156,9 @@ def _norm(s):
     return "".join(ch for ch in str(s).lower() if ch.isalnum())
 
 
-def gather(places, stop_ids, lang, use_tour=True, use_google=True, example=False, csv=None) -> tuple[list, dict]:
+def gather(places, stop_ids, lang, use_tour=True, use_google=True, example=False, csv=None, use_naver=True) -> tuple[list, dict]:
     """(가게 목록, 출처별 개수)"""
-    shops, stat = [], {"csv": 0, "tour": 0, "google": 0, "example": 0}
+    shops, stat = [], {"csv": 0, "tour": 0, "google": 0, "example": 0, "naver": 0}
     if csv is not None and not csv.empty:
         for _, s in csv.iterrows():
             shops.append({"id": f"csv_{s.get('id')}", "name": s["name"], "kind": classify(s["name"], CSV_KIND.get(s.get("type", ""), "meal")),
@@ -141,6 +175,12 @@ def gather(places, stop_ids, lang, use_tour=True, use_google=True, example=False
             got = _google(lat, lon, 800, gkey, lang) or []
             stat["google"] += len(got)
             shops += got
+        ncid, nsec = naver_keys() if use_naver else (None, None)
+        if ncid:
+            for word in ("카페", "맛집"):
+                got = _naver(f"경주 {p['name'].split(' ')[0]} {word}", ncid, nsec) or []
+                stat["naver"] += len(got)
+                shops += got
         if tkey:
             for ctype in (39, 38, 14):
                 got = _tour(lat, lon, 800, ctype, tkey) or []
@@ -193,6 +233,10 @@ def score(s, a, b, ctx, lang) -> tuple[float, list]:
         bq = bayes(float(s["rating"]), int(s["reviews"]))
         q = 0.7 * max(0, min(1, (bq - 3.5) / 1.5)) + 0.3 * min(1, math.log10(int(s["reviews"]) + 1) / 3)
         why.append(I.t("s_rating", lang, r=f"{s['rating']:.1f}", n=f"{int(s['reviews']):,}"))
+    elif s.get("source") == "naver" and s.get("rank") is not None:
+        q = 0.8 - 0.07 * s["rank"]   # 네이버 '리뷰 많은 순' 순위
+        why.append({"ko": f"네이버 리뷰 많은 순 {s['rank'] + 1}위", "en": f"#{s['rank'] + 1} by Naver review count",
+                    "ja": f"NAVERレビュー数{s['rank'] + 1}位", "zh": f"NAVER评论数第{s['rank'] + 1}"}.get(lang, ""))
     else:
         q = 0.45 + (0.1 if s.get("img") else 0)
     hour = ctx["now"].hour
@@ -257,14 +301,17 @@ def assign(shops, places, stops, ctx, lang, per_leg=2, max_m=700) -> dict:
     return out
 
 
-def around(shops, places, pid, ctx, lang, exclude=(), limit=3, kinds=None) -> list:
+def around(shops, places, pid, ctx, lang, exclude=(), limit=3, kinds=None, radius_km=0.8, min_rating=3.5) -> list:
+    """한 장소 둘레(radius_km) 안의 가게. 평점을 아는 가게는 min_rating 미만이면 빼요."""
     p = places.loc[pid]
     A = (p.lat, p.lon)
     cands = []
     for s in shops:
         if s["id"] in exclude or s.get("open_now") is False or (kinds and s["kind"] not in kinds):
             continue
-        if L.haversine_km(p.lat, p.lon, s["lat"], s["lon"]) > 0.8:
+        if s.get("rating") is not None and s.get("reviews") and int(s["reviews"]) >= 5 and float(s["rating"]) < min_rating:
+            continue
+        if L.haversine_km(p.lat, p.lon, s["lat"], s["lon"]) > radius_km:
             continue
         sc, why = score(s, A, A, ctx, lang)
         cands.append(dict(s, score=sc, why=why, dist_m=L.haversine_km(p.lat, p.lon, s["lat"], s["lon"]) * 1000))
