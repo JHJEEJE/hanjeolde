@@ -39,7 +39,8 @@ W = _fresh(W)
 
 st.set_page_config(page_title="한 절 더 · Han Jeol Deo", page_icon="🪷", layout="wide", initial_sidebar_state="collapsed")
 st.markdown("""<style>
-  header[data-testid="stHeader"]{background:transparent;height:0}
+  header[data-testid="stHeader"]{background:transparent;height:0;pointer-events:none}
+  header[data-testid="stHeader"] button{pointer-events:auto}
   [data-testid="stToolbar"],[data-testid="stDecoration"],footer{display:none!important}
   .block-container{padding:0!important;max-width:100%!important}
   [data-testid="stMainBlockContainer"]{padding:0!important}

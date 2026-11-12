@@ -5,6 +5,7 @@
 const TX = {
   ko: {
     how: "이렇게 이용해요",
+    map_big: "크게 보기", map_close: "닫기",
     how1: "QR 찍기",
     how1s: "사찰 입구에서",
     how2: "취향 고르기",
@@ -64,6 +65,7 @@ const TX = {
   },
   en: {
     how: "How it works",
+    map_big: "Full screen", map_close: "Close",
     how1: "Scan the QR",
     how1s: "at the temple gate",
     how2: "Pick your taste",
@@ -123,6 +125,7 @@ const TX = {
   },
   ja: {
     how: "使い方",
+    map_big: "大きく見る", map_close: "閉じる",
     how1: "QRを読む",
     how1s: "寺の入口で",
     how2: "好みを選ぶ",
@@ -182,6 +185,7 @@ const TX = {
   },
   zh: {
     how: "使用方法",
+    map_big: "放大查看", map_close: "关闭",
     how1: "扫描二维码",
     how1s: "在寺院入口",
     how2: "选择喜好",
@@ -807,8 +811,14 @@ function afterRender() {
   if ($("#pc")) drawCard();
 }
 function baseMap(id) {
-  const m = L.map(id, { zoomControl: false, attributionControl: true, scrollWheelZoom: false, tap: true });
+  const m = L.map(id, { zoomControl: true, attributionControl: true, scrollWheelZoom: false, touchZoom: true, doubleClickZoom: true, tap: true });
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(m);
+  m.zoomControl.setPosition("bottomright");
+  const box = document.getElementById(id);
+  box._lmap = m;
+  const b = document.createElement("button");
+  b.className = "mapbtn"; b.dataset.act = "mapfull"; b.setAttribute("aria-label", x("map_big")); b.textContent = "⤢ " + x("map_big");
+  box.appendChild(b);
   maps.push(m);
   return m;
 }
@@ -826,6 +836,7 @@ function routeMap(id, r, done, shops, focusLeg) {
     pts.push([p.lat, p.lon]);
     L.marker([p.lat, p.lon], { icon: L.divIcon({ html: pinHtml(p.kind, i + 1, done && !done.includes(s.id)), className: "", iconSize: [34, 44], iconAnchor: [17, 43] }) }).bindTooltip(p.name).addTo(m);
   });
+  document.getElementById(id)._pts = pts;
   if (pts.length === 1) m.setView(pts[0], 16); else m.fitBounds(pts, { padding: [36, 36] });
 }
 function allMap() {
@@ -891,6 +902,19 @@ document.addEventListener("click", (e) => {
     case "mapstart": S.tab = "walk"; S.screen = "setup"; S.qr = v; S.plan = null; scrollTop(); break;
     case "compare": ask("compare", { choice: c, start: v, month: DEMO.month || null, mode: S.cmpMode }); return;
     case "cmpmode": S.cmpMode = v; break;
+    case "mapfull": {
+      const box = el.closest(".map");
+      const on = !box.classList.contains("full");
+      box.classList.toggle("full", on);
+      el.textContent = on ? "✕ " + x("map_close") : "⤢ " + x("map_big");
+      setTimeout(() => {
+        if (!box._lmap) return;
+        box._lmap.invalidateSize();
+        const pts = box._pts || [];
+        if (pts.length > 1) box._lmap.fitBounds(pts, { padding: [50, 50] }); else if (pts.length === 1) box._lmap.setView(pts[0], 16);
+      }, 80);
+      return;
+    }
     case "scan": QRScan.open(); return;
     case "qrpick": S.qr = v; S.sheet = null; QRScan.close(); S.plan = null; renderSheet(); break;
     case "fix": S.fixOn = !S.fixOn; break;
