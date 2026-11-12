@@ -4,7 +4,33 @@
 /* ------------------------------------------------------------------ 새 화면 문구 (4개 언어) */
 const TX = {
   ko: {
-    how: "이렇게 이용해요", how1: "취향 고르기", how1s: "일행·시간·관심사", how2: "AI 순례길", how2s: "35곳 중 나에게 맞게", how3: "걷고 일지 받기", how3s: "이야기·사진 엽서",
+    how: "이렇게 이용해요",
+    how1: "QR 찍기",
+    how1s: "사찰 입구에서",
+    how2: "취향 고르기",
+    how2s: "일행·시간·걷기",
+    how3: "AI 순례길",
+    how3s: "이야기·일지·엽서",
+    hero_q: "{n}에서\n한 절 더 걸어 볼까요?",
+    qr_t: "사찰 입구의 QR을 찍어 주세요",
+    qr_s: "QR을 찍은 사찰에서 시작하는 순례길을 AI가 짜 드려요.",
+    qr_cam: "📷 카메라로 QR 찍기",
+    qr_demo: "🧭 시연: QR 찍은 사찰 고르기",
+    qr_here: "📍 QR을 찍은 곳",
+    qr_from: "여기서 시작해 사찰 1~3곳을 더 잇는 순례길을 짜 드려요.",
+    qr_other: "다른 사찰 QR",
+    qr_need: "먼저 사찰 QR을 찍어 주세요",
+    qr_nocam: "이 브라우저는 앱 안에서 QR을 못 읽어요. 휴대폰 기본 카메라로 사찰 QR을 찍으면 이 앱이 그 사찰로 바로 열려요.",
+    qr_scanning: "QR을 네모 안에 맞춰 주세요",
+    qr_bad: "한 절 더 QR이 아니에요",
+    qr_list: "QR 찍은 사찰 고르기 (시연)",
+    cmp_m1: "⏰ 시간·날씨별",
+    cmp_m2: "📍 QR 사찰별",
+    cmp_qr_s: "같은 취향·지금 날씨에서, QR을 찍은 사찰만 바꿔 봤어요.",
+    cmp_used: "QR {n}곳에서 시작한 길이 서로 다른 장소 {m}곳을 지나요",
+    cmp_go2: "QR 사찰별로 비교해 보기",
+    cmp_from: "QR: {n}",
+
     hero_ey: "TODAY IN GYEONGJU", hero_t: "한 절 더,\n걸어 볼까요?", hero_s: "고른 취향과 오늘 날씨·해 지는 시각으로\nAI가 순례길을 새로 짜 드려요.",
     tip_rain: "☔ 비 오는 날이라 실내에서 마무리하는 길을 먼저 찾아요", tip_cold: "🧣 추운 날이라 짧고 따뜻한 길로 맞춰요", tip_hot: "🥵 더운 날이라 그늘·숲길에 가산점을 줘요", tip_clear: "☀️ 걷기 좋은 날이에요",
     make: "AI 순례길 만들기", make_s: "고를수록 AI가 짜는 길이 달라져요",
@@ -37,7 +63,33 @@ const TX = {
     new_story: "다시 쓰기", stop_q: "왜 멈추셨어요? (코스를 고치는 데 써요)", stop_ok: "여기서 마칠게요", lang: "언어",
   },
   en: {
-    how: "How it works", how1: "Pick your taste", how1s: "who · time · interests", how2: "AI route", how2s: "best of 35 places", how3: "Walk & get a journal", how3s: "story · photo postcard",
+    how: "How it works",
+    how1: "Scan the QR",
+    how1s: "at the temple gate",
+    how2: "Pick your taste",
+    how2s: "who · time · walking",
+    how3: "AI route",
+    how3s: "story · journal · postcard",
+    hero_q: "From {n},\none more temple?",
+    qr_t: "Scan the QR at the temple gate",
+    qr_s: "AI plans a walk that starts from the temple where you scanned.",
+    qr_cam: "📷 Scan with camera",
+    qr_demo: "🧭 Demo: pick the scanned temple",
+    qr_here: "📍 Where you scanned",
+    qr_from: "Starts here and links 1–3 more temples on foot.",
+    qr_other: "Other temple QR",
+    qr_need: "Please scan a temple QR first",
+    qr_nocam: "This browser can't read QR inside the app. Scan the temple QR with your phone camera and the app opens at that temple.",
+    qr_scanning: "Fit the QR inside the square",
+    qr_bad: "Not a Han Jeol Deo QR",
+    qr_list: "Pick the scanned temple (demo)",
+    cmp_m1: "⏰ By time & weather",
+    cmp_m2: "📍 By QR temple",
+    cmp_qr_s: "Same taste, current weather — only the scanned temple changes.",
+    cmp_used: "Routes from {n} QR temples pass through {m} different places",
+    cmp_go2: "Compare by QR temple",
+    cmp_from: "QR: {n}",
+
     hero_ey: "TODAY IN GYEONGJU", hero_t: "One more temple,\nshall we walk?", hero_s: "Using your taste, today's weather and sunset,\nAI builds a fresh temple walk for you.",
     tip_rain: "☔ Rainy day — routes that end indoors come first", tip_cold: "🧣 Cold day — short and warm routes", tip_hot: "🥵 Hot day — shady forest paths get a bonus", tip_clear: "☀️ A great day for walking",
     make: "Build an AI route", make_s: "Every choice changes the route",
@@ -70,7 +122,33 @@ const TX = {
     new_story: "Rewrite", stop_q: "Why did you stop? (helps us fix the course)", stop_ok: "End here", lang: "Language",
   },
   ja: {
-    how: "使い方", how1: "好みを選ぶ", how1s: "同行・時間・興味", how2: "AI巡礼ルート", how2s: "35か所からぴったり", how3: "歩いて日記をもらう", how3s: "物語・写真はがき",
+    how: "使い方",
+    how1: "QRを読む",
+    how1s: "寺の入口で",
+    how2: "好みを選ぶ",
+    how2s: "同行・時間・歩く量",
+    how3: "AI巡礼ルート",
+    how3s: "物語・日記・はがき",
+    hero_q: "{n}から\nもう一寺、歩きませんか？",
+    qr_t: "寺の入口のQRを読み取ってください",
+    qr_s: "QRを読んだ寺から始まる巡礼ルートをAIが組みます。",
+    qr_cam: "📷 カメラでQRを読む",
+    qr_demo: "🧭 デモ：QRを読んだ寺を選ぶ",
+    qr_here: "📍 QRを読んだ場所",
+    qr_from: "ここから始めて、さらに1〜3か所の寺を歩いてつなぎます。",
+    qr_other: "別の寺のQR",
+    qr_need: "まず寺のQRを読み取ってください",
+    qr_nocam: "このブラウザはアプリ内でQRを読めません。スマホのカメラで寺のQRを読むと、その寺でアプリが開きます。",
+    qr_scanning: "QRを枠の中に合わせてください",
+    qr_bad: "ハン・ジョル・ドのQRではありません",
+    qr_list: "QRを読んだ寺を選ぶ（デモ）",
+    cmp_m1: "⏰ 時刻・天気別",
+    cmp_m2: "📍 QRの寺別",
+    cmp_qr_s: "同じ好み・今の天気で、QRを読んだ寺だけを変えてみました。",
+    cmp_used: "QR {n}か所から始まる道が、{m}か所の異なる場所を通ります",
+    cmp_go2: "QRの寺別に比べる",
+    cmp_from: "QR：{n}",
+
     hero_ey: "TODAY IN GYEONGJU", hero_t: "もう一寺、\n歩いてみませんか？", hero_s: "好みと今日の天気・日の入りから\nAIが巡礼ルートを組み立てます。",
     tip_rain: "☔ 雨の日なので屋内で締めくくる道を優先します", tip_cold: "🧣 寒い日なので短く暖かい道に", tip_hot: "🥵 暑い日なので木陰・森の道を優先", tip_clear: "☀️ 歩くのにいい日です",
     make: "AI巡礼ルートを作る", make_s: "選ぶほどAIのルートが変わります",
@@ -103,7 +181,33 @@ const TX = {
     new_story: "書き直す", stop_q: "どうしてやめましたか？（コース改善に使います）", stop_ok: "ここで終わる", lang: "言語",
   },
   zh: {
-    how: "使用方法", how1: "选择喜好", how1s: "同伴·时间·兴趣", how2: "AI巡礼路线", how2s: "从35处中为你挑选", how3: "走完领取日记", how3s: "故事·照片明信片",
+    how: "使用方法",
+    how1: "扫描二维码",
+    how1s: "在寺院入口",
+    how2: "选择喜好",
+    how2s: "同伴·时间·步行量",
+    how3: "AI巡礼路线",
+    how3s: "故事·日记·明信片",
+    hero_q: "从{n}出发，\n再多走一寺吧？",
+    qr_t: "请扫描寺院入口的二维码",
+    qr_s: "AI会规划从你扫码的寺院出发的巡礼路线。",
+    qr_cam: "📷 用相机扫码",
+    qr_demo: "🧭 演示：选择扫码的寺院",
+    qr_here: "📍 扫码地点",
+    qr_from: "从这里出发，步行再连起1~3座寺院。",
+    qr_other: "其他寺院二维码",
+    qr_need: "请先扫描寺院二维码",
+    qr_nocam: "此浏览器无法在应用内识别二维码。用手机相机扫描寺院二维码，就会直接打开该寺院页面。",
+    qr_scanning: "请把二维码对准方框",
+    qr_bad: "不是再一寺的二维码",
+    qr_list: "选择扫码的寺院（演示）",
+    cmp_m1: "⏰ 按时间·天气",
+    cmp_m2: "📍 按扫码寺院",
+    cmp_qr_s: "同样的喜好、现在的天气，只换扫码的寺院。",
+    cmp_used: "从{n}处扫码出发的路线经过{m}个不同地点",
+    cmp_go2: "按扫码寺院对比",
+    cmp_from: "扫码：{n}",
+
     hero_ey: "TODAY IN GYEONGJU", hero_t: "再多走一寺，\n出发吧？", hero_s: "根据你的喜好、今天的天气和日落时间，\nAI为你重新规划巡礼路线。",
     tip_rain: "☔ 下雨天，优先寻找在室内结束的路线", tip_cold: "🧣 天冷，安排短而温暖的路线", tip_hot: "🥵 天热，树荫和林间小路加分", tip_clear: "☀️ 适合散步的好天气",
     make: "生成AI巡礼路线", make_s: "选得越多，AI规划的路线越不同",
@@ -147,7 +251,7 @@ const ST = {
 
 let B = null, C = null, QR = null, DEMO = {}, LLM = false;
 const S = {
-  tab: "walk", screen: "setup", startMode: null, startPick: "bunhwangsa",
+  tab: "walk", screen: "setup", qr: null, cmpMode: "time",
   choice: { who: "혼자", minutes: 120, level: "가볍게", interests: [], free: "" },
   plan: null, cand: 0, walk: null, done: null, compare: null, cmpFixed: false,
   mapKinds: null, mapSel: null, pending: null, bored: null, sheet: null, pcPhoto: null, lastResp: null,
@@ -257,8 +361,8 @@ function afterReload(kind) {
   if (S.compare) S.compare = null;
 }
 function requestPlan() {
-  const start = S.startMode === "ai" ? null : S.startMode === "qr" ? QR : S.startPick;
-  ask("plan", { choice: S.choice, start });
+  if (!S.qr) { toast(x("qr_need")); S.sheet = "qr"; renderSheet(); return; }
+  ask("plan", { choice: S.choice, start: S.qr });   // 순례길은 언제나 QR을 찍은 사찰에서 시작해요
 }
 
 /* ------------------------------------------------------------------ 로딩 · 시트 */
@@ -307,26 +411,27 @@ function routeLine(stops) { return stops.map((id) => esc(pname(id))).join(" › 
 /* ------------------------------------------------------------------ 1) 고르기 */
 function setupView() {
   const c = S.choice;
-  if (S.startMode == null) S.startMode = QR ? "qr" : "ai";
   const tip = C.rain ? x("tip_rain") : C.cold ? x("tip_cold") : C.hot ? x("tip_hot") : x("tip_clear");
   const endAt = (() => { const e = clockAdd(nowDate(), c.minutes); const ss = sunsetDate(); return hhmm(e > ss ? clockAdd(ss, -20) : e); })();
   const pct = ((c.minutes - 30) / (300 - 30)) * 100;
-  const startSeg = [];
-  startSeg.push(`<button class="${S.startMode === "ai" ? "on" : ""}" data-act="start" data-v="ai">${esc(x("st_ai"))}<small>${esc(x("st_ai_s"))}</small></button>`);
-  if (QR) startSeg.push(`<button class="${S.startMode === "qr" ? "on" : ""}" data-act="start" data-v="qr">${esc(x("st_qr", { n: pname(QR) }))}<small>${esc(x("st_qr_s"))}</small></button>`);
-  startSeg.push(`<button class="${S.startMode === "pick" ? "on" : ""}" data-act="start" data-v="pick">${esc(x("st_pick"))}<small>${esc(x("st_pick_s"))}</small></button>`);
-  const pickList = S.startMode === "pick" ? `<div class="chips" style="margin-top:8px">${B.places.filter((p) => p.id !== "campus").map((p) => `<button class="chip ${S.startPick === p.id ? "on" : ""}" data-act="pickstart" data-v="${p.id}">${icon(p.kind, 18)} ${esc(p.name)}</button>`).join("")}</div>` : "";
-  const startNote = S.startMode === "ai" ? `<p class="sub" style="margin-top:7px">💡 ${esc(x("st_ai_note"))}</p>` : S.startMode === "qr" ? `<p class="sub" style="margin-top:7px">${icon(P(QR).kind, 16)} ${esc(P(QR).short)}</p>` : "";
-  return `${header()}
+  const q = S.qr ? P(S.qr) : null;
+  const qrCard = q ? `<div class="card qr"><div class="eyebrow">${esc(x("qr_here"))}</div>
+      <div class="row">${icon(q.kind, 40)}<div style="flex:1;min-width:0"><h3>${esc(q.name)}</h3><div class="small muted">${esc(lab("icon", q.kind))} · ${esc(q.era)}</div></div>
+      <button class="mini" data-act="sheet" data-v="qr">${esc(x("qr_other"))}</button></div>
+      <p class="small" style="margin:8px 0 0">${esc(q.short)}</p><div class="qrnote">🧭 ${esc(x("qr_from"))}</div></div>`
+    : `<div class="card qr scan"><div style="font-size:42px;line-height:1">📷</div><h3 style="margin-top:6px">${esc(x("qr_t"))}</h3><p class="sub" style="margin:4px 0 12px">${esc(x("qr_s"))}</p>
+      <button class="btn coral sm" data-act="scan">${esc(x("qr_cam"))}</button><div style="height:8px"></div>
+      <button class="btn ghost sm" data-act="sheet" data-v="qr">${esc(x("qr_demo"))}</button></div>`;
+  return `${header()}${qrCard}
   <div class="card"><h2>${esc(x("how"))}</h2>
     <div class="how"><div><span class="num">1</span><b>${esc(x("how1"))}</b><span>${esc(x("how1s"))}</span></div>
     <div><span class="num">2</span><b>${esc(x("how2"))}</b><span>${esc(x("how2s"))}</span></div>
     <div><span class="num">3</span><b>${esc(x("how3"))}</b><span>${esc(x("how3s"))}</span></div></div></div>
   <div class="hero"><div class="sun"></div><div class="emoji">${C.rain ? "☔" : C.cold ? "🧣" : "🪷"}</div>
-    <div class="eyebrow">${esc(x("hero_ey"))}</div><h1>${esc(x("hero_t"))}</h1><p>${esc(x("hero_s"))}</p><span class="tip">${esc(tip)}</span></div>
+    <div class="eyebrow">${esc(x("hero_ey"))}</div><h1>${esc(q ? x("hero_q", { n: q.name }) : x("hero_t"))}</h1><p>${esc(x("hero_s"))}</p><span class="tip">${esc(tip)}</span></div>
   <div class="card"><div class="between"><div><h2>${esc(x("make"))}</h2><p class="sub">${esc(x("make_s"))}</p></div><span style="font-size:26px">🧭</span></div>
-    <div class="step"><span class="num">1</span>${esc(x("q_start"))}</div>
-    <div class="seg">${startSeg.join("")}</div>${pickList}${startNote}
+    <div class="step"><span class="num">1</span>${esc(x("q_who"))}</div>
+    <div class="chips">${B.opts.who.map((w) => `<button class="chip ${c.who === w ? "on" : ""}" data-act="who" data-v="${esc(w)}">${esc(lab("who2", w))}</button>`).join("")}</div>
     <div class="step"><span class="num">2</span>${esc(x("q_time"))}</div>
     <div class="timebox"><div class="timebig" id="timebig">${timeBig(c.minutes)}</div>
       <div class="timeend" id="timeend">${esc(x("end_at", { t: endAt }))}</div>
@@ -335,13 +440,11 @@ function setupView() {
         <button class="stepbtn" data-act="time" data-v="5">${esc(x("plus"))}</button></div>
       <div class="ticks"><span>30${lang() === "en" ? "m" : lang() === "ko" ? "분" : "分"}</span><span>${esc(t("h", { h: 2 }))}</span><span>${esc(t("h", { h: 5 }))}</span></div>
       <div class="chips" style="justify-content:center;margin-top:8px">${[60, 90, 120, 180, 240].map((m) => `<button class="chip sm ${c.minutes === m ? "on" : ""}" data-act="timeset" data-v="${m}">${esc(fmtMin(m))}</button>`).join("")}</div></div>
-    <div class="step"><span class="num">3</span>${esc(x("q_who"))}</div>
-    <div class="chips">${B.opts.who.map((w) => `<button class="chip ${c.who === w ? "on" : ""}" data-act="who" data-v="${esc(w)}">${esc(lab("who2", w))}</button>`).join("")}</div>
-    <div class="step"><span class="num">4</span>${esc(x("q_level"))}</div>
+    <div class="step"><span class="num">3</span>${esc(x("q_level"))}</div>
     <div class="levels">${B.opts.level.map((lv) => { const [a, ...b] = lab("level2", lv).split("·"); return `<button class="level ${c.level === lv ? "on" : ""}" data-act="level" data-v="${esc(lv)}"><b>${esc(a.trim())}</b><span>${esc(b.join("·").trim())}</span></button>`; }).join("")}</div>
-    <div class="step"><span class="num">5</span>${esc(x("q_int"))} <span class="opt">${esc(x("q_int_s"))}</span></div>
+    <div class="step"><span class="num">4</span>${esc(x("q_int"))} <span class="opt">${esc(x("q_int_s"))}</span></div>
     <div class="chips wrap">${B.opts.interest.map((it) => `<button class="chip coral ${c.interests.includes(it) ? "on" : ""}" data-act="int" data-v="${esc(it)}">${esc(lab("interest2", it))}</button>`).join("")}</div>
-    <div class="step"><span class="num">6</span>${esc(x("q_free"))} <span class="opt">${esc(x("q_free_s"))}</span></div>
+    <div class="step"><span class="num">5</span>${esc(x("q_free"))} <span class="opt">${esc(x("q_free_s"))}</span></div>
     <textarea id="free" maxlength="300" placeholder="${esc(x("free_ph"))}">${esc(c.free)}</textarea>
     <div class="sub" style="margin:6px 0 4px">${esc(x("ex"))}</div>
     <div class="chips">${B.examples.map((e) => `<button class="chip sm" data-act="ex" data-v="${esc(e)}">+ ${esc(e)}</button>`).join("")}</div>
@@ -585,16 +688,24 @@ function mapView() {
     <div class="map tall" id="map-all"></div><div style="height:12px"></div>
     ${sel ? `<div class="card"><div class="row">${icon(sel.kind, 30)}<div><h3>${esc(sel.name)}</h3><div class="small muted">${esc(sel.era)} · ${esc(lab("icon", sel.kind))}</div></div></div>
       <p style="margin:10px 0 8px;font-size:14px">${esc(sel.desc)}</p><div class="row"><a class="mini" href="${esc(sel.kakao)}" target="_blank" rel="noopener">${esc(x("kakao"))} ›</a>
-      ${sel.id !== "campus" ? `<button class="mini coral" data-act="mapstart" data-v="${sel.id}">${esc(x("start_here"))}</button>` : ""}</div></div>` : ""}`;
+      ${sel.id !== "campus" ? `<button class="mini coral" data-act="mapstart" data-v="${sel.id}">📷 ${esc(x("start_here"))}</button>` : ""}</div></div>` : ""}`;
 }
 
 /* ------------------------------------------------------------------ AI 비교 탭 */
 function compareView() {
   const c = S.choice;
-  const startId = S.startMode === "qr" && QR ? QR : S.startMode === "pick" ? S.startPick : (S.plan ? S.plan.cands[S.cand].stops[0].id : "bunhwangsa");
+  const startId = S.qr || "bunhwangsa";
   const base = `<span class="tag sky">${esc(lab("who2", c.who))}</span><span class="tag">${esc(fmtMin(c.minutes))}</span><span class="tag">${esc(lab("level2", c.level).split("·")[0])}</span>${c.interests.map((v) => `<span class="tag coral">${esc(lab("interest2", v))}</span>`).join("")}<span class="tag lav">📍 ${esc(pname(startId))}</span>`;
   let grid = "";
-  if (S.compare) {
+  const seg = `<div class="seg" style="margin-top:10px"><button class="${S.cmpMode === "time" ? "on" : ""}" data-act="cmpmode" data-v="time">${esc(x("cmp_m1"))}</button><button class="${S.cmpMode === "qr" ? "on" : ""}" data-act="cmpmode" data-v="qr">${esc(x("cmp_m2"))}</button></div>`;
+  if (S.compare && S.compare.mode === "qr" && S.cmpMode === "qr") {
+    const d = S.compare;
+    grid = `<div class="card"><p class="sub">${esc(x("cmp_qr_s"))}</p><div class="tag coral" style="margin-top:6px">${esc(x("cmp_used", { n: d.rows.length, m: d.used }))}</div>
+      ${d.notes.map((n) => `<div class="reason small"><i>•</i><span>${esc(n)}</span></div>`).join("")}</div>
+      ${d.rows.map((r) => `<div class="cell" style="margin-bottom:8px;min-height:0"><div class="between"><span class="w">${icon(P(r.qr).kind, 18)} ${esc(x("cmp_from", { n: pname(r.qr) }))}</span><span class="mt">${esc(fmtMin(r.totalMin))} · ${(r.dist / 1000).toFixed(1)}km</span></div>
+        <div class="rt">${r.stops.map((id, i) => `${i ? "<span class='muted'> › </span>" : ""}${icon(P(id).kind, 14)} ${esc(pname(id))}`).join("")}</div>
+        ${r.why ? `<div class="small muted">${esc(r.why)}</div>` : ""}</div>`).join("")}`;
+  } else if (S.compare && S.compare.mode !== "qr" && S.cmpMode === "time") {
     grid = S.compare.grid.map((row) => {
       const sunny = row.cells[0];
       const left = Math.max(0, row.cells[0].budget);
@@ -613,7 +724,7 @@ function compareView() {
     ${S.plan ? "" : `<p class="sub" style="margin-top:6px">${esc(x("cmp_need"))}</p>`}
     <div class="pline">${esc(x("cmp_rules"))}</div>
     <div class="rules"><div>${esc(x("rule_rain"))}</div><div>${esc(x("rule_cold"))}</div><div>${esc(x("rule_hot"))}</div><div>${esc(x("rule_sun"))}</div></div>
-    <div style="height:12px"></div><button class="btn coral sm" data-act="compare" data-v="${startId}">${esc(x("cmp_go"))}</button></div>${grid}`;
+    ${seg}<div style="height:12px"></div><button class="btn coral sm" data-act="compare" data-v="${startId}">${esc(S.cmpMode === "qr" ? x("cmp_go2") : x("cmp_go"))}</button></div>${grid}`;
 }
 
 /* ------------------------------------------------------------------ 기록 탭 (⑥ 중단 분석) */
@@ -657,6 +768,12 @@ function renderSheet() {
       <div class="pline">${esc(x("set_time"))}</div><div class="chips wrap">${ts.map((v) => `<button class="chip sm ${(DEMO.time || "지금") === v ? "on" : ""}" data-act="dt" data-v="${v}">${esc(v === "지금" ? x("now") : v)}</button>`).join("")}</div>
       <div class="pline">${esc(x("set_m"))}</div><div class="chips wrap"><button class="chip sm ${!DEMO.month ? "on" : ""}" data-act="dm" data-v="">${esc(x("now"))}</button>${[1, 4, 7, 10].map((m) => `<button class="chip sm ${DEMO.month === m ? "on" : ""}" data-act="dm" data-v="${m}">${m}</button>`).join("")}</div>
       <div style="height:14px"></div><button class="btn" data-act="demoapply">${esc(x("apply_btn"))}</button>`;
+  } else if (S.sheet === "qr") {
+    const groups = B.pins.legend.filter((k) => k !== "start").map((k) => {
+      const ps = B.places.filter((p) => p.kind === k && p.id !== "campus");
+      return ps.length ? `<div class="pline">${icon(k, 16)} ${esc(lab("icon", k))}</div><div class="chips wrap">${ps.map((p) => `<button class="chip sm ${S.qr === p.id ? "on" : ""}" data-act="qrpick" data-v="${p.id}">${esc(p.name)}</button>`).join("")}</div>` : "";
+    }).join("");
+    body = `<h2>📷 ${esc(x("qr_list"))}</h2><button class="btn coral sm" data-act="scan">${esc(x("qr_cam"))}</button><div id="qrcam"></div>${groups}`;
   } else if (S.sheet === "stop") {
     body = `<h2>${esc(x("stop_q"))}</h2>${B.opts.stop.map((k) => `<button class="btn ghost" style="margin-bottom:8px;justify-content:flex-start" data-act="stopwhy" data-v="${esc(k)}">${esc(lab("stop", k))}</button>`).join("")}`;
   }
@@ -746,8 +863,6 @@ document.addEventListener("click", (e) => {
   if (el.tagName === "INPUT" && el.type !== "checkbox") return;
   switch (act) {
     case "tab": S.tab = v; scrollTop(); break;
-    case "start": S.startMode = v; break;
-    case "pickstart": S.startPick = v; break;
     case "time": c.minutes = Math.min(300, Math.max(30, c.minutes + Number(v))); break;
     case "timeset": c.minutes = Number(v); break;
     case "who": c.who = v; break;
@@ -770,14 +885,17 @@ document.addEventListener("click", (e) => {
     case "pcphoto": S.pcPhoto = S.walk.photos[v]; break;
     case "pcdl": Postcard.download($("#pc"), `hanjeolde_postcard_${hhmm(nowDate()).replace(":", "")}.png`, $("#pcimg")); return;
     case "pcshare": Postcard.share($("#pc"), $("#pcimg")); return;
-    case "recgo": S.startMode = "pick"; S.startPick = v; S.screen = "setup"; S.plan = null; S.walk = null; S.done = null; scrollTop(); break;
+    case "recgo": S.qr = v; S.screen = "setup"; S.plan = null; S.walk = null; S.done = null; scrollTop(); break;
     case "home": S.screen = "setup"; S.plan = null; S.walk = null; S.done = null; S.pcPhoto = null; scrollTop(); break;
     case "kind": { const ks = S.mapKinds || B.pins.legend.slice(); S.mapKinds = ks.includes(v) ? ks.filter((k) => k !== v) : ks.concat([v]); if (!S.mapKinds.length) S.mapKinds = B.pins.legend.slice(); break; }
-    case "mapstart": S.tab = "walk"; S.screen = "setup"; S.startMode = "pick"; S.startPick = v; scrollTop(); break;
-    case "compare": ask("compare", { choice: c, start: v, month: DEMO.month || null }); return;
+    case "mapstart": S.tab = "walk"; S.screen = "setup"; S.qr = v; S.plan = null; scrollTop(); break;
+    case "compare": ask("compare", { choice: c, start: v, month: DEMO.month || null, mode: S.cmpMode }); return;
+    case "cmpmode": S.cmpMode = v; break;
+    case "scan": QRScan.open(); return;
+    case "qrpick": S.qr = v; S.sheet = null; QRScan.close(); S.plan = null; renderSheet(); break;
     case "fix": S.fixOn = !S.fixOn; break;
     case "sheet": S.sheet = v; demoDraft = Object.assign({}, DEMO); renderSheet(); return;
-    case "closesheet": if (e.target === el || el.tagName === "BUTTON") { S.sheet = null; renderSheet(); } return;
+    case "closesheet": if (e.target === el || el.tagName === "BUTTON") { S.sheet = null; QRScan.close(); renderSheet(); } return;
     case "lang": S.sheet = null; if (v !== lang()) ask("lang", { lang: v }); else renderSheet(); return;
     case "dw": demoDraft.weather = v; DEMO = Object.assign({}, DEMO, { weather: v }); renderSheet(); return;
     case "dt": demoDraft.time = v; DEMO = Object.assign({}, DEMO, { time: v }); renderSheet(); return;
@@ -812,6 +930,38 @@ document.addEventListener("change", (e) => {
   }
 });
 
+/* ------------------------------------------------------------------ QR 인식 (휴대폰 카메라 · BarcodeDetector) */
+const QRScan = (() => {
+  let stream = null, timer = null;
+  function parse(raw) {
+    try { const u = new URL(raw); const t = u.searchParams.get("temple") || u.searchParams.get("start"); if (t) return t; } catch (e) { /* 주소가 아니면 id로 봐요 */ }
+    return String(raw || "").trim();
+  }
+  async function open() {
+    if (S.sheet !== "qr") { S.sheet = "qr"; renderSheet(); }
+    const box = $("#qrcam");
+    if (!("BarcodeDetector" in window) || !navigator.mediaDevices) { box.innerHTML = `<p class="sub" style="margin:10px 0">${esc(x("qr_nocam"))}</p>`; return; }
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      box.innerHTML = `<div class="cam"><video playsinline muted autoplay></video><i></i></div><p class="sub" style="text-align:center">${esc(x("qr_scanning"))}</p>`;
+      const v = box.querySelector("video"); v.srcObject = stream;
+      const det = new BarcodeDetector({ formats: ["qr_code"] });
+      timer = setInterval(async () => {
+        try {
+          const r = await det.detect(v);
+          if (r && r[0]) {
+            const id = parse(r[0].rawValue);
+            if (B.places.some((p) => p.id === id && p.id !== "campus")) { S.qr = id; S.sheet = null; S.plan = null; close(); renderSheet(); render(); toast("📍 " + pname(id)); }
+            else toast(x("qr_bad"));
+          }
+        } catch (e) { /* 다음 프레임 */ }
+      }, 400);
+    } catch (e) { box.innerHTML = `<p class="sub" style="margin:10px 0">${esc(x("qr_nocam"))}</p>`; }
+  }
+  function close() { clearInterval(timer); timer = null; if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null; }
+  return { open, close };
+})();
+
 /* ------------------------------------------------------------------ 시작 */
 window.addEventListener("message", (ev) => {
   const d = ev.data;
@@ -820,7 +970,7 @@ window.addEventListener("message", (ev) => {
   const first = !B;
   const langChanged = B && a.bundle && a.bundle.lang !== B.lang;
   B = a.bundle; C = a.cond; QR = a.qr || null; DEMO = Object.assign({}, a.demo || {}); LLM = !!a.llm;
-  if (first && QR) { S.startMode = "qr"; S.startPick = QR; }
+  if (first && QR) S.qr = QR;
   const handled = onResp(a.resp);
   if (first || handled || langChanged) render();
 });

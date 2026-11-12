@@ -195,6 +195,28 @@ def stay_min(data, pid, who) -> int:
     return s
 
 
+MUSEUM_OPEN = (10 * 60, 17 * 60 + 30)   # 국립경주박물관 10:00 개관 · 늦어도 17:30 전 도착
+
+
+def daypart(cond, minutes_to_sunset=None) -> str:
+    """morning(~11시) · noon(11~14시) · afternoon · golden(해 지기 90분 전부터)"""
+    h = cond["now"].hour + cond["now"].minute / 60
+    if minutes_to_sunset is not None and minutes_to_sunset <= 90:
+        return "golden"
+    return "morning" if h < 11 else "noon" if h < 14 else "afternoon"
+
+
+def site_kind(pid) -> str:
+    """covered: 법당·처마가 있는 절 / indoor: 박물관 / open: 그늘 없는 들판의 절터·탑·왕릉"""
+    try:
+        cat = L.load_places().loc[pid, "category"]
+    except Exception:
+        cat = ""
+    if cat == "현존 사찰":
+        return "covered"
+    return "open" if cat in ("절터", "불상·석탑", "명소") else "other"
+
+
 def place_utility(pid, prefs, cond, data, minutes_to_sunset=None) -> tuple[float, dict]:
     tg = tags_of(data, pid)
     t = tg.get("t", {})
@@ -235,7 +257,37 @@ def place_utility(pid, prefs, cond, data, minutes_to_sunset=None) -> tuple[float
             parts["shade"] = True
         if tg.get("hill"):
             u -= 0.2
-    if minutes_to_sunset is not None and minutes_to_sunset <= 120 and tg.get("sunset"):
+    # ---- 시간대 · 날씨에 따라 '지금 가기 좋은 곳'이 달라져요
+    dp = daypart(cond, minutes_to_sunset)
+    sk = "indoor" if tg.get("indoor") else ("other" if tg.get("shade") else site_kind(pid))
+    hot = (cond.get("temp") or 0) >= 28
+    if cond.get("rain"):
+        if sk == "covered":
+            u += 0.35
+            parts["covered"] = True
+        elif sk == "open":
+            u -= 0.45
+    if cond.get("cold") and sk == "open":
+        u -= 0.3
+    if hot and sk == "open":
+        u -= 0.45 if dp in ("noon", "afternoon") else 0.25
+        parts["hot_open"] = True
+    if dp == "noon" and not (cond.get("rain") or cond.get("cold")):
+        if tg.get("shade") or sk == "indoor":
+            u += 0.25   # 해가 머리 위에 있는 한낮엔 그늘·실내가 편해요
+            parts["noon_shade"] = True
+        elif sk == "open":
+            u -= 0.15
+    if dp == "morning" and sk == "covered" and not cond.get("rain"):
+        u += 0.3 + 0.2 * tg.get("quiet", 0)
+        parts["morning"] = True
+    if dp == "afternoon" and sk == "open" and not (cond.get("rain") or cond.get("cold") or hot):
+        u += 0.25 * t.get("photo", 0) + 0.1
+        parts["light"] = True
+    if dp == "golden" and tg.get("sunset"):
+        u += 0.7
+        parts["sunset"] = True
+    elif minutes_to_sunset is not None and minutes_to_sunset <= 120 and tg.get("sunset"):
         u += 0.3
         parts["sunset"] = True
     if pid in prefs.get("boost", []):
@@ -283,6 +335,8 @@ def search(start: str, choice: dict, prefs: dict, cond: dict, places, data, elev
         return leg_cache[(a, b)]
 
     max_extra = 2 if (cond.get("cold") or prefs.get("short")) else 3
+    now_min = cond["now"].hour * 60 + cond["now"].minute
+    dp_now = daypart(cond, to_sunset)
     evaluated, feasible = 0, []
     start_stay = stay_min(data, start, who)
     for k in range(0 if start_util else 1, max_extra + 1):   # AI 출발지 모드에서는 '한 곳만 깊게'도 후보
@@ -296,7 +350,7 @@ def search(start: str, choice: dict, prefs: dict, cond: dict, places, data, elev
                         ok = False
                         break
                     lg = leg(a, b)
-                    if prefs["avoid_hill"] and (lg["hill"] or tags_of(data, b).get("hill")):
+                    if (prefs["avoid_hill"] or cond.get("rain")) and (lg["hill"] or tags_of(data, b).get("hill")):
                         ok = False
                         break
                     legs.append(lg)
@@ -308,6 +362,11 @@ def search(start: str, choice: dict, prefs: dict, cond: dict, places, data, elev
                 total = sum(l["minutes"] for l in legs) + start_stay + sum(stay_min(data, p, who) for p in perm)
                 if total > budget:
                     continue
+                if "museum" in seq:   # 박물관 여는 시간 안에 도착하는지 (도착 시각 = 지금 + 앞 구간·관람 시간)
+                    i = seq.index("museum")
+                    arr = now_min + (start_stay if i else 0) + sum(l["minutes"] for l in legs[:i]) + sum(stay_min(data, p, who) for p in seq[1:i])
+                    if not (MUSEUM_OPEN[0] <= arr <= MUSEUM_OPEN[1]):
+                        continue
                 us = [util[p][0] for p in perm] + ([start_util] if start_util else [])
                 # 많이 들르는 것보다 '나에게 맞는 곳'을 우선: 평균 점수 × 들르는 수 보정(체감)
                 score = sum(us) / len(us) * (1 + 0.22 * (len(us) - 1))
@@ -321,6 +380,8 @@ def search(start: str, choice: dict, prefs: dict, cond: dict, places, data, elev
                 score -= 0.2 * (dist / 1000) / max(prefs["max_km"], 1)
                 score += 0.15 * min(1.0, total / max(budget, 1))
                 score -= 1.2 * max(0.0, 0.6 - total / max(budget, 1))   # 쓸 수 있는 시간을 너무 남기면 감점
+                if dp_now == "golden" and tags_of(data, seq[-1]).get("sunset"):
+                    score += 0.4   # 노을 보며 끝나기
                 if prefs.get("must") and not set(prefs["must"]) & set(perm):
                     score -= 1.5
                 feasible.append({"stops": list(seq), "legs": legs, "dist_m": dist, "total_min": total,
@@ -353,12 +414,25 @@ def diverse_top(routes: list, n: int = 3, by_start: bool = False) -> list:
     return picked
 
 
-def nearest_fallback(start, places, data, elev, hills, choice, prefs):
-    near = sorted([p for p in places.index if p not in (start, "campus")], key=lambda p: L.km_between(places, start, p))[0]
-    lg = L.leg_info(places, start, near, choice.get("who"), elev, hills, prefs["speed"])
-    return {"id": "P1", "stops": [start, near], "legs": [lg], "dist_m": lg["dist_m"], "walk_min": lg["minutes"],
-            "total_min": lg["minutes"] + stay_min(data, start, choice.get("who")) + stay_min(data, near, choice.get("who")),
-            "hill": lg["hill"], "guessed": lg["guessed"], "score": 0, "course_id": None, "fallback": True}
+def nearest_fallback(start, places, data, elev, hills, choice, prefs, cond=None):
+    """조건에 맞는 길이 없을 때: 걸어서 닿는 평지의 가장 가까운 곳 하나, 그것도 없으면 QR 사찰 한 곳을 깊게"""
+    who = choice.get("who")
+    no_hill = prefs["avoid_hill"] or bool(cond and cond.get("rain"))
+    near = sorted([p for p in places.index if p not in (start, "campus")], key=lambda p: L.km_between(places, start, p))
+    for p in near[:6]:
+        if L.km_between(places, start, p) > prefs["leg_km"]:
+            break
+        lg = L.leg_info(places, start, p, who, elev, hills, prefs["speed"])
+        if lg["guessed"]:
+            lg["hill"] = bool(tags_of(data, start).get("hill") or tags_of(data, p).get("hill"))
+        if no_hill and (lg["hill"] or tags_of(data, p).get("hill")):
+            continue
+        return {"id": "P1", "stops": [start, p], "legs": [lg], "dist_m": lg["dist_m"], "walk_min": lg["minutes"],
+                "total_min": lg["minutes"] + stay_min(data, start, who) + stay_min(data, p, who),
+                "hill": lg["hill"], "guessed": lg["guessed"], "score": 0, "course_id": None, "fallback": True}
+    return {"id": "P1", "stops": [start], "legs": [], "dist_m": 0, "walk_min": 0, "total_min": stay_min(data, start, who),
+            "hill": False, "guessed": False, "score": 0, "course_id": None, "fallback": True, "alone": True,
+            "skipped": near[0] if near else None}
 
 
 # ---------------------------------------------------------------- 5) 설명
@@ -372,6 +446,9 @@ def explain(route: dict, prefs: dict, cond: dict, result: dict, places, data, bu
     th = lambda k: I.lab("theme", k, lang)
     name = lambda p: L.place_name(p, places, data, lang)
     out = []
+    if route.get("alone"):
+        sk = route.get("skipped")
+        return [T("r_alone", n=name(route["stops"][0]), m=name(sk) if sk else "-")]
     if route.get("fallback"):
         return [T("r_nearest")]
     picks = []
@@ -381,6 +458,8 @@ def explain(route: dict, prefs: dict, cond: dict, result: dict, places, data, bu
             picks.append(T("why_must", n=name(p)))
         elif parts.get("top"):
             picks.append(f"{name(p)}({th(parts['top'])})")
+        else:
+            picks.append(name(p))
     tops = I.join_list([th(k) for k in top_themes(prefs)], lang)
     out.append(T("r_fit", t=tops, x=I.join_list(picks, lang)))
     out.append(I.t("r_budget", lang, b=budget, t=f"{route['total_min']:.0f}", km=f"{route['dist_m'] / 1000:.1f}"))
@@ -396,6 +475,14 @@ def explain(route: dict, prefs: dict, cond: dict, result: dict, places, data, bu
         out.append(T("r_indoor"))
     if "sunset" in flags:
         out.append(T("r_sunset"))
+    if "covered" in flags and cond.get("rain"):
+        out.append(T("r_covered"))
+    if "morning" in flags:
+        out.append(T("r_morning"))
+    if "light" in flags:
+        out.append(T("r_light"))
+    if "noon_shade" in flags:
+        out.append(T("r_noon"))
     if "season" in flags:
         out.append(T("r_season", s=I.lab("season", cond["season"], lang)))
     if "shade" in flags:
@@ -483,12 +570,42 @@ def pick_starts(prefs, cond, places, data, n=6) -> list:
     return [(p, util[p], pot[p]) for p in out]
 
 
+def situation_budget(budget, notes, cond, lang):
+    """날씨·시간대에 따라 쓸 시간과 안내 문장을 바꿔요"""
+    notes = list(notes)
+    to_sunset = int((cond["sunset"] - cond["now"]).total_seconds() // 60)
+    dp = daypart(cond, to_sunset)
+    hot = (cond.get("temp") or 0) >= 28
+    if cond.get("rain"):
+        budget = int(budget * 0.85)
+        notes.append(I.t("n_rain_short", lang))
+    if cond.get("cold") and budget > 75:
+        budget = 75
+        notes.append(I.t("n_cold_cap", lang))
+    if hot:
+        budget = int(budget * (0.85 if dp in ("noon", "afternoon") else 0.92))
+        notes.append(I.t("n_hot", lang))
+    if dp == "noon" and not (cond.get("rain") or cond.get("cold") or hot):
+        notes.append(I.t("n_noon", lang))
+    if dp == "morning" and not cond.get("rain"):
+        notes.append(I.t("n_morning", lang))
+    elif dp == "afternoon" and not (cond.get("rain") or cond.get("cold") or hot):
+        notes.append(I.t("n_afternoon", lang))
+    elif dp == "golden":
+        notes.append(I.t("n_golden", lang))
+    h = cond["now"].hour * 60 + cond["now"].minute
+    if h < MUSEUM_OPEN[0]:
+        notes.append(I.t("n_museum", lang))
+    return budget, notes
+
+
 def plan(start, choice: dict, cond: dict, places, data, elev, hills, lang: str, use_llm: bool = True) -> dict:
     """start=None 이면 출발지까지 AI가 골라요. use_llm=False면 Claude 없이 규칙 AI만 (비교 화면용)."""
     prefs = understand(choice, places, data, use_llm)
     budget, notes = L.time_budget({"minutes": choice["minutes"]}, cond, lang)
     if prefs["short"]:
         budget = int(budget * 0.7)
+    budget, notes = situation_budget(budget, notes, cond, lang)
     if start:
         res = search(start, choice, prefs, cond, places, data, elev, hills, budget)
         routes, starts = res["routes"], []
@@ -513,7 +630,7 @@ def plan(start, choice: dict, cond: dict, places, data, elev, hills, lang: str, 
                    pool=sorted(agg["util"], key=lambda p: -agg["util"][p][0])[:12])
         start = routes[0]["stops"][0] if routes else starts[0][0]
     cands = diverse_top(routes, 3, by_start=bool(starts)) or [
-        nearest_fallback(start, places, data, elev, hills, choice, prefs)]
+        nearest_fallback(start, places, data, elev, hills, choice, prefs, cond)]
     for c in cands:
         c["reasons"] = explain(c, prefs, cond, res, places, data, budget, lang)
     agent = agent_pick(cands, prefs, cond, choice, places, data, budget, lang) if use_llm else None

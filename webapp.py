@@ -269,6 +269,26 @@ def do_finish(payload, cond, lang):
             "recs": recs, "near": [_shop_json(x, lang) for x in near]}
 
 
+CMP_QR = ["bunhwangsa", "hwangnyongsaji", "mitansaji", "museum", "seondeok", "heungnyunsa",
+          "muyeol", "kimyusin", "geumjangdae", "samneung", "bulguksa", "girimsa"]
+
+
+def do_compare_qr(payload, cond, lang):
+    """같은 취향·같은 날씨에서 QR을 찍은 사찰만 바꿔 보기"""
+    places, data = L.load_places(), L.load_all()
+    choice = _choice(payload.get("choice", {}))
+    elev = L.elevations(places)
+    hills = L.hill_pairs(data["courses"], data["tags"])
+    rows = []
+    for st_id in CMP_QR:
+        res = P.plan(st_id, choice, cond, places, data, elev, hills, lang, use_llm=False)
+        c = res["chosen"]
+        rows.append({"qr": st_id, "stops": c["stops"], "totalMin": round(c["total_min"]), "dist": round(c["dist_m"]),
+                     "why": c["reasons"][0] if c.get("reasons") else "", "fallback": bool(c.get("fallback"))})
+    used = sorted({p for r in rows for p in r["stops"]})
+    return {"mode": "qr", "rows": rows, "used": len(used), "budget": res["budget"], "notes": res["notes"]}
+
+
 def do_compare(payload, lang):
     places, data = L.load_places(), L.load_all()
     choice = _choice(payload.get("choice", {}))
@@ -294,7 +314,7 @@ def do_compare(payload, lang):
             row.append({"weather": wth, "stops": c["stops"], "totalMin": round(c["total_min"]), "dist": round(c["dist_m"]),
                         "budget": res["budget"], "notes": notes, "tags": tags, "sunset": cond["sunset"].strftime("%H:%M")})
         out.append({"time": t, "cells": row})
-    return {"start": start, "grid": out}
+    return {"mode": "time", "start": start, "grid": out}
 
 
 HANDLERS = {"plan", "route", "alts", "finish", "compare"}
@@ -323,7 +343,7 @@ def _handle(req: dict, cond, lang) -> dict | None:
         if kind == "finish":
             return do_finish(payload, cond, lang)
         if kind == "compare":
-            return do_compare(payload, lang)
+            return do_compare_qr(payload, cond, lang) if payload.get("mode") == "qr" else do_compare(payload, lang)
     except Exception as e:  # 화면이 멈추지 않게 에러도 답으로 보내요
         import traceback
         traceback.print_exc()

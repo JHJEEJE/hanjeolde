@@ -191,7 +191,8 @@ select{width:100%;border:1.5px solid var(--line2);border-radius:12px;padding:10p
 .badge{display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:999px;background:#fff;border:1px solid #F1E2D8;font-size:12.5px;font-weight:800;margin:0 6px 6px 0}
 .book{background:#FFFDF7;border-color:#EFE3CC;background-image:repeating-linear-gradient(transparent 0 29px,#F3EAD9 29px 30px)}
 .book h3{font-family:"Noto Serif KR","Noto Serif JP","Noto Serif SC",serif;font-size:19px;text-align:center;margin:4px 0 12px}
-.book p{font-family:"Noto Serif KR","Noto Serif JP","Noto Serif SC",serif;font-size:15.5px;line-height:30px;margin:0 0 14px;text-indent:1em;word-break:keep-all}
+.book p{font-family:"Noto Serif KR","Noto Serif JP","Noto Serif SC",serif;font-size:15.5px;line-height:30px;margin:0 0 14px;text-indent:1em;word-break:normal;overflow-wrap:anywhere}
+html[lang=ko] .book p{word-break:keep-all;overflow-wrap:break-word}
 .thumbs{display:flex;gap:8px;overflow-x:auto;padding:4px 0}
 .thumbs button{flex:none;width:68px;height:68px;border-radius:12px;overflow:hidden;border:3px solid transparent;padding:0;background:#F4EEE9}
 .thumbs button.on{border-color:var(--coral)}
@@ -257,3 +258,11 @@ details.proc summary{font-weight:900;font-size:13.5px;cursor:pointer;color:var(-
 .legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .legend span{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--ink2)}
 .legend svg{width:16px;height:16px}
+
+/* QR */
+.card.qr{background:linear-gradient(160deg,#FFFFFF,#FFF6F0);border-color:#F6DCCD}
+.card.qr.scan{text-align:center;border-style:dashed;border-width:2px}
+.qrnote{margin-top:10px;padding:9px 12px;border-radius:12px;background:var(--coral-bg);color:#B5502F;font-size:12.5px;font-weight:800}
+.cam{position:relative;border-radius:16px;overflow:hidden;margin:10px 0 6px;background:#000;aspect-ratio:1/1}
+.cam video{width:100%;height:100%;object-fit:cover}
+.cam i{position:absolute;inset:18%;border:3px solid #fff;border-radius:18px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
