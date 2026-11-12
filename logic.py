@@ -252,8 +252,9 @@ def walk_route(lat1, lon1, lat2, lon2):
         for leg in route.get("legs", []):
             for stp in leg.get("steps", []):
                 m = stp.get("maneuver", {})
+                loc = m.get("location") or [None, None]
                 steps.append({"type": m.get("type", ""), "mod": m.get("modifier", ""), "bearing": m.get("bearing_after", 0),
-                              "name": stp.get("name", ""), "dist": float(stp.get("distance", 0))})
+                              "name": stp.get("name", ""), "dist": float(stp.get("distance", 0)), "lat": loc[1], "lon": loc[0]})
         return float(route["distance"]), coords, steps
     except Exception:
         return None
@@ -289,19 +290,19 @@ def _m(d, lang):
 
 
 def directions(steps, a, b, dest_name, lang="ko") -> list:
-    """갈림길 안내 문장 목록. steps가 없으면 방향·거리로 한 줄 어림.
-    a, b = (위도, 경도)"""
+    """갈림길 안내 [{text, lat, lon}] — 실시간 길 안내에서 그 지점에 가까워지면 보여 줘요.
+    steps가 없으면 방향·거리로 한 줄 어림. a, b = (위도, 경도)"""
     road = {"ko": "골목길", "en": "the path", "ja": "小道", "zh": "小路"}[lang]
     out = []
     if not steps:
         d = haversine_km(a[0], a[1], b[0], b[1]) * 1000
         dr = _dir8(_bearing(a[0], a[1], b[0], b[1]), lang)
-        out.append({"ko": f"{dr}쪽으로 약 {_m(d * PATH_FACTOR, lang)} 걸어가요 (직선 {_m(d, lang)})",
+        out.append({"lat": a[0], "lon": a[1], "text": {"ko": f"{dr}쪽으로 약 {_m(d * PATH_FACTOR, lang)} 걸어가요 (직선 {_m(d, lang)})",
                     "en": f"Walk about {_m(d * PATH_FACTOR, lang)} heading {dr} ({_m(d, lang)} as the crow flies)",
                     "ja": f"{dr}の方向へ約{_m(d * PATH_FACTOR, lang)}歩きます（直線{_m(d, lang)}）",
-                    "zh": f"向{dr}步行约{_m(d * PATH_FACTOR, lang)}（直线{_m(d, lang)}）"}[lang])
-        out.append({"ko": f"{dest_name}에 도착해요", "en": f"Arrive at {dest_name}", "ja": f"{dest_name}に到着",
-                    "zh": f"到达{dest_name}"}[lang])
+                    "zh": f"向{dr}步行约{_m(d * PATH_FACTOR, lang)}（直线{_m(d, lang)}）"}[lang]})
+        out.append({"lat": b[0], "lon": b[1], "text": {"ko": f"{dest_name}에 도착해요", "en": f"Arrive at {dest_name}", "ja": f"{dest_name}に到着",
+                    "zh": f"到达{dest_name}"}[lang]})
         return out
     merged = []
     for st_ in steps:   # 같은 길이 이어지거나 아주 짧은 꺾임은 합쳐요
@@ -333,7 +334,9 @@ def directions(steps, a, b, dest_name, lang="ko") -> list:
                 act = act[0].lower() + act[1:]
             txt = {"ko": f"{pre}{act} {nm}을 따라 {d}", "en": f"{pre}{act} onto {nm}, {d}",
                    "ja": f"{pre}{act}{nm}を{d}", "zh": f"{pre}{act}，沿{nm}走{d}"}[lang]
-        out.append(I.josa(txt.replace("을 따라", "[을/를] 따라")) if lang == "ko" else txt)
+        txt = I.josa(txt.replace("을 따라", "[을/를] 따라")) if lang == "ko" else txt
+        out.append({"text": txt, "lat": st_.get("lat") if st_.get("lat") is not None else (b[0] if t == "arrive" else a[0]),
+                    "lon": st_.get("lon") if st_.get("lon") is not None else (b[1] if t == "arrive" else a[1])})
     return out
 
 

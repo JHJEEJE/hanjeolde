@@ -354,6 +354,9 @@ function onResp(resp) {
       S.walk.stops = d.stops.map((s) => s.id);
       if (opts.toast) toast(opts.toast);
     }
+  } else if (kind === "nearby") {
+    S.nearby = d;
+    setTimeout(() => { const el = $("#nearbybox"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }, 80);
   } else if (kind === "alts") {
     S.bored = d;
   } else if (kind === "finish") {
@@ -418,7 +421,7 @@ function shopCard(s) {
 }
 function stepsHtml(lg, open) {
   if (!lg.steps || !lg.steps.length) return "";
-  const li = lg.steps.map((v, i) => `<li><span class="sn">${i + 1}</span><span>${esc(v)}</span></li>`).join("");
+  const li = lg.steps.map((v, i) => `<li><span class="sn">${i + 1}</span><span>${esc(v.text || v)}</span></li>`).join("");
   return `<details class="dirs" ${open ? "open" : ""}><summary>${esc(x("dir_t"))}</summary><ol>${li}</ol>${lg.detailed ? "" : `<div class="small muted">${esc(x("dir_rough"))}</div>`}</details>`;
 }
 function stopIcon(id, n) {
@@ -491,7 +494,7 @@ function planView() {
     if (i < c.legs.length) {
       const lg = c.legs[i];
       const sh = (c.legShops[i] || []).map(shopCard).join("");
-      tl.push(`<div class="leg"><span class="ln">🚶 ${esc(x("walk_leg", { m: Math.round(lg.min), km: (lg.dist / 1000).toFixed(1), g: lg.grade }))}</span>${lg.guessed ? ` <span class="muted">${esc(t("guess"))}</span>` : ""}${stepsHtml(lg, false)}${sh}</div>`);
+      tl.push(`<div class="leg"><span class="ln">🚶 ${esc(x("walk_leg", { m: Math.round(lg.min), km: (lg.dist / 1000).toFixed(1), g: lg.grade }))}</span>${lg.guessed ? ` <span class="muted">${esc(t("guess"))}</span>` : ""}${sh}</div>`);
     }
   });
   if (c.stops.length === 1) tl.push(`<div class="small muted" style="margin:4px 0 0 49px">${esc(x("one_place"))}</div>${(c.stops[0].near || []).map(shopCard).join("")}`);
@@ -556,10 +559,13 @@ function walkView() {
     next = `<div class="card next"><div class="eyebrow" style="color:#33658F">${esc(t("next"))}</div>
       <div class="row">${icon(P(n.id).kind, 26)}<h3>${esc(pname(n.id))}</h3></div>
       <div class="small" style="margin-top:4px">🚶 ${esc(x("walk_leg", { m: Math.round(lg.min), km: (lg.dist / 1000).toFixed(1), g: lg.grade }))}</div>
-      ${s.teaser ? `<div class="teaser">📖 ${esc(s.teaser)}</div>` : ""}${stepsHtml(lg, true)}${sh}
+      ${s.teaser ? `<div class="teaser">📖 ${esc(s.teaser)}</div>` : ""}${sh}
+      <button class="btn navgo" data-act="navstart">${esc(Nav.T("start"))}</button>
       <div class="src" style="margin-top:8px"><a href="${esc(r.kakaoLegs[i])}" target="_blank" rel="noopener">${esc(t("kakao_walk"))}</a></div></div>
       <div class="map" id="map-walk" style="height:210px"></div><div style="height:12px"></div>
       <button class="btn coral" data-act="arrive">${esc(t("arrive", { n: pname(n.id) }))}</button>
+      <button class="mini" style="margin-top:8px" data-act="nearby">${esc(Nav.T("near_t"))}</button>
+      ${S.nearby && S.nearby.pid === s.id ? nearbyPanel() : ""}
       <div class="btns3"><button class="btn ghost" data-act="tired">${esc(x("tired"))}</button><button class="btn ghost" data-act="bored">${esc(x("bored"))}</button><button class="btn ghost" data-act="sheet" data-v="stop">${esc(x("stop"))}</button></div>
       ${S.bored ? boredPanel() : ""}`;
   } else {
@@ -582,6 +588,11 @@ function walkView() {
     <div class="photo">${photo ? `<img src="${photo}" alt="">` : ""}<label class="upload">${esc(photo ? x("photo2") : x("photo"))}<input type="file" accept="image/*" data-act="photo"></label></div></div>
   ${seasons}${next}`;
 }
+function nearbyPanel() {
+  const n = S.nearby;
+  return `<div class="card" id="nearbybox" style="margin-top:10px"><div class="between"><h2>${esc(Nav.T("near_t"))}</h2><button class="mini" data-act="nearbyclose">✕</button></div>
+    ${n.near.length ? n.near.map(shopCard).join("") : `<p class="sub">-</p>`}</div>`;
+}
 function boredPanel() {
   const b = S.bored, w = S.walk;
   const alts = b.alts.length ? b.alts.map((a) => `<div class="shop"><div class="k">${icon(P(a.id).kind, 26)}</div><div style="flex:1"><div class="nm">${esc(pname(a.id))}</div>
@@ -597,7 +608,7 @@ function arrive() {
   w.idx += 1;
   w.arrived.push(n);
   w.arrivedAt[n] = (demoTime() ? plannedClock(i + 1) : new Date()).toISOString();
-  S.bored = null;
+  S.bored = null; S.nearby = null;
   scrollTop();
 }
 function tired() {
@@ -941,6 +952,9 @@ document.addEventListener("click", (e) => {
     case "mapstart": S.tab = "walk"; S.screen = "setup"; S.qr = v; S.plan = null; scrollTop(); break;
     case "compare": ask("compare", { choice: c, start: v, month: DEMO.month || null, mode: S.cmpMode }); return;
     case "cmpmode": S.cmpMode = v; break;
+    case "navstart": Nav.open(); return;
+    case "nearby": if (S.nearby && S.nearby.pid === S.walk.stops[S.walk.idx]) { S.nearby = null; break; } ask("nearby", { pid: S.walk.stops[S.walk.idx], who: S.walk.who }); return;
+    case "nearbyclose": S.nearby = null; break;
     case "endkind": S.endKind = v; break;
     case "mapfull": {
       const box = el.closest(".map");

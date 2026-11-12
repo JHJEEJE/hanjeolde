@@ -270,8 +270,13 @@ def do_finish(payload, cond, lang):
             recs.append({"kind": k, "title": title, "sub": sub, "stops": c["stops"], "reason": rec[k]["reason"]})
     prefs = st.session_state.get("prefs") or {}
     end = w["arrived"][-1]
-    near = SH.around(_shops(places, [end], lang, keys_status()), places, end,
-                     shop_ctx(cond, prefs, walk["user"]["who"]), lang, limit=8, radius_km=0.5)
+    pool = _shops(places, [end], lang, keys_status())
+    ctx_ = shop_ctx(cond, prefs, walk["user"]["who"])
+    near = SH.around(pool, places, end, ctx_, lang, limit=8, radius_km=0.5)
+    radius = 500
+    if len(near) < 3:   # 500m 안에 가게가 적으면 1km까지 넓혀요
+        near = SH.around(pool, places, end, ctx_, lang, limit=8, radius_km=1.0)
+        radius = 1000
     try:
         L.log_event(st.session_state.get("sid", "web"), "finish" if not w.get("stopped") else "stop",
                     stops=w["stops"], arrived=w["arrived"], reason=w.get("stopped"), lang=lang)
@@ -279,7 +284,7 @@ def do_finish(payload, cond, lang):
         pass
     return {"story": polished or story, "byClaude": bool(polished), "stats": s,
             "badges": [{"key": b, "label": I.lab("badge", b, lang), "emoji": I.BADGE_EMOJI.get(b, "")} for b in bs],
-            "end": {"id": end, "lat": float(places.loc[end, "lat"]), "lon": float(places.loc[end, "lon"]), "radius": 500},
+            "end": {"id": end, "lat": float(places.loc[end, "lat"]), "lon": float(places.loc[end, "lon"]), "radius": radius},
             "recs": recs, "near": [_shop_json(x, lang, {"name": places.loc[w["arrived"][-1], "name"], "lat": float(places.loc[w["arrived"][-1], "lat"]),
                                                   "lon": float(places.loc[w["arrived"][-1], "lon"]),
                                                   "label": L.place_name(w["arrived"][-1], places, data, lang)}) for x in near]}
@@ -333,7 +338,21 @@ def do_compare(payload, lang):
     return {"mode": "time", "start": start, "grid": out}
 
 
-HANDLERS = {"plan", "route", "alts", "finish", "compare"}
+def do_nearby(payload, cond, lang):
+    """걷는 중 '주변 쉬어 갈 곳'을 직접 눌렀을 때만 (권하지 않고, 원할 때 보여 줘요)"""
+    places, data = L.load_places(), L.load_all()
+    pid = payload.get("pid")
+    if pid not in places.index:
+        return {"near": []}
+    prefs = st.session_state.get("prefs") or {}
+    pool = _shops(places, [pid], lang, keys_status())
+    near = SH.around(pool, places, pid, shop_ctx(cond, prefs, payload.get("who")), lang, limit=6, radius_km=0.5)
+    o = {"name": places.loc[pid, "name"], "lat": float(places.loc[pid, "lat"]), "lon": float(places.loc[pid, "lon"]),
+         "label": L.place_name(pid, places, data, lang)}
+    return {"pid": pid, "near": [_shop_json(x, lang, o) for x in near]}
+
+
+HANDLERS = {"plan", "route", "alts", "finish", "compare", "nearby"}
 
 
 def _plain(obj):
@@ -358,6 +377,8 @@ def _handle(req: dict, cond, lang) -> dict | None:
             return do_alts(payload, cond, lang)
         if kind == "finish":
             return do_finish(payload, cond, lang)
+        if kind == "nearby":
+            return do_nearby(payload, cond, lang)
         if kind == "compare":
             return do_compare_qr(payload, cond, lang) if payload.get("mode") == "qr" else do_compare(payload, lang)
     except Exception as e:  # 화면이 멈추지 않게 에러도 답으로 보내요
