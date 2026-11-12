@@ -136,7 +136,7 @@ def parse_free_text_llm(text: str) -> dict | None:
         return None
 
 
-def understand(choice: dict, places, data) -> dict:
+def understand(choice: dict, places, data, use_llm: bool = True) -> dict:
     """선택지 + 자유 입력 → 취향(prefs). choice: {who, minutes, level, interests[list], free}"""
     w = {t: 0.0 for t in THEMES}
     for it in choice.get("interests") or []:
@@ -155,7 +155,7 @@ def understand(choice: dict, places, data) -> dict:
              "speed": adj.get("speed", 1.0), "max_km": level["max_km"] * adj.get("km", 1.0), "leg_km": level["leg"],
              "parsed_by": "rule"}
     ft = parse_free_text(choice.get("free", ""), places, data)
-    llm = parse_free_text_llm(choice.get("free", ""))
+    llm = parse_free_text_llm(choice.get("free", "")) if use_llm else None
     effects = ft["effects"]
     if llm and llm["effects"]:
         effects = llm["effects"] + [e for e in effects if e[1] not in {x for _, x in llm["effects"]}]
@@ -203,12 +203,18 @@ def place_utility(pid, prefs, cond, data, minutes_to_sunset=None) -> tuple[float
     match = sum(contrib.values())
     parts = {"match": match, "top": max(contrib, key=contrib.get) if any(contrib.values()) else None}
     u = 0.15 + 1.6 * match
+    # 내가 가장 원하는 테마가 그곳의 대표 테마면 가산점 (두루두루 무난한 곳보다 '딱 맞는 곳'을 먼저)
+    if t:
+        mine = max(w, key=w.get)
+        if max(t, key=t.get) == mine or t.get(mine, 0) >= 0.9:
+            u += 0.25 * w[mine] / max(max(w.values()), 1e-6)
+            parts["fit"] = True
     if prefs.get("quiet"):
         q = 0.4 * tg.get("quiet", 0)
         u += q
         parts["quiet"] = q
     if L.has_piece(data, pid):
-        u += 0.15
+        u += 0.06
         parts["story"] = True
     now_s, _ = L.season_for(pid, cond["month"], data, "ko")
     if now_s:
@@ -245,14 +251,15 @@ def place_utility(pid, prefs, cond, data, minutes_to_sunset=None) -> tuple[float
 def _story_link(a, b, data) -> float:
     pa, pb = L._piece(data, a), L._piece(data, b)
     if pa and pb and pb.get("order", 0) == pa.get("order", 0) + 1:
-        return 0.25
+        return 0.1
     if f"{a}>{b}" in data["stories"].get("_bridges", {}):
         return 0.12
     return 0.0
 
 
-def search(start: str, choice: dict, prefs: dict, cond: dict, places, data, elev, hills, budget: int) -> dict:
-    """출발지에서 1~3곳을 더 잇는 모든 조합·순서를 평가해요."""
+def search(start: str, choice: dict, prefs: dict, cond: dict, places, data, elev, hills, budget: int,
+           start_util: float = 0.0) -> dict:
+    """출발지에서 1~3곳을 더 잇는 모든 조합·순서를 평가해요. start_util: AI가 출발지까지 고를 때 출발지 자체 점수"""
     who = choice.get("who")
     to_sunset = int((cond["sunset"] - cond["now"]).total_seconds() // 60)
     radius = min(3.5, max(1.2, prefs["max_km"] * 0.75))
@@ -269,13 +276,16 @@ def search(start: str, choice: dict, prefs: dict, cond: dict, places, data, elev
 
     def leg(a, b):
         if (a, b) not in leg_cache:
-            leg_cache[(a, b)] = L.leg_info(places, a, b, who, elev, hills, prefs["speed"])
+            lg = L.leg_info(places, a, b, who, elev, hills, prefs["speed"])
+            if lg["guessed"]:   # 고도를 못 받았을 때는 장소 태그(산길 여부)로 오르막을 어림해요
+                lg["hill"] = bool(tags_of(data, a).get("hill") or tags_of(data, b).get("hill"))
+            leg_cache[(a, b)] = lg
         return leg_cache[(a, b)]
 
     max_extra = 2 if (cond.get("cold") or prefs.get("short")) else 3
     evaluated, feasible = 0, []
     start_stay = stay_min(data, start, who)
-    for k in range(1, max_extra + 1):
+    for k in range(0 if start_util else 1, max_extra + 1):   # AI 출발지 모드에서는 '한 곳만 깊게'도 후보
         for combo in itertools.combinations(pool, k):
             for perm in itertools.permutations(combo):
                 evaluated += 1
@@ -298,16 +308,19 @@ def search(start: str, choice: dict, prefs: dict, cond: dict, places, data, elev
                 total = sum(l["minutes"] for l in legs) + start_stay + sum(stay_min(data, p, who) for p in perm)
                 if total > budget:
                     continue
-                score = sum(util[p][0] for p in perm)
+                us = [util[p][0] for p in perm] + ([start_util] if start_util else [])
+                # 많이 들르는 것보다 '나에게 맞는 곳'을 우선: 평균 점수 × 들르는 수 보정(체감)
+                score = sum(us) / len(us) * (1 + 0.22 * (len(us) - 1))
                 cats = {places.loc[p, "category"] for p in seq}
-                score += 0.12 * len(cats)
+                score += 0.05 * len(cats)
                 score += sum(_story_link(a, b, data) for a, b in zip(seq, seq[1:]))
                 if (cond.get("rain") or cond.get("cold") or prefs.get("indoor")) and tags_of(data, seq[-1]).get("indoor"):
                     score += 0.4
                 hill_legs = sum(1 for l in legs if l["hill"])
                 score -= 0.15 * hill_legs
                 score -= 0.2 * (dist / 1000) / max(prefs["max_km"], 1)
-                score += 0.25 * min(1.0, total / max(budget, 1))
+                score += 0.15 * min(1.0, total / max(budget, 1))
+                score -= 1.2 * max(0.0, 0.6 - total / max(budget, 1))   # 쓸 수 있는 시간을 너무 남기면 감점
                 if prefs.get("must") and not set(prefs["must"]) & set(perm):
                     score -= 1.5
                 feasible.append({"stops": list(seq), "legs": legs, "dist_m": dist, "total_min": total,
@@ -319,7 +332,7 @@ def search(start: str, choice: dict, prefs: dict, cond: dict, places, data, elev
             "pool": pool, "radius": radius, "to_sunset": to_sunset}
 
 
-def diverse_top(routes: list, n: int = 3) -> list:
+def diverse_top(routes: list, n: int = 3, by_start: bool = False) -> list:
     """점수 높은 길을 고르되, 앞에서 고른 길과 장소가 많이 겹치면 감점 (서로 다른 후보 3개)."""
     picked = []
     for _ in range(n):
@@ -327,7 +340,8 @@ def diverse_top(routes: list, n: int = 3) -> list:
         for r in routes[:400]:
             if r in picked or any(set(r["stops"]) == set(p["stops"]) for p in picked):
                 continue   # 같은 장소를 순서만 바꾼 길은 빼요
-            overlap = max((len(set(r["stops"][1:]) & set(p["stops"][1:])) for p in picked), default=0)
+            k = 0 if by_start else 1
+            overlap = max((len(set(r["stops"][k:]) & set(p["stops"][k:])) for p in picked), default=0)
             s = r["score"] - 0.6 * overlap
             if s > best_s:
                 best, best_s = r, s
@@ -447,22 +461,69 @@ def agent_pick(cands, prefs, cond, choice, places, data, budget, lang) -> dict |
 
 
 # ---------------------------------------------------------------- 한 번에
-def plan(start: str, choice: dict, cond: dict, places, data, elev, hills, lang: str) -> dict:
-    prefs = understand(choice, places, data)
+def pick_starts(prefs, cond, places, data, n=6) -> list:
+    """AI가 출발지를 고를 때: 장소 자체 점수 + 걸어서 닿는 주변(1.5km)의 좋은 곳 2개 점수로 출발 후보 n곳"""
+    to_sunset = int((cond["sunset"] - cond["now"]).total_seconds() // 60)
+    util = {p: place_utility(p, prefs, cond, data, to_sunset)[0] for p in places.index if p != "campus"}
+    if prefs["avoid_hill"]:
+        util = {p: u for p, u in util.items() if not tags_of(data, p).get("hill")}
+    pot = {}
+    for p, u in util.items():
+        near = sorted((util[q] for q in util if q != p and L.km_between(places, p, q) <= 1.5), reverse=True)[:2]
+        pot[p] = u + sum(near) * 0.8
+    out = []
+    for p in sorted(pot, key=lambda p: -pot[p]):
+        if all(L.km_between(places, p, q) > 0.35 for q in out):   # 너무 붙은 출발지는 하나만
+            out.append(p)
+        if len(out) >= n:
+            break
+    for p in prefs.get("must", []):
+        if p in util and p not in out:
+            out.append(p)
+    return [(p, util[p], pot[p]) for p in out]
+
+
+def plan(start, choice: dict, cond: dict, places, data, elev, hills, lang: str, use_llm: bool = True) -> dict:
+    """start=None 이면 출발지까지 AI가 골라요. use_llm=False면 Claude 없이 규칙 AI만 (비교 화면용)."""
+    prefs = understand(choice, places, data, use_llm)
     budget, notes = L.time_budget({"minutes": choice["minutes"]}, cond, lang)
     if prefs["short"]:
         budget = int(budget * 0.7)
-    res = search(start, choice, prefs, cond, places, data, elev, hills, budget)
-    cands = diverse_top(res["routes"], 3) or [nearest_fallback(start, places, data, elev, hills, choice, prefs)]
+    if start:
+        res = search(start, choice, prefs, cond, places, data, elev, hills, budget)
+        routes, starts = res["routes"], []
+    else:
+        starts = pick_starts(prefs, cond, places, data)
+        routes, res = [], None
+        agg = {"evaluated": 0, "feasible": 0, "util": {}, "pool": []}
+        for sp, su, _ in starts:
+            r = search(sp, choice, prefs, cond, places, data, elev, hills, budget, start_util=su)
+            routes += r["routes"]
+            agg["evaluated"] += r["evaluated"]
+            agg["feasible"] += r["feasible"]
+            for k, v in r["util"].items():
+                agg["util"].setdefault(k, v)
+            if res is None:
+                res = r
+        routes.sort(key=lambda r: -r["score"])
+        to_sunset = int((cond["sunset"] - cond["now"]).total_seconds() // 60)
+        for sp, _, _ in starts:
+            agg["util"].setdefault(sp, place_utility(sp, prefs, cond, data, to_sunset))
+        res = dict(res, evaluated=agg["evaluated"], feasible=agg["feasible"], util=agg["util"],
+                   pool=sorted(agg["util"], key=lambda p: -agg["util"][p][0])[:12])
+        start = routes[0]["stops"][0] if routes else starts[0][0]
+    cands = diverse_top(routes, 3, by_start=bool(starts)) or [
+        nearest_fallback(start, places, data, elev, hills, choice, prefs)]
     for c in cands:
         c["reasons"] = explain(c, prefs, cond, res, places, data, budget, lang)
-    agent = agent_pick(cands, prefs, cond, choice, places, data, budget, lang)
+    agent = agent_pick(cands, prefs, cond, choice, places, data, budget, lang) if use_llm else None
     chosen = agent["plan"] if agent else cands[0]
     return {"prefs": prefs, "budget": budget, "notes": notes, "cands": cands, "chosen": chosen,
             "planner": "agent" if agent else "rule", "ai_reason": agent["reason"] if agent else "",
             "process": {"evaluated": res["evaluated"], "feasible": res["feasible"], "radius": res["radius"],
+                        "starts": [(p, round(u, 2), round(pt, 2)) for p, u, pt in starts],
                         "pool": [(p, round(res["util"][p][0], 2), res["util"][p][1].get("top")) for p in res["pool"]]},
-            "util": res["util"]}
+            "util": res["util"], "auto_start": bool(starts)}
 
 
 def interest_to_story(prefs: dict) -> str:

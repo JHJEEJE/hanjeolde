@@ -435,7 +435,7 @@ def get_conditions(demo_weather: str = "실시간", demo_month: int | None = Non
     month = demo_month or now.month
     out = {"now": now, "month": month, "season": season_of(month)}
     if demo_weather != "실시간":
-        preset = {"맑음": (16.0, False), "비": (12.0, True), "영하": (-3.0, False)}[demo_weather]
+        preset = {"맑음": (16.0, False), "비": (12.0, True), "영하": (-3.0, False), "폭염": (33.0, False)}[demo_weather]
         out.update(temp=preset[0], rain=preset[1], sunset=sunset_calc(now.date()), source="데모 날씨")
     else:
         om = _open_meteo()
@@ -903,8 +903,12 @@ def course_of(stops: list, courses: list) -> str | None:
 def recommend(course_id, stops, data, places, lang: str = "ko") -> dict:
     tags, courses = data["tags"], {c["id"]: c for c in data["courses"]}
     cur = course_id or course_of(stops, data["courses"])
-    if cur not in tags:
-        return {}
+    if cur not in tags:   # 정해진 코스가 아닌 AI 길이면, 장소가 가장 많이 겹치는 코스를 기준으로
+        ov = [(len(set(c["stops"]) & set(stops)), c["id"]) for c in data["courses"] if c["id"] in tags]
+        ov = [x for x in ov if x[0] > 0]
+        if not ov:
+            return {}
+        cur = max(ov)[1]
     me = set(tags[cur]["theme"])
     terrain = tags[cur].get("terrain", "")
     scored = []

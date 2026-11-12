@@ -3,6 +3,8 @@
 문구를 고치려면 아래 S 사전에서 해당 줄을 찾아 바꾸면 돼요.
 사찰 이름·소개, 코스, 이야기 조각 번역은 data/translations.json에 있어요.
 """
+import re
+
 LANGS = ["ko", "en", "ja", "zh"]
 LANG_NAMES = {"ko": "한국어", "en": "English", "ja": "日本語", "zh": "中文"}
 TTS_LANG = {"ko": "ko-KR", "en": "en-US", "ja": "ja-JP", "zh": "zh-CN"}
@@ -148,8 +150,8 @@ S = {
                 "🧣 It's 0°C or below, so the walk is shortened to 1–2 stops with a warm rest stop.",
                 "🧣 気温が0度以下なので1〜2か所の短い順礼にし、暖かい休憩所を入れました。",
                 "🧣 气温在0度以下，已缩短为1～2处的短途巡礼，并加入温暖的休息点。"),
-    "diff_generic": _("{a}이 {pa}였다면, {b}은 {pb}예요.", "{a} was {pa}; {b} is {pb}.", "{a}が{pa}だったのに対し、{b}は{pb}です。", "如果说{a}是{pa}，那么{b}就是{pb}。"),
-    "diff_same": _("{a}과 같은 {c}지만, 시대와 이야기가 달라요: {e}.", "Like {a}, it's a {c}, but from another time with another story: {e}.",
+    "diff_generic": _("{a}[이/가] {pa}[이었/였]다면, {b}[은/는] {pb}[이에요/예요].", "{a} was {pa}; {b} is {pb}.", "{a}が{pa}だったのに対し、{b}は{pb}です。", "如果说{a}是{pa}，那么{b}就是{pb}。"),
+    "diff_same": _("{a}[과/와] 같은 {c}지만, 시대와 이야기가 달라요: {e}.", "Like {a}, it's a {c}, but from another time with another story: {e}.",
                    "{a}と同じ{c}ですが、時代と物語が違います：{e}。", "和{a}一样是{c}，但时代和故事不同：{e}。"),
     "example_spot": _("예시 쉼터 {x} (실제 가게 아님)", "Sample rest stop {x} (not a real shop)", "サンプル休憩所{x}（実在の店ではありません）", "示例休息点{x}（非真实店铺）"),
     # ---------- 지도 탭
@@ -292,10 +294,31 @@ SPOT_TYPE = {"카페": _("카페", "cafe", "カフェ", "咖啡馆"), "식당": 
 MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
+JOSA_RE = re.compile(r"(.)([\"'’”」』)]*)\[([^/\]]+)/([^\]]+)\]")
+
+
+def josa(s: str) -> str:
+    """한국어 조사 고르기: '분황사[이/가]' → '분황사가', '곳[이었/였]다면' → '곳이었다면'"""
+    def rep(m):
+        ch, quote, a, b = m.groups()
+        code = ord(ch) - 0xAC00
+        if 0 <= code < 11172:
+            jong = code % 28
+            if a == "으로":
+                use = b if jong in (0, 8) else a
+            else:
+                use = a if jong else b
+        else:
+            use = b if not ch.isdigit() else a
+        return ch + quote + use
+    return JOSA_RE.sub(rep, s)
+
+
 def t(key: str, lang: str, **kw) -> str:
     d = S[key]
     s = d.get(lang) or d["ko"]
-    return s.format(**kw) if kw else s
+    s = s.format(**kw) if kw else s
+    return josa(s) if "[" in s and "/" in s else s
 
 
 def lab(group: str, value: str, lang: str) -> str:
