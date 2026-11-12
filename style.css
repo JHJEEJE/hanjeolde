@@ -111,8 +111,8 @@ iframe { border-radius: 20px; }
 .brand .name { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
 .brand .tag { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
 .brand .wx {
-  margin-left: auto; font-size: 0.72rem; color: var(--sky-d); text-align: center; line-height: 1.35;
-  background: var(--sky); padding: 6px 10px; border-radius: 14px; max-width: 120px;
+  margin-left: auto; font-size: 0.98rem; font-weight: 700; color: var(--sky-d); text-align: center; line-height: 1.45;
+  background: var(--sky); padding: 9px 14px; border-radius: 18px; min-width: 112px;
 }
 
 .card {
@@ -192,3 +192,25 @@ iframe { border-radius: 20px; }
 
 /* 제목 옆 링크 아이콘 숨기기 */
 [data-testid="stHeaderActionElements"], .stMarkdown h1 a, .stMarkdown h2 a, .stMarkdown h3 a { display: none !important; }
+
+/* ---------- v3 ---------- */
+.wx .big { font-size: 1.25rem; }
+.shop { display: flex; gap: 10px; align-items: flex-start; background: #FFFFFF; border: 1px solid var(--line);
+  border-radius: 16px; padding: 9px 12px; margin: 6px 0; }
+.shop .k { font-size: 1.3rem; line-height: 1.2; }
+.shop .nm { font-weight: 700; font-size: 0.9rem; }
+.shop .why { font-size: 0.78rem; color: var(--muted); line-height: 1.45; }
+.shop a { color: var(--coral-d); font-weight: 700; text-decoration: none; font-size: 0.8rem; }
+.wbar { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 0.82rem; }
+.wbar .lab { width: 92px; color: var(--muted); }
+.wbar .bg { flex: 1; background: #F6ECE6; border-radius: 999px; height: 9px; }
+.wbar .fg { height: 9px; border-radius: 999px; background: linear-gradient(90deg, #F8A985, #F2896B); }
+.proc { font-size: 0.86rem; line-height: 1.6; margin: 4px 0; }
+.tl { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+.tl:last-child { border-bottom: none; }
+.tl .tm { min-width: 46px; font-weight: 800; color: var(--coral-d); font-size: 0.86rem; padding-top: 2px; }
+.tl .memo { background: #FFF7F1; border-radius: 12px; padding: 6px 10px; margin-top: 5px; font-size: 0.88rem; }
+.badge { display: inline-block; background: var(--sage-l); color: var(--sage-d); border-radius: 999px; padding: 5px 12px;
+  font-weight: 700; font-size: 0.82rem; margin: 3px 4px 3px 0; }
+.story p { line-height: 1.8; margin: 8px 0; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; margin: 3px 10px 3px 0; font-size: 0.8rem; color: var(--muted); }

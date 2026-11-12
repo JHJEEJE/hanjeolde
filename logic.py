@@ -80,6 +80,7 @@ def load_all() -> dict:
         "pieces": _json("story_pieces.json", {}),
         "tags": {k: v for k, v in _json("course_tags.json", {}).items() if not k.startswith("_")},
         "tr": _json("translations.json", {}),
+        "ptags": _json("place_tags.json", {"places": {}}),
     }
 
 
@@ -735,7 +736,7 @@ def agent_choose(cands, budget, cond, user, places, data, lang: str = "ko") -> d
 
 def retell(text: str, who: str, lang: str = "ko") -> str:
     """④ 말투 맞춤 (Haiku): 사실은 그대로, 말투만. 키가 없으면 원문."""
-    if who == "혼자·친구" or not llm_ready():
+    if who in ("혼자·친구", "혼자", "친구") or not llm_ready():
         return text
     res = call_claude([{"role": "user", "content": text}],
                       f"아래 글을 '{who}' 일행에게 들려주듯 말투만 바꿔. 사실·숫자·이름은 그대로 두고 새 사실은 절대 더하지 마. "
