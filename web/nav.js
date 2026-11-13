@@ -171,11 +171,11 @@ const Nav = (() => {
     if (!map) return false;
     clearShops();
     shopLayer = L.layerGroup().addTo(map);
-    (d.near || []).forEach((s) => L.marker([s.lat, s.lon], { icon: L.divIcon({ html: `<div class="shopdot">${KIND_EMOJI[s.kind] || "📍"}</div>`, className: "", iconSize: [24, 24], iconAnchor: [12, 12] }) }).bindTooltip(s.name).addTo(shopLayer));
+    (d.near || []).forEach((s) => L.marker([s.lat, s.lon], { icon: L.divIcon({ html: `<div class="shopdot">${GROUP_EMOJI[s.group] || KIND_EMOJI[s.kind] || "📍"}</div>`, className: "", iconSize: [24, 24], iconAnchor: [12, 12] }) }).bindTooltip(s.name).addTo(shopLayer));
     let sh = $("#navnear");
     if (!sh) { sh = document.createElement("div"); sh.id = "navnear"; sh.className = "navnear"; $("#nav").appendChild(sh); }
     sh.innerHTML = `<div class="between"><b>${esc(T("near_t"))}</b><button class="mini" data-nav="nearclose">✕</button></div>
-      ${d.near && d.near.length ? d.near.map(shopCard).join("") : `<p class="sub">${esc(T("near_none"))}</p>`}
+      ${d.near && d.near.length ? groupedShops(d.groups, d.near) : `<p class="sub">${esc(T("near_none"))}</p>`}
       ${d.search ? `<a class="mini" href="${esc(d.search)}" target="_blank" rel="noopener">N ${esc(T("near_more"))} ›</a>` : ""}`;
     return true;
   }

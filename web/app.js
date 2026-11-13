@@ -641,10 +641,24 @@ function walkView() {
     <div class="photo">${photo ? `<img src="${photo}" alt="">` : ""}<label class="upload">${esc(photo ? x("photo2") : x("photo"))}<input type="file" accept="image/*" data-act="photo"></label></div></div>
   ${seasons}${next}`;
 }
+/* 종류별(☕🍰🍚🎨)로 나누고, 칸 안에서는 가까운 순 */
+function groupedShops(groups, near) {
+  if (!(groups && groups.length)) {
+    const by = {};
+    (near || []).forEach((s) => { (by[s.group || "cafe"] = by[s.group || "cafe"] || []).push(s); });
+    groups = ["cafe", "dessert", "meal", "exp"].filter((g) => by[g]).map((g) => [g, by[g]]);
+  }
+  return groups.map(([g, list]) => {
+    list = list.slice().sort((a, b) => (a.distM || 0) - (b.distM || 0)).slice(0, 2);
+    const d = list[0] && list[0].distM != null ? list[0].distM : null;
+    return `<div class="grp"><div class="grph">${GROUP_EMOJI[g] || "📍"} ${esc(x("g_" + g))}
+      ${d != null ? `<span class="muted small">· ${d >= 1000 ? (d / 1000).toFixed(1) + "km" : d + "m"}~ · ${esc(x("nearest"))}</span>` : ""}</div>${list.map(shopCard).join("")}</div>`;
+  }).join("");
+}
 function nearbyPanel() {
   const n = S.nearby;
   return `<div class="card" id="nearbybox" style="margin-top:10px"><div class="between"><h2>${esc(Nav.T("near_t"))}</h2><button class="mini" data-act="nearbyclose">✕</button></div>
-    ${n.near.length ? n.near.map(shopCard).join("") : `<p class="sub">${esc(Nav.T("near_none"))}</p>`}
+    ${n.near.length ? groupedShops(n.groups, n.near) : `<p class="sub">${esc(Nav.T("near_none"))}</p>`}
     ${n.search ? `<a class="mini" href="${esc(n.search)}" target="_blank" rel="noopener">N ${esc(Nav.T("near_more"))} ›</a>` : ""}</div>`;
 }
 function boredPanel() {

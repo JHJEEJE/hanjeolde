@@ -359,11 +359,19 @@ def do_nearby(payload, cond, lang):
     stops = [pid] + ([nxt] if nxt else [])
     prefs = st.session_state.get("prefs") or {}
     pool = _shops(places, stops, lang, keys_status(), points=tuple(pts))
-    near = SH.around_point(pool, me[0], me[1], shop_ctx(cond, prefs, payload.get("who")), lang, leg=(a, b) if nxt else None)
+    near = SH.around_point(pool, me[0], me[1], shop_ctx(cond, prefs, payload.get("who")), lang, leg=(a, b) if nxt else None, limit=60)
+    groups = {}
+    for x in sorted(near, key=lambda x: x["dist_m"]):   # 종류마다 가까운 2곳씩
+        g = SH.group_of(x)
+        if len(groups.setdefault(g, [])) < 2:
+            groups[g].append(x)
+    order = [g for g in ("cafe", "dessert", "meal", "exp") if groups.get(g)]
+    near = [x for g in order for x in groups[g]]
     here = "내 위치" if pos else L.place_name(pid, places, data, lang)
     here = {"ko": "내 위치", "en": "my location", "ja": "現在地", "zh": "我的位置"}[lang] if pos else here
     o = {"name": here if pos else places.loc[pid, "name"], "lat": me[0], "lon": me[1], "label": here}
     return {"pid": pid, "pos": list(me), "near": [_shop_json(x, lang, o) for x in near],
+            "groups": [[g, [_shop_json(x, lang, o) for x in groups[g]]] for g in order],
             "search": "https://map.naver.com/p/search/" + quote("경주 " + L.place_name(pid, places, data, "ko") + " 카페")}
 
 
