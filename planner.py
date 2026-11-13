@@ -147,8 +147,26 @@ def match_place_names(names, places, data) -> list:
     return out
 
 
+class _NoAnswer(Exception):
+    pass
+
+
 @st.cache_data(ttl=3600, show_spinner=False)
+def _llm_parse_cached(text: str) -> dict:
+    d = _llm_parse_once(text)
+    if d is None:
+        raise _NoAnswer()   # 실패는 기억하지 않아요 (다음에 다시 시도)
+    return d
+
+
 def _llm_parse(text: str) -> dict | None:
+    try:
+        return _llm_parse_cached(text)
+    except _NoAnswer:
+        return None
+
+
+def _llm_parse_once(text: str) -> dict | None:
     eff_list = "\n".join(f"- {k}: {v}" for k, v in EFFECT_DESC.items())
     res = L.call_claude([{"role": "user", "content": text}],
                         "사용자가 경주 사찰 도보 순례 앱의 'AI에게 하고 싶은 말' 칸에 쓴 글이야. 무엇을 원하는지 파악해서 JSON 한 줄로만 답해.\n"
@@ -602,17 +620,30 @@ def agent_pick(cands, prefs, cond, choice, places, data, budget, lang) -> dict |
               f'{{"plan_id": "P1", "reason": "고른 이유 2문장, {I.LLM_LANG[lang]}로"}}')
     msgs = [{"role": "user", "content": f"일행 {choice.get('who')}, {choice.get('minutes')}분, 걷기 {choice.get('level')}, "
                                          f"관심사 {choice.get('interests')}, 요청: {choice.get('free') or '없음'}"}]
-    if L.llm_provider() == "gemini":   # 도구 대신 후보·조건을 한 번에 건네요
-        msgs[0]["content"] += ("\n\n[후보 순례길]\n" + json.dumps(run("find_routes", {}), ensure_ascii=False) +
-                               "\n\n[조건]\n" + json.dumps(run("get_conditions", {}), ensure_ascii=False))
-        res = L.call_claude(msgs, system.replace("도구로 후보와 조건을 확인하고", "주어진 후보와 조건을 보고"), max_tokens=500)
+    def claude_loop():
+        return _claude_agent_loop([dict(m) for m in msgs], system, tools, run, cands)
+
+    def one_shot():   # Gemini: 도구 대신 후보·조건을 한 번에 건네요
+        m = [{"role": "user", "content": msgs[0]["content"] + "\n\n[후보 순례길]\n" + json.dumps(run("find_routes", {}), ensure_ascii=False) +
+              "\n\n[조건]\n" + json.dumps(run("get_conditions", {}), ensure_ascii=False)}]
+        res = L._call_gemini(m, system.replace("도구로 후보와 조건을 확인하고", "주어진 후보와 조건을 보고"), max_tokens=500)
         t = L._text_of(res) if res else ""
         try:
             d = json.loads(t[t.find("{"): t.rfind("}") + 1])
             chosen = next(c for c in cands if c["id"] == d["plan_id"])
-            return {"plan": chosen, "reason": str(d.get("reason", ""))[:300]}
+            return {"plan": chosen, "reason": str(d.get("reason", ""))[:300], "by": "gemini"}
         except Exception:
             return None
+
+    if L.llm_provider() == "gemini":
+        return one_shot()
+    got = claude_loop()
+    if got is None and L.gemini_key():   # Claude 크레딧이 떨어졌거나 막히면 Gemini로
+        return one_shot()
+    return got
+
+
+def _claude_agent_loop(msgs, system, tools, run, cands):
     for _ in range(5):
         res = L.call_claude(msgs, system, tools=tools, max_tokens=700)
         if not res:

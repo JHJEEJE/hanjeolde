@@ -792,11 +792,15 @@ def _secret(name: str, default=None):
     return os.environ.get(name, default)
 
 
+def gemini_key() -> str | None:
+    return _secret("GEMINI_API_KEY") or _secret("GOOGLE_AI_KEY")
+
+
 def llm_provider() -> str | None:
     """'claude' (ANTHROPIC_API_KEY) → 'gemini' (GEMINI_API_KEY, 무료 등급 가능) → None (규칙 AI)"""
     if _secret("ANTHROPIC_API_KEY"):
         return "claude"
-    if _secret("GEMINI_API_KEY") or _secret("GOOGLE_AI_KEY"):
+    if gemini_key():
         return "gemini"
     return None
 
@@ -810,7 +814,9 @@ GEMINI_MODELS = ("gemini-3.5-flash", "gemini-flash-latest", "gemini-2.5-flash")
 
 def _call_gemini(messages, system, max_tokens=600) -> dict | None:
     """Gemini를 Claude 응답 모양({content:[{type:text}]})으로 바꿔 돌려줘요. 도구(tools)는 안 써요."""
-    key = _secret("GEMINI_API_KEY") or _secret("GOOGLE_AI_KEY")
+    key = gemini_key()
+    if not key:
+        return None
     contents = []
     for m in messages:
         c = m["content"]
@@ -858,7 +864,7 @@ def call_claude(messages, system, model=None, tools=None, max_tokens=600) -> dic
     except Exception:
         pass
     # 크레딧이 떨어졌거나 잠깐 막히면 Gemini 키가 있을 때 Gemini로, 없으면 규칙 AI로
-    if not tools and (_secret("GEMINI_API_KEY") or _secret("GOOGLE_AI_KEY")):
+    if not tools and gemini_key():
         return _call_gemini(messages, system, max_tokens)
     return None
 
