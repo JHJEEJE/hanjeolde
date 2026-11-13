@@ -84,8 +84,8 @@ GJ_SOURCES = {
 }
 
 
-def gj_url(src):
-    name, default = GJ_SOURCES[src][0], GJ_SOURCES[src][1]
+def _gj_raw(src):
+    name = GJ_SOURCES[src][0]
     typed = str(st.session_state.get(f"{name.lower()}_input", "") or "").strip()
     if typed:
         return typed
@@ -95,7 +95,37 @@ def gj_url(src):
                 return str(v).strip()
     except Exception:
         pass
-    return default
+    return ""
+
+
+def _gj_raw(src):
+    name = GJ_SOURCES[src][0]
+    typed = str(st.session_state.get(f"{name.lower()}_input", "") or "").strip()
+    if typed:
+        return typed
+    try:
+        for full, v in L._walk_secrets(st.secrets):
+            if full.split(".")[-1].upper() == name and str(v).strip():
+                return str(v).strip()
+    except Exception:
+        pass
+    return ""
+
+
+def gj_url(src):
+    """요청주소. 칸에 주소(http…)가 아니라 키가 들어 있으면 기본 주소를 써요."""
+    raw = _gj_raw(src)
+    return raw if raw.lower().startswith("http") else GJ_SOURCES[src][1]
+
+
+def gj_key(src=None):
+    """공공데이터포털 키는 한 사람당 하나라서 TourAPI·기상청 키와 같아요.
+    GJ_… 칸에 키를 넣었어도 알아서 써요."""
+    if src:
+        raw = _gj_raw(src)
+        if raw and not raw.lower().startswith("http"):
+            return raw
+    return L.data_key() or L.tour_key() or L.kma_key()
 
 
 def _pick(d, *pats):
@@ -160,15 +190,37 @@ def _gj_fetch(url, key, src):
 
 
 def gj_all():
-    key = L.data_key()
-    if not key:
-        return []
     out = []
     for src in GJ_SOURCES:
-        url = gj_url(src)
-        if url:
+        url, key = gj_url(src), gj_key(src)
+        if url and key:
             out += _gj_fetch(url, key, src) or []
     return out
+
+
+def gj_check():
+    """관리 화면용: 소스마다 (이름, 상태 문장)."""
+    res = []
+    for src, (_, _, _, label) in GJ_SOURCES.items():
+        url, key = gj_url(src), gj_key(src)
+        if not key:
+            res.append((label["ko"], "❌ 키 없음"))
+            continue
+        if not url:
+            res.append((label["ko"], "⏸️ 요청주소가 아직 없어요"))
+            continue
+        try:
+            r = requests.get(url, timeout=8, params={"serviceKey": key, "pageNo": 1, "numOfRows": 5, "type": "json", "_type": "json"})
+            txt = r.text[:300]
+            try:
+                n = len(_items(r.json()))
+            except Exception:
+                n = 0
+            got = len(_gj_fetch(url, key, src) or []) if n else 0
+            res.append((label["ko"], f"✅ {got}곳 받음" if got else f"⚠️ 응답은 왔는데 가게가 없어요 (HTTP {r.status_code}): {txt[:160]}"))
+        except Exception as e:
+            res.append((label["ko"], f"❌ 연결 실패: {type(e).__name__}"))
+    return res
 
 
 # ---------------------------------------------------------------- 1) 모으기

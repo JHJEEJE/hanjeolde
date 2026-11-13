@@ -85,14 +85,14 @@ def admin_panel():
     st.caption("🟢 네이버 검색: " + ("있음 ✅" if SH.naver_keys()[0] else "없음"))
     st.markdown("---")
     st.markdown("**📡 경주시 공공데이터 (가게 추천)**")
-    st.caption("공공데이터포털 키(DATA_GO_KR_KEY)로 불러와요. 마이페이지 › 활용신청 현황에 나온 '요청주소(End Point)'를 넣어 주세요.")
-    st.text_input("전망 좋은 카페 요청주소", key="gj_view_cafe_url_input", placeholder=SH.GJ_SOURCES["view_cafe"][1])
-    st.text_input("디저트점 현황 요청주소", key="gj_dessert_url_input", placeholder="https://apis.data.go.kr/5050000/…")
-    st.text_input("이색체험 정보 요청주소", key="gj_experience_url_input", placeholder="https://apis.data.go.kr/5050000/…")
+    st.caption("키는 TourAPI 키와 같은 공공데이터포털 키를 자동으로 써요. 요청주소는 비워 두면 기본값을 써요.")
+    with st.expander("요청주소 직접 넣기 (선택)"):
+        st.text_input("전망 좋은 카페 요청주소", key="gj_view_cafe_url_input", placeholder=SH.GJ_SOURCES["view_cafe"][1])
+        st.text_input("디저트점 현황 요청주소", key="gj_dessert_url_input", placeholder="https://apis.data.go.kr/5050000/…")
+        st.text_input("이색체험 정보 요청주소", key="gj_experience_url_input", placeholder="https://apis.data.go.kr/5050000/…")
     if st.button("불러오기 확인"):
-        got = SH.gj_all()
-        from collections import Counter
-        st.caption(f"받은 곳: {len(got)}곳 · " + ", ".join(f"{k} {v}" for k, v in Counter(g['gj'] for g in got).items()) if got else "받은 곳이 없어요. 키·요청주소·활용신청 승인을 확인해 주세요.")
+        for name, msg in SH.gj_check():
+            st.caption(f"{name}: {msg}")
     st.markdown("---")
     st.markdown("**🛕 사찰 좌표 만들기 (종교시설 현황)**")
     n_extra = int(L.load_places().index.str.startswith("tp").sum())
