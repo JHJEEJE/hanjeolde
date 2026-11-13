@@ -106,11 +106,11 @@ def admin_panel():
     st.markdown("**🛕 사찰 좌표 만들기 (종교시설 현황)**")
     n_extra = int(L.load_places().index.str.startswith("tp").sum())
     st.caption(f"지금 앱에 들어 있는 곳: {len(L.load_places())}곳 (종교시설 현황에서 더한 절 {n_extra}곳)")
-    st.text_input("카카오 REST API 키 (없으면 OpenStreetMap으로 5~6분)", key="kakao_rest_input", type="password")
+    st.text_input("카카오 REST API 키 (Secrets에 KAKAO_REST_KEY가 있으면 비워도 돼요)", key="kakao_rest_input", type="password")
     if st.button("주소 → 좌표 변환 시작"):
         import geocode
         bar = st.progress(0.0, text="시작해요")
-        ok, total = geocode.run(st.session_state.get("kakao_rest_input") or None,
+        ok, total = geocode.run(SH.kakao_key(),
                                 lambda i, n, nm, hit: bar.progress(i / n, text=f"{i}/{n} {'✓' if hit else '✗'} {nm}"))
         st.cache_data.clear()
         st.success(f"{ok}/{total}곳 좌표를 찾았어요. 아래 파일을 GitHub의 data 폴더에 올리면 계속 써요.")
