@@ -95,6 +95,13 @@ def admin_panel():
     if st.button("불러오기 확인"):
         for name, msg in SH.gj_check():
             st.caption(f"{name}: {msg}")
+    st.caption("좌표가 없는 가게는 주소로 위치를 찾아야 지도에 나와요. (카카오 키가 있으면 빨라요)")
+    if st.button("가게 주소 → 좌표 만들기"):
+        bar = st.progress(0.0, text="준비 중…")
+        ok, n, total = SH.gj_build_geo(lambda f, nm: bar.progress(min(1.0, f), text=f"{nm} 찾는 중…"))
+        st.success(f"새로 찾은 곳 {ok}/{n} · 저장된 좌표 {total}곳")
+        if SH.GJ_GEO_FILE.exists():
+            st.download_button("gj_geo.json 받기 (GitHub data 폴더에 올리면 계속 유지돼요)", SH.GJ_GEO_FILE.read_bytes(), "gj_geo.json", "application/json")
     st.markdown("---")
     st.markdown("**🛕 사찰 좌표 만들기 (종교시설 현황)**")
     n_extra = int(L.load_places().index.str.startswith("tp").sum())

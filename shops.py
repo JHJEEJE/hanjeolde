@@ -7,6 +7,8 @@
 4) 대체    alternatives(): '볼 게 없어요' → 근처 다른 유적 + 공방·문화공간·카페
 """
 from __future__ import annotations
+import json
+from pathlib import Path
 
 import math
 
@@ -175,11 +177,11 @@ def _items(obj):
     if isinstance(obj, list):
         out = []
         for x in obj:
-            out += _items(x) if not (isinstance(x, dict) and len([v for v in x.values() if not isinstance(v, (dict, list))]) >= 3) else [x]
+            out += _items(x) if not (isinstance(x, dict) and len([v for v in x.values() if not isinstance(v, (dict, list))]) >= 2 and _pick(x, r"NM$|NAME|TITLE|명$")) else [x]
         return out
     if isinstance(obj, dict):
         flat = [v for v in obj.values() if not isinstance(v, (dict, list))]
-        if len(flat) >= 3 and _pick(obj, r"NM$|NAME|TITLE|명$"):
+        if len(flat) >= 2 and _pick(obj, r"NM$|NAME|TITLE|명$") and not _pick(obj, r"^RESULT|^TOTALCOUNT$"):
             return [obj]
         out = []
         for v in obj.values():
@@ -189,37 +191,130 @@ def _items(obj):
     return []
 
 
-@st.cache_data(ttl=86400, show_spinner=False)
-def _gj_fetch(url, key, src):
-    out = []
-    for page in range(1, 6):
+GJ_GEO_FILE = Path(__file__).parent / "data" / "gj_geo.json"   # 주소 → 좌표 캐시 (관리 화면에서 만들어요)
+
+
+def _gj_geo_cache():
+    try:
+        return json.loads(GJ_GEO_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def kakao_key():
+    k = str(st.session_state.get("kakao_rest_input", "") or "").strip()
+    if k:
+        return k
+    try:
+        for full, v in L._walk_secrets(st.secrets):
+            if full.split(".")[-1].upper() in ("KAKAO_REST_KEY", "KAKAO_REST_API_KEY", "KAKAO_API_KEY", "KAKAO_KEY") and str(v).strip():
+                return str(v).strip()
+    except Exception:
+        pass
+    return None
+
+
+def _latlon(it):
+    """칸 이름으로 먼저 찾고, 없으면 경주 범위 숫자 두 개를 찾아요."""
+    lat = _pick(it, r"^LA$|^LAT|LATITUDE|_LA$|LTTD|_LAT$|YCRD|Y_CRD|YCNTS|MAP_Y|^Y$|위도")
+    lon = _pick(it, r"^LO$|^LOT|^LON|LONGITUDE|_LO$|LNGT|LGTD|_LOT$|XCRD|X_CRD|XCNTS|MAP_X|^X$|경도")
+    try:
+        la, lo = float(lat), float(lon)
+        if la > 100:
+            la, lo = lo, la
+        if 35.5 < la < 36.2 and 128.9 < lo < 129.6:
+            return la, lo
+    except ValueError:
+        pass
+    las, los = [], []
+    for v in it.values():
         try:
-            r = requests.get(url, timeout=8, params={"serviceKey": key, "pageNo": page, "numOfRows": 100, "type": "json", "_type": "json"})
+            x = float(str(v).strip())
+        except ValueError:
+            continue
+        if 35.5 < x < 36.2:
+            las.append(x)
+        elif 128.9 < x < 129.6:
+            los.append(x)
+    return (las[0], los[0]) if las and los else (None, None)
+
+
+def _gj_rows(url, key):
+    """쪽 번호·개수 이름을 기관이 반대로 받는 경우도 있어서 둘 다 해 봐요."""
+    best = []
+    for params in ({"pageNo": 1, "numOfRows": 1000}, {"pageNo": 1000, "numOfRows": 1}):
+        try:
+            r = requests.get(url, timeout=10, params={"serviceKey": key, "type": "json", "_type": "json", **params})
             rows = _items(r.json())
         except Exception:
+            rows = []
+        if len(rows) > len(best):
+            best = rows
+        if len(best) >= 50:
             break
-        for it in rows:
-            name = _pick(it, r"CAFE_NM|SHOP_NM|BSSH_NM|FCLTY_NM|EXPRN_NM|_NM$|NAME|TITLE|명$")
-            lat = _pick(it, r"^LA$|^LAT|LATITUDE|_LA$|YCRD|Y_CRD|MAP_Y|^Y$|위도")
-            lon = _pick(it, r"^LO$|^LOT|^LON|LONGITUDE|_LO$|XCRD|X_CRD|MAP_X|^X$|경도")
-            try:
-                la, lo = float(lat), float(lon)
-                if la > 100:   # 경도·위도가 바뀌어 오는 경우
-                    la, lo = lo, la
-            except ValueError:
+    return best
+
+
+def _gj_name(it):
+    return _pick(it, r"CAFE_NM|SHOP_NM|BSSH_NM|ENTRPS_NM|ENT_NM|FCLTY_NM|EXPRN_NM|_NM$|NAME|TITLE|명$")
+
+
+def _gj_addr(it):
+    return _pick(it, r"^ADRES$|RDNMADR|ROAD|ADDR|ADRES|주소")
+
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def _gj_fetch(url, key, src, kkey=None):
+    out, cache = [], _gj_geo_cache()
+    for it in _gj_rows(url, key):
+        name = _gj_name(it)
+        if not name:
+            continue
+        la, lo = _latlon(it)
+        if la is None:
+            addr = _gj_addr(it)
+            hit = cache.get(f"{name}|{addr}")
+            if not hit and kkey and addr:
+                import geocode as G
+                g = G.kakao(G.clean_addr(addr), name, kkey)
+                hit = [g[0], g[1]] if g and G.in_bbox(g[0], g[1]) else None
+            if not hit:
                 continue
-            if not name or not (35.5 < la < 36.2 and 128.9 < lo < 129.6):
-                continue
-            kind = GJ_SOURCES[src][2]
-            if src == "experience" and _re.search(r"공방|만들기|도자|공예|클래스|체험관", name):
-                kind = "craft"
-            out.append({"id": f"gj_{src}_{_norm(name)}", "name": name, "kind": kind, "lat": la, "lon": lo, "rating": None,
-                        "reviews": None, "open_now": None, "url": _pick(it, r"HMPG|HOMEPAGE|URL"), "img": _pick(it, r"IMG|IMAGE|PHOTO"),
-                        "source": "gj", "gj": src, "partner": "", "coupon": "",
-                        "view": _pick(it, r"VIEW|SCENE|조망|특징|FEATURE|INTRCN|DESC")[:40]})
-        if len(rows) < 100:
-            break
+            la, lo = hit
+        kind = GJ_SOURCES[src][2]
+        if src == "experience" and _re.search(r"공방|만들기|도자|공예|클래스|체험관|캔들|향수|도예", name):
+            kind = "craft"
+        out.append({"id": f"gj_{src}_{_norm(name)}", "name": name, "kind": kind, "lat": la, "lon": lo, "rating": None,
+                    "reviews": None, "open_now": None, "url": _pick(it, r"HMPG|HOMEPAGE|URL"), "img": _pick(it, r"IMG|IMAGE|PHOTO"),
+                    "source": "gj", "gj": src, "partner": "", "coupon": "",
+                    "view": _pick(it, r"VIEW|SCENE|조망|특징|FEATURE|INTRCN|DESC")[:40]})
     return out
+
+
+def gj_build_geo(progress=None):
+    """관리 화면: 좌표 없는 가게 주소를 좌표로 바꿔 data/gj_geo.json 에 저장 (카카오, 없으면 OpenStreetMap)."""
+    import geocode as G
+    cache, kk, todo = _gj_geo_cache(), kakao_key(), []
+    for src in GJ_SOURCES:
+        url, key = gj_url(src), gj_key(src)
+        if url and key:
+            for it in _gj_rows(url, key):
+                name, addr = _gj_name(it), _gj_addr(it)
+                if name and addr and _latlon(it)[0] is None and f"{name}|{addr}" not in cache:
+                    todo.append((name, addr))
+    ok = 0
+    for i, (name, addr) in enumerate(todo):
+        a = G.clean_addr(addr)
+        g = (G.kakao(a, name, kk) if kk else None) or G.nominatim(a, name)
+        if g and G.in_bbox(g[0], g[1]):
+            cache[f"{name}|{addr}"] = [round(g[0], 6), round(g[1], 6)]
+            ok += 1
+        if progress:
+            progress((i + 1) / max(1, len(todo)), name)
+    GJ_GEO_FILE.parent.mkdir(exist_ok=True)
+    GJ_GEO_FILE.write_text(json.dumps(cache, ensure_ascii=False, indent=0), encoding="utf-8")
+    _gj_fetch.clear()
+    return ok, len(todo), len(cache)
 
 
 def gj_all():
@@ -227,7 +322,7 @@ def gj_all():
     for src in GJ_SOURCES:
         url, key = gj_url(src), gj_key(src)
         if url and key:
-            out += _gj_fetch(url, key, src) or []
+            out += _gj_fetch(url, key, src, kakao_key()) or []
     return out
 
 
@@ -242,17 +337,14 @@ def gj_check():
         if not url:
             res.append((label["ko"], "⏸️ 요청주소가 아직 없어요"))
             continue
-        try:
-            r = requests.get(url, timeout=8, params={"serviceKey": key, "pageNo": 1, "numOfRows": 5, "type": "json", "_type": "json"})
-            txt = r.text[:300]
-            try:
-                n = len(_items(r.json()))
-            except Exception:
-                n = 0
-            got = len(_gj_fetch(url, key, src) or []) if n else 0
-            res.append((label["ko"], f"✅ {got}곳 받음" if got else f"⚠️ 응답은 왔는데 가게가 없어요 (HTTP {r.status_code}): {txt[:160]}"))
-        except Exception as e:
-            res.append((label["ko"], f"❌ 연결 실패: {type(e).__name__}"))
+        rows = _gj_rows(url, key)
+        if not rows:
+            res.append((label["ko"], "⚠️ 가게 목록을 못 받았어요 (요청주소 끝부분 확인)"))
+            continue
+        with_xy = sum(1 for it in rows if _latlon(it)[0] is not None)
+        got = len(_gj_fetch(url, key, src, kakao_key()) or [])
+        fields = ", ".join(list(rows[0].keys())[:12])
+        res.append((label["ko"], f"{'✅' if got else '⚠️'} 목록 {len(rows)}곳 · 지도에 쓸 수 있는 곳 {got}곳 (원래 좌표 있음 {with_xy}) · 칸: {fields}"))
     return res
 
 
