@@ -16,6 +16,7 @@ import streamlit as st
 
 import i18n as I
 import journal as J
+import areas as AR
 import logic as L
 import pins as PN
 import planner as P
@@ -42,12 +43,14 @@ def bundle(lang: str, _v: int = 3) -> dict:
         tg = P.tags_of(data, pid)
         desc = L.place_desc(pid, places, data, lang)
         kind = _kind(places, pid)
+        ar, town = AR.area_of(p.get("address", ""), float(p.lat), float(p.lon))
         pl.append({"id": pid, "name": L.place_name(pid, places, data, lang), "cat": p.category,
                    "catLabel": I.lab("category", p.category, lang), "era": L.era_text(p.era, data, lang),
                    "lat": float(p.lat), "lon": float(p.lon), "desc": desc, "short": L._first_sentence(desc, lang),
                    "kind": kind, "hill": bool(tg.get("hill")), "indoor": bool(tg.get("indoor")),
-                   "kakao": L.kakao_to(p["name"], p.lat, p.lon)})
+                   "kakao": L.kakao_to(p["name"], p.lat, p.lon), "area": ar, "town": town, "story": not L.is_extra(pid)})
     return {"lang": lang, "S": S, "L": labels, "places": pl,
+            "areas": [{"id": k, "name": AR.AREA_LABEL[k].get(lang) or AR.AREA_LABEL[k]["ko"], "emoji": AR.AREA_EMOJI[k]} for k in AR.AREA_ORDER],
             "langs": [{"id": x, "name": I.LANG_NAMES[x]} for x in I.LANGS], "tts": I.TTS_LANG[lang],
             "opts": {"who": P.WHO_OPTS, "level": P.LEVEL_OPTS, "interest": P.INTEREST_OPTS, "mood": J.MOODS,
                      "stop": L.STOP_KEYS, "cmpTimes": CMP_TIMES, "cmpWeather": CMP_WEATHER},
@@ -225,7 +228,9 @@ def do_plan(payload, cond, lang):
             "prefs": {"tops": [I.lab("theme", k, lang) for k in P.top_themes(prefs)], "by": prefs.get("parsed_by"),
                       "effects": [[q, I.lab("effect", e, lang)] for q, e in prefs["effects"][:5]],
                       "weights": [[I.lab("theme", k, lang), round(v, 3)] for k, v in sorted(w.items(), key=lambda kv: -kv[1]) if v > 0.02],
-                      "avoidHill": prefs["avoid_hill"], "cafe": prefs["want_cafe"]},
+                      "avoidHill": prefs["avoid_hill"], "cafe": prefs["want_cafe"], "summary": prefs.get("summary", ""),
+                      "must": [L.place_name(p, places, data, lang) for p in prefs.get("must", [])],
+                      "avoid": [L.place_name(p, places, data, lang) for p in prefs.get("avoid", [])]},
             "process": {"evaluated": proc["evaluated"], "feasible": proc["feasible"], "radius": proc["radius"],
                         "starts": [[name(p), u, pt] for p, u, pt in proc.get("starts", [])],
                         "pool": [[p, name(p), u, I.lab("theme", tp, lang) if tp else ""] for p, u, tp in proc["pool"][:8]]}}
@@ -375,7 +380,7 @@ def do_nearby(payload, cond, lang):
             "search": "https://map.naver.com/p/search/" + quote("경주 " + L.place_name(pid, places, data, "ko") + " 카페")}
 
 
-HANDLERS = {"plan", "route", "alts", "finish", "compare", "nearby"}
+HANDLERS = {"plan", "route", "alts", "finish", "compare", "nearby", "pcpolish"}
 
 
 def _plain(obj):
@@ -402,6 +407,9 @@ def _handle(req: dict, cond, lang) -> dict | None:
             return do_finish(payload, cond, lang)
         if kind == "nearby":
             return do_nearby(payload, cond, lang)
+        if kind == "pcpolish":
+            text, by = J.polish_postcard(payload.get("text", ""), payload.get("place", ""), int(payload.get("n") or 0), lang)
+            return {"text": text, "by": by}
         if kind == "compare":
             return do_compare_qr(payload, cond, lang) if payload.get("mode") == "qr" else do_compare(payload, lang)
     except Exception as e:  # 화면이 멈추지 않게 에러도 답으로 보내요

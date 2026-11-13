@@ -34,7 +34,7 @@ const TX = {
     qr_demo: "🧭 시연: QR 찍은 사찰 고르기",
     qr_here: "📍 QR을 찍은 곳",
     qr_from: "여기서 시작해 사찰 1~3곳을 더 잇는 순례길을 짜 드려요.",
-    qr_other: "다른 사찰 QR",
+    qr_other: "다른 사찰 QR", u_t_ai: "Claude가 이렇게 이해했어요", u_t_rule: "이렇게 이해했어요 (규칙 AI)", u_must: "꼭 넣을 곳", u_avoid: "뺄 곳", qr_area_s: "경주시 어느 쪽인지 눌러서 펼쳐요. ✨는 이야기가 준비된 곳이에요.", qr_none: "찾는 절이 없어요. 이름을 다시 확인해 주세요.", qr_change: "🔄 절 바꾸기", qr_rescan: "📷 다시 찍기", qr_clear: "선택 취소", qr_wrong: "잘못 고른 절이면 바꿔 주세요.", start_chg: "📍 {n}에서 출발 · 바꾸기", pc_write: "✍️ 엽서에 쓸 말", pc_write_s: "직접 고쳐 쓰면 엽서에 바로 바뀌어요. 7줄까지 들어가요.", pc_ai: "✨ AI로 다듬기", pc_reset: "↺ 처음 문장", pc_aidone: "AI가 다듬었어요. 마음에 안 들면 다시 고쳐 써도 돼요.", pc_noai: "AI 키가 없어 띄어쓰기·문장부호만 다듬었어요.", pc_empty: "먼저 엽서에 쓸 말을 적어 주세요.",
     qr_need: "먼저 사찰 QR을 찍어 주세요",
     qr_nocam: "이 브라우저는 앱 안에서 QR을 못 읽어요. 휴대폰 기본 카메라로 사찰 QR을 찍으면 이 앱이 그 사찰로 바로 열려요.",
     qr_scanning: "QR을 네모 안에 맞춰 주세요",
@@ -109,7 +109,7 @@ const TX = {
     qr_demo: "🧭 Demo: pick the scanned temple",
     qr_here: "📍 Where you scanned",
     qr_from: "Starts here and links 1–3 more temples on foot.",
-    qr_other: "Other temple QR",
+    qr_other: "Other temple QR", u_t_ai: "How Claude understood you", u_t_rule: "How we understood you (rule AI)", u_must: "Must include", u_avoid: "Skip", qr_area_s: "Tap an area of Gyeongju to open it. ✨ = stories ready.", qr_none: "No match. Check the name.", qr_change: "🔄 Change temple", qr_rescan: "📷 Scan again", qr_clear: "Clear", qr_wrong: "Picked the wrong temple? Change it here.", start_chg: "📍 Starting at {n} · change", pc_write: "✍️ Your message", pc_write_s: "Edit it and the postcard updates. Up to 7 lines fit.", pc_ai: "✨ Polish with AI", pc_reset: "↺ Original text", pc_aidone: "AI polished it. Feel free to edit again.", pc_noai: "No AI key, so only spacing and punctuation were tidied.", pc_empty: "Write your message first.",
     qr_need: "Please scan a temple QR first",
     qr_nocam: "This browser can't read QR inside the app. Scan the temple QR with your phone camera and the app opens at that temple.",
     qr_scanning: "Fit the QR inside the square",
@@ -184,7 +184,7 @@ const TX = {
     qr_demo: "🧭 デモ：QRを読んだ寺を選ぶ",
     qr_here: "📍 QRを読んだ場所",
     qr_from: "ここから始めて、さらに1〜3か所の寺を歩いてつなぎます。",
-    qr_other: "別の寺のQR",
+    qr_other: "別の寺のQR", u_t_ai: "Claudeはこう理解しました", u_t_rule: "こう理解しました（ルールAI）", u_must: "必ず入れる", u_avoid: "外す", qr_area_s: "慶州のエリアを押すと開きます。✨は物語がある場所です。", qr_none: "見つかりません。名前を確認してください。", qr_change: "🔄 寺を変える", qr_rescan: "📷 もう一度読む", qr_clear: "選択を消す", qr_wrong: "選んだ寺が違うときはここで変えられます。", start_chg: "📍 {n}から出発 · 変える", pc_write: "✍️ はがきのメッセージ", pc_write_s: "書き直すとはがきにすぐ反映されます。7行まで入ります。", pc_ai: "✨ AIで整える", pc_reset: "↺ 最初の文", pc_aidone: "AIが整えました。気に入らなければ書き直せます。", pc_noai: "AIキーがないので、空白と句読点だけ整えました。", pc_empty: "先にメッセージを書いてください。",
     qr_need: "まず寺のQRを読み取ってください",
     qr_nocam: "このブラウザはアプリ内でQRを読めません。スマホのカメラで寺のQRを読むと、その寺でアプリが開きます。",
     qr_scanning: "QRを枠の中に合わせてください",
@@ -259,7 +259,7 @@ const TX = {
     qr_demo: "🧭 演示：选择扫码的寺院",
     qr_here: "📍 扫码地点",
     qr_from: "从这里出发，步行再连起1~3座寺院。",
-    qr_other: "其他寺院二维码",
+    qr_other: "其他寺院二维码", u_t_ai: "Claude是这样理解的", u_t_rule: "这样理解（规则AI）", u_must: "一定要去", u_avoid: "不去", qr_area_s: "点开庆州的区域查看。✨表示已有故事。", qr_none: "没有找到，请确认名称。", qr_change: "🔄 换寺院", qr_rescan: "📷 重新扫码", qr_clear: "取消选择", qr_wrong: "选错寺院了？在这里更换。", start_chg: "📍 从{n}出发 · 更换", pc_write: "✍️ 明信片留言", pc_write_s: "修改后明信片会立即更新，最多7行。", pc_ai: "✨ 用AI润色", pc_reset: "↺ 原来的文字", pc_aidone: "AI已润色，不满意可以再改。", pc_noai: "没有AI密钥，只整理了空格和标点。", pc_empty: "请先写下留言。",
     qr_need: "请先扫描寺院二维码",
     qr_nocam: "此浏览器无法在应用内识别二维码。用手机相机扫描寺院二维码，就会直接打开该寺院页面。",
     qr_scanning: "请把二维码对准方框",
@@ -416,6 +416,8 @@ function onResp(resp) {
     S.done = d; S.screen = "done"; S.pcPhoto = S.pcPhoto || firstPhoto(); scrollTop();
   } else if (kind === "compare") {
     S.compare = d;
+  } else if (kind === "pcpolish") {
+    if (d.text) { S.pcText = d.text; toast(d.by === "claude" ? x("pc_aidone") : x("pc_noai")); }
   } else if (kind === "lang" || kind === "demo") {
     afterReload(kind);
   }
@@ -491,9 +493,12 @@ function setupView() {
   const pct = ((c.minutes - 30) / (300 - 30)) * 100;
   const q = S.qr ? P(S.qr) : null;
   const qrCard = q ? `<div class="card qr"><div class="eyebrow">${esc(x("qr_here"))}</div>
-      <div class="row">${icon(q.kind, 40)}<div style="flex:1;min-width:0"><h3>${esc(q.name)}</h3><div class="small muted">${esc(lab("icon", q.kind))} · ${esc(q.era)}</div></div>
-      <button class="mini" data-act="sheet" data-v="qr">${esc(x("qr_other"))}</button></div>
-      <p class="small" style="margin:8px 0 0">${esc(q.short)}</p><div class="qrnote">🧭 ${esc(x("qr_from"))}</div></div>`
+      <div class="row">${icon(q.kind, 40)}<div style="flex:1;min-width:0"><h3>${esc(q.name)}</h3><div class="small muted">${esc(lab("icon", q.kind))}${q.era && q.era !== "-" ? " · " + esc(q.era) : ""}${q.town ? " · 📍 " + esc(q.town) : ""}</div></div>
+      </div>
+      <p class="small" style="margin:8px 0 0">${esc(q.short)}</p><div class="qrnote">🧭 ${esc(x("qr_from"))}</div>
+      <div class="qrchg"><span class="small muted">${esc(x("qr_wrong"))}</span>
+        <div class="row" style="gap:6px;margin-top:6px"><button class="mini coral" data-act="sheet" data-v="qr">${esc(x("qr_change"))}</button>
+        <button class="mini" data-act="scan">${esc(x("qr_rescan"))}</button><button class="mini" data-act="qrclear">${esc(x("qr_clear"))}</button></div></div></div>`
     : `<div class="card qr scan"><div style="font-size:42px;line-height:1">📷</div><h3 style="margin-top:6px">${esc(x("qr_t"))}</h3><p class="sub" style="margin:4px 0 12px">${esc(x("qr_s"))}</p>
       <button class="btn coral sm" data-act="scan">${esc(x("qr_cam"))}</button><div style="height:8px"></div>
       <button class="btn ghost sm" data-act="sheet" data-v="qr">${esc(x("qr_demo"))}</button></div>`;
@@ -556,7 +561,8 @@ function planView() {
   const starts = pl.process.starts.length ? `<div class="pline">${esc(x("starts"))}</div><div>${pl.process.starts.map(([n, u, pt]) => `<span class="tag lav">${esc(n)} ${pt.toFixed(1)}</span>`).join("")}</div>` : "";
   const by = pl.prefs.by === "claude" ? t("by_claude") : t("by_rule");
   return `${header()}
-  <div class="backbar"><button data-act="back">${esc(x("back"))}</button></div>
+  <div class="backbar"><button data-act="back">${esc(x("back"))}</button>
+    ${S.qr ? `<button class="mini" style="margin-left:auto" data-act="qrchange">${esc(x("start_chg", { n: pname(S.qr) }))}</button>` : ""}</div>
   <div class="cands">${tabs}</div>
   <div class="card"><div class="eyebrow">${esc(t("plan_title"))}</div>
     <div style="font-weight:900;font-size:16.5px;line-height:1.45">${routeLine(stops)}</div>
@@ -565,7 +571,7 @@ function planView() {
       <div class="stat"><div class="v">${stops.length}</div><div class="l">${esc(t("stat_pieces"))}</div></div></div>
     <div style="margin-top:8px">${chip}${pl.prefs.tops.map((v) => `<span class="tag coral">${esc(v)}</span>`).join("")}<span class="tag sky">${esc(lab("who2", S.choice.who))}</span></div></div>
   <div class="map" id="map-plan"></div><div style="height:12px"></div>
-  <div class="card"><h2>🤖 ${esc(x("why"))}</h2>${pl.aiReason && c.picked ? `<div class="aiq">💬 ${esc(pl.aiReason)}</div>` : ""}<div style="margin-top:8px">${reasons}${notes}</div>
+  <div class="card"><h2>🤖 ${esc(x("why"))}</h2>${understood(pl)}${pl.aiReason && c.picked ? `<div class="aiq">💬 ${esc(pl.aiReason)}</div>` : ""}<div style="margin-top:8px">${reasons}${notes}</div>
     <details class="proc"><summary>${esc(t("ai_process"))}</summary>
       <div class="pline">${esc(t("proc_1", { t: pl.prefs.tops.join(" · ") }))}</div><div class="small muted">${esc(t("proc_1b", { by }))}</div>${ws}
       ${pl.prefs.effects.length ? `<div style="margin-top:6px">${pl.prefs.effects.map(([q, e]) => `<span class="tag butter">‘${esc(q)}’ → ${esc(e)}</span>`).join("")}</div>` : ""}
@@ -577,6 +583,17 @@ function planView() {
   <div class="card"><h2>${esc(x("course"))}</h2><div class="tl">${tl.join("")}</div>
     ${c.legShops.some((v) => v.length) ? `<p class="sub" style="margin-top:8px">${esc(t("shops_title"))}</p>` : ""}</div>
   <button class="btn coral" data-act="startwalk">${esc(x("start_btn"))}</button><div style="height:10px"></div>`;
+}
+
+/* 'AI에게 하고 싶은 말'을 어떻게 알아들었는지 */
+function understood(pl) {
+  const p = pl.prefs || {};
+  if (!S.choice.free || !(p.summary || (p.must || []).length || (p.avoid || []).length || (p.effects || []).length)) return "";
+  const parts = [];
+  if ((p.must || []).length) parts.push(`<span class="tag coral">📍 ${esc(x("u_must"))}: ${p.must.map(esc).join(", ")}</span>`);
+  if ((p.avoid || []).length) parts.push(`<span class="tag">🚫 ${esc(x("u_avoid"))}: ${p.avoid.map(esc).join(", ")}</span>`);
+  return `<div class="aiq" style="background:#F4F0FF;border-color:#DCD2FF">🧠 <b>${esc(p.by === "claude" ? x("u_t_ai") : x("u_t_rule"))}</b><br>
+    ${p.summary ? esc(p.summary) : `‘${esc(S.choice.free)}’`}${parts.length ? `<div style="margin-top:6px">${parts.join("")}</div>` : ""}</div>`;
 }
 
 /* ------------------------------------------------------------------ 3) 걷기 */
@@ -754,6 +771,10 @@ function doneView() {
     <div class="pline">${esc(x("pc_pick"))}</div>
     <div class="thumbs">${thumbs}<label class="upload" style="width:68px;height:68px;justify-content:center;padding:0;font-size:24px">+<input type="file" accept="image/*" data-act="pcupload"></label></div>
     ${photos.length || S.pcPhoto ? "" : `<p class="sub">${esc(x("pc_none"))}</p>`}
+    <div class="pline" style="margin-top:12px">${esc(x("pc_write"))}</div>
+    <textarea id="pctext" rows="5" class="pcta">${esc(S.pcText != null ? S.pcText : pcDefault())}</textarea>
+    <div class="small muted" style="margin:4px 0 6px">${esc(x("pc_write_s"))}</div>
+    <div class="row" style="gap:6px"><button class="mini coral" data-act="pcai">${esc(x("pc_ai"))}</button><button class="mini" data-act="pcreset">${esc(x("pc_reset"))}</button></div>
     <div style="margin-top:10px"><canvas class="pc" id="pc"></canvas></div>
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:10px"><button class="btn coral sm" data-act="pcdl">${esc(x("pc_dl"))}</button><button class="btn ghost sm" data-act="pcshare">${esc(x("pc_share"))}</button></div>
     <p class="sub" style="margin-top:6px">${esc(x("pc_hold"))}</p><img id="pcimg" style="display:none;width:100%;margin-top:8px;border-radius:10px" alt=""></div>
@@ -772,6 +793,13 @@ function endShops(d) {
     <div class="map" id="map-end" style="height:260px;margin:8px 0"></div>${sec}</div>`;
 }
 const GROUP_EMOJI = { cafe: "☕", dessert: "🍰", meal: "🍚", exp: "🎨" };
+function pcDefault() {
+  const w = S.walk, d = S.done;
+  if (!w || !d) return "";
+  const memo = w.arrived.map((p) => w.memos[p]).filter(Boolean)[0];
+  return [d.story.title, x("pc_msg1", { n: w.arrived.length, km: d.stats.km.toFixed(1) }), memo ? `“${memo}”` : "", x("pc_msg2")].filter(Boolean).join("\n");
+}
+let pcTimer = null;
 async function drawCard() {
   const cv = $("#pc");
   if (!cv || !S.done) return;
@@ -783,7 +811,7 @@ async function drawCard() {
     lang: lang(), photo: S.pcPhoto, place: pname(photoPid || last), kind: P(photoPid || last).kind,
     date: nowDate(), rain: C.rain, cold: C.cold, hot: C.hot, season: C.season,
     greet: x("pc_greet"), to: x("pc_to"), from: x("pc_from"),
-    lines: [d.story.title, x("pc_msg1", { n: w.arrived.length, km: d.stats.km.toFixed(1) }), memo ? `“${memo}”` : "", x("pc_msg2")].filter(Boolean),
+    lines: (S.pcText != null ? S.pcText : pcDefault()).split("\n").map((l) => l.trim()).filter(Boolean),
     stampSvg: B.pins.inner[P(photoPid || last).kind], stampColor: B.pins.color[P(photoPid || last).kind],
   });
 }
@@ -878,12 +906,20 @@ function renderSheet() {
       <div class="pline">${esc(x("set_m"))}</div><div class="chips wrap"><button class="chip sm ${!DEMO.month ? "on" : ""}" data-act="dm" data-v="">${esc(x("now"))}</button>${[1, 4, 7, 10].map((m) => `<button class="chip sm ${DEMO.month === m ? "on" : ""}" data-act="dm" data-v="${m}">${m}</button>`).join("")}</div>
       <div style="height:14px"></div><button class="btn" data-act="demoapply">${esc(x("apply_btn"))}</button>`;
   } else if (S.sheet === "qr") {
-    const groups = B.pins.legend.filter((k) => k !== "start").map((k) => {
-      const ps = B.places.filter((p) => p.kind === k && p.id !== "campus");
-      return ps.length ? `<div class="pline">${icon(k, 16)} ${esc(lab("icon", k))}</div><div class="chips wrap">${ps.map((p) => `<button class="chip sm ${S.qr === p.id ? "on" : ""}" data-act="qrpick" data-v="${p.id}" data-name="${esc(p.name)}">${esc(p.name)}</button>`).join("")}</div>` : "";
+    /* 경주시 어디에 있는지 권역별로 접어 두고, 펼치면 절 이름이 나와요. 이야기가 준비된 곳이 먼저. */
+    const areas = (B.areas || []).map((a) => {
+      const ps = B.places.filter((p) => p.area === a.id && p.id !== "campus")
+        .sort((p, q) => (q.story - p.story) || p.name.localeCompare(q.name, "ko"));
+      if (!ps.length) return "";
+      const on = ps.some((p) => p.id === S.qr);
+      return `<details class="area" data-area="${a.id}" ${on ? "open" : ""}><summary><span>${a.emoji} ${esc(a.name)}</span><span class="cnt">${ps.length}</span></summary>
+        <div class="chips wrap">${ps.map((p) => `<button class="chip sm ${S.qr === p.id ? "on" : ""} ${p.story ? "st" : ""}" data-act="qrpick" data-v="${p.id}"
+          data-q="${esc((p.name + " " + (p.town || "")).toLowerCase())}">${p.story ? "✨ " : ""}${esc(p.name)}${p.town ? `<small>${esc(p.town)}</small>` : ""}</button>`).join("")}</div></details>`;
     }).join("");
     body = `<h2>📷 ${esc(x("qr_list"))}</h2><button class="btn coral sm" data-act="scan">${esc(x("qr_cam"))}</button><div id="qrcam"></div>
-      <input type="text" id="qrq" placeholder="🔍 ${esc(x("qr_search"))}" style="margin-top:10px">${groups}`;
+      <input type="text" id="qrq" placeholder="🔍 ${esc(x("qr_search"))}" style="margin-top:10px" autocomplete="off">
+      <div class="small muted" style="margin:6px 2px">${esc(x("qr_area_s"))}</div><div id="qrareas">${areas}</div>
+      <p class="sub" id="qrnone" style="display:none">${esc(x("qr_none"))}</p>`;
   } else if (S.sheet === "stop") {
     body = `<h2>${esc(x("stop_q"))}</h2>${B.opts.stop.map((k) => `<button class="btn ghost" style="margin-bottom:8px;justify-content:flex-start" data-act="stopwhy" data-v="${esc(k)}">${esc(lab("stop", k))}</button>`).join("")}`;
   }
@@ -1041,6 +1077,16 @@ document.addEventListener("click", (e) => {
       return;
     }
     case "scan": QRScan.open(); return;
+    case "qrclear": S.qr = null; S.plan = null; break;
+    case "qrchange": S.plan = null; S.screen = "setup"; S.sheet = "qr"; scrollTop(); render(); renderSheet(); return;
+    case "pcai": {
+      const tx = (S.pcText != null ? S.pcText : pcDefault()).trim();
+      if (!tx) { toast(x("pc_empty")); return; }
+      const w = S.walk;
+      ask("pcpolish", { text: tx, place: pname(w.arrived[w.arrived.length - 1]), n: w.arrived.length });
+      return;
+    }
+    case "pcreset": S.pcText = null; break;
     case "qrpick": S.qr = v; S.sheet = null; QRScan.close(); S.plan = null; renderSheet(); break;
     case "fix": S.fixOn = !S.fixOn; break;
     case "sheet": S.sheet = v; demoDraft = Object.assign({}, DEMO); renderSheet(); return;
@@ -1064,6 +1110,19 @@ document.addEventListener("input", (e) => {
     $("#timeend").textContent = x("end_at", { t: hhmm(en > ss ? clockAdd(ss, -20) : en) });
   } else if (e.target.id === "free") S.choice.free = e.target.value;
   else if (e.target.id === "memo" && S.walk) S.walk.memos[S.walk.stops[S.walk.idx]] = e.target.value;
+  else if (e.target.id === "qrq") {   // 절 이름·동네로 찾기: 맞는 권역만 펼쳐요
+    const q = e.target.value.trim().toLowerCase();
+    let any = false;
+    document.querySelectorAll("#qrareas details.area").forEach((d) => {
+      let n = 0;
+      d.querySelectorAll("[data-q]").forEach((b) => { const ok = !q || b.dataset.q.includes(q); b.style.display = ok ? "" : "none"; if (ok) n++; });
+      d.style.display = n ? "" : "none";
+      d.open = !!q && n > 0;
+      if (n) any = true;
+    });
+    const no = $("#qrnone"); if (no) no.style.display = any ? "none" : "";
+  }
+  else if (e.target.id === "pctext") { S.pcText = e.target.value; clearTimeout(pcTimer); pcTimer = setTimeout(drawCard, 250); }
 });
 document.addEventListener("change", (e) => {
   if (e.target.id === "trange") render();

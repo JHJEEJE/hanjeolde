@@ -17,6 +17,8 @@ import math
 import re
 
 import i18n as I
+import streamlit as st
+
 import logic as L
 
 THEMES = ["history", "architecture", "buddha_art", "photo", "nature", "rest", "people", "kids", "temple_life"]
@@ -53,7 +55,7 @@ FREE_RULES = [  # (정규식, 효과 키) — 한국어·영어·일본어·중�
     (r"사진|인생샷|예쁜|포토|노을|photo|picture|instagram|写真|映え|拍照|照片", "photo"),
     (r"카페|커피|디저트|빵|찻집|차 한잔|cafe|coffee|dessert|tea|カフェ|コーヒー|咖啡|甜点|茶", "cafe"),
     (r"밥|점심|저녁|맛집|식사|배고|먹|lunch|dinner|food|eat|restaurant|ご飯|ランチ|食事|午饭|吃饭|美食", "meal"),
-    (r"오르막|계단|산길 싫|힘들|무릎|다리 아|uphill|stairs|no hill|knee|坂|階段|上り坂|台阶|爬山|上坡", "no_hill"),
+    (r"오르막|계단|산길 싫|힘들|무릎|다리.{0,2}아|uphill|stairs|no hill|knee|坂|階段|上り坂|台阶|爬山|上坡", "no_hill"),
     (r"조용|한적|사람 없|붐비지|quiet|calm|peaceful|静か|安静|人少", "quiet"),
     (r"아이|애기|아기|아들|딸|어린이|kid|child|children|子ども|子供|孩子|小孩", "kids"),
     (r"선덕|여왕|김유신|원효|최치원|이차돈|queen|king|seondeok|女王|王", "people"),
@@ -109,31 +111,73 @@ def parse_free_text(text: str, places, data) -> dict:
         m = re.search(pat, low)
         if m and eff not in [e for _, e in out["effects"]]:
             out["effects"].append((m.group(0), eff))
+    out["avoid"] = []
     for pid in places.index:
         if pid == "campus":
             continue
-        if any(a.lower() in low for a in _aliases(pid, places, data)):
+        hit = next((a for a in _aliases(pid, places, data) if a.lower() in low), None)
+        if not hit:
+            continue
+        after = low[low.find(hit.lower()) + len(hit): low.find(hit.lower()) + len(hit) + 8]
+        if re.search(r"빼|말고|싫|제외|안 가|안가|말구|skip|except|avoid|not|以外|除了|不要", after):
+            out["avoid"].append(pid)
+        else:
             out["must"].append(pid)
     return out
 
 
-def parse_free_text_llm(text: str) -> dict | None:
-    """키가 있으면 Claude(Haiku)가 자유 입력을 해석해요. 실패하면 None → 규칙 해석만 사용."""
-    if not text or not L.llm_ready():
-        return None
-    effects = sorted({e for _, e in FREE_RULES})
+EFFECT_DESC = {"photo": "사진 명소", "cafe": "카페·디저트에 들르고 싶음", "meal": "밥·식사", "no_hill": "오르막·계단 싫음, 다리 아픔",
+               "quiet": "조용하고 한적한 곳", "kids": "아이와 함께", "people": "역사 인물(선덕여왕·김유신 등)", "architecture": "탑·건축",
+               "buddha_art": "불상·마애불", "nature": "숲·자연·산책", "indoor": "실내·비 피하기·박물관", "short": "짧게·빨리",
+               "history": "역사 이야기", "temple_life": "스님·사찰 체험", "rest": "쉬고 싶음·힐링"}
+
+
+def match_place_names(names, places, data) -> list:
+    """Claude가 돌려준 장소 이름 → 장소 id (이름이 겹치면 이야기가 있는 곳 먼저)"""
+    out = []
+    for nm in names or []:
+        key = str(nm).replace(" ", "")
+        if len(key) < 2:
+            continue
+        hits = [pid for pid in places.index if pid != "campus" and any(
+            key in a.replace(" ", "") or a.replace(" ", "") in key for a in _aliases(pid, places, data) if len(a.replace(" ", "")) >= 2)]
+        hits.sort(key=lambda p: (L.is_extra(p), len(str(places.loc[p, "name"]))))
+        if hits and hits[0] not in out:
+            out.append(hits[0])
+    return out
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _llm_parse(text: str) -> dict | None:
+    eff_list = "\n".join(f"- {k}: {v}" for k, v in EFFECT_DESC.items())
     res = L.call_claude([{"role": "user", "content": text}],
-                        "사용자가 경주 사찰 도보 순례에 대해 자유롭게 쓴 요청이야. 아래 효과 목록에서 해당하는 것만 골라 "
-                        f"JSON 한 줄로만 답해: {{\"effects\": [[\"근거가 된 구절\", \"효과\"], ...]}}. 효과 목록: {effects}",
-                        model=L._secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=250)
+                        "사용자가 경주 사찰 도보 순례 앱의 'AI에게 하고 싶은 말' 칸에 쓴 글이야. 무엇을 원하는지 파악해서 JSON 한 줄로만 답해.\n"
+                        '형식: {"effects": [["근거 구절", "효과키"]], "want": ["꼭 가고 싶다고 한 장소 이름"], '
+                        '"avoid": ["빼 달라거나 싫다고 한 장소 이름"], "summary": "AI가 이해한 요청 한 문장(사용자 언어로)"}\n'
+                        "효과키는 아래 목록에서만 골라. 장소 이름은 사용자가 쓴 그대로. 없으면 빈 배열.\n" + eff_list,
+                        model=L._secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=350)
     if not res:
         return None
     t = L._text_of(res)
     try:
-        d = json.loads(t[t.find("{"): t.rfind("}") + 1])
-        return {"effects": [(str(q)[:30], e) for q, e in d.get("effects", []) if e in effects]}
+        return json.loads(t[t.find("{"): t.rfind("}") + 1])
     except Exception:
         return None
+
+
+def parse_free_text_llm(text: str, places=None, data=None) -> dict | None:
+    """키가 있으면 Claude(Haiku)가 자유 입력의 뜻(효과·꼭 갈 곳·뺄 곳)을 파악해요. 실패하면 None → 규칙 해석만."""
+    if not text or not L.llm_ready():
+        return None
+    d = _llm_parse(text.strip()[:400])
+    if not d:
+        return None
+    out = {"effects": [(str(q)[:30], e) for q, e in d.get("effects", []) if e in EFFECT_DESC],
+           "summary": str(d.get("summary", ""))[:160], "want": [], "avoid": []}
+    if places is not None:
+        out["want"] = match_place_names(d.get("want"), places, data)
+        out["avoid"] = [p for p in match_place_names(d.get("avoid"), places, data) if p not in out["want"]]
+    return out
 
 
 def understand(choice: dict, places, data, use_llm: bool = True) -> dict:
@@ -155,11 +199,16 @@ def understand(choice: dict, places, data, use_llm: bool = True) -> dict:
              "speed": adj.get("speed", 1.0), "max_km": level["max_km"] * adj.get("km", 1.0), "leg_km": level["leg"],
              "parsed_by": "rule"}
     ft = parse_free_text(choice.get("free", ""), places, data)
-    llm = parse_free_text_llm(choice.get("free", "")) if use_llm else None
+    llm = parse_free_text_llm(choice.get("free", ""), places, data) if use_llm else None
     effects = ft["effects"]
-    if llm and llm["effects"]:
+    avoid = list(ft.get("avoid", []))
+    if llm:
         effects = llm["effects"] + [e for e in effects if e[1] not in {x for _, x in llm["effects"]}]
+        ft["must"] = llm["want"] + [p for p in ft["must"] if p not in llm["want"] and p not in llm["avoid"]]
+        avoid = list(dict.fromkeys(llm["avoid"] + avoid))
+        prefs["summary"] = llm["summary"]
         prefs["parsed_by"] = "claude"
+    prefs["avoid"] = avoid
     for q, eff in effects:
         for k, v in EFFECT_W.get(eff, {}).items():
             w[k] += v
@@ -343,6 +392,8 @@ def search(start: str, choice: dict, prefs: dict, cond: dict, places, data, elev
         if pid in (start, "campus"):
             continue
         km = L.km_between(places, start, pid)
+        if pid in prefs.get("avoid", []):
+            continue
         if km <= radius or (pid in prefs["must"] and km <= 6):
             util[pid] = place_utility(pid, prefs, cond, data, to_sunset)
     ranked = sorted(util, key=lambda p: -util[p][0])

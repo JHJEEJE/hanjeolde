@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import io
 import os
+import re
 from datetime import datetime
 
 import i18n as I
@@ -327,6 +328,32 @@ def polish(st: dict, lang) -> dict | None:
     if len(lines) < 3:
         return None
     return {"title": lines[0].strip("# "), "paras": lines[1:]}
+
+
+def polish_postcard(text: str, place: str, n: int, lang: str) -> tuple[str, str]:
+    """엽서에 쓸 말을 Claude가 다듬어요. (다듬은 글, 'claude'|'rule')
+    사용자가 쓴 내용·말투는 그대로 두고, 새 사실은 더하지 않아요. 키가 없으면 띄어쓰기·문장부호만."""
+    text = (text or "").strip()[:600]
+    if L.llm_ready() and text:
+        res = L.call_claude([{"role": "user", "content": f"[오늘 마지막으로 들른 곳: {place} · 들른 곳 {n}곳]\n\n{text}"}],
+                            "너는 경주 사찰 순례를 마친 사람의 엽서 문구를 다듬어 주는 도우미야. "
+                            "규칙: 1) 사용자가 쓴 내용과 사실, 말투(반말/존댓말)는 그대로 지켜. 2) 새 사실·장소·일정을 지어내지 마. "
+                            "3) 따옴표 안의 말은 바꾸지 마. 4) 엽서에 들어가게 짧게: 최대 6줄, 한 줄에 한 문장. "
+                            "5) 따뜻하고 자연스럽게, 이모지는 많아야 1개. 6) 설명 없이 다듬은 엽서 문장만 답해. "
+                            f"{I.LLM_LANG[lang]}로 써.",
+                            model=L._secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=400)
+        t = L._text_of(res) if res else ""
+        lines = [x.strip().strip("\"'") if not x.strip().startswith(("“", '"')) else x.strip() for x in t.split("\n") if x.strip()]
+        if lines:
+            return "\n".join(lines[:7]), "claude"
+    out = []
+    for ln in text.split("\n"):
+        ln = re.sub(r"\s+", " ", ln).strip()
+        ln = re.sub(r"\s+([,.!?。、！？])", r"\1", ln)
+        ln = re.sub(r"([.!?])(?=[^\s.!?\"”'’)])", r"\1 ", ln)
+        if ln:
+            out.append(ln)
+    return "\n".join(out[:7]), "rule"
 
 
 # ---------------------------------------------------------------- 엽서 PNG

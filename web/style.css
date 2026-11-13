@@ -304,3 +304,18 @@ details.dirs .sn{flex:none;width:18px;height:18px;border-radius:50%;background:#
 .navnear{position:absolute;left:0;right:0;bottom:0;z-index:1100;max-height:55%;overflow:auto;background:#fff;border-radius:22px 22px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -8px 24px rgba(0,0,0,.18)}
 
 .grp{margin-top:12px}.grph{font-weight:900;font-size:15px;margin-bottom:2px}
+
+.qrchg{margin-top:10px;padding-top:10px;border-top:1px dashed #EADFD2}
+.pcta{width:100%;box-sizing:border-box;border:1.5px solid #EADFD2;border-radius:12px;padding:10px 12px;font:16px/1.6 "Nanum Pen Script","Gaegu",cursive,sans-serif;background:#FFFDF9;color:#4B3F3A;resize:vertical}
+.pcta:focus{outline:none;border-color:var(--coral,#E9785A)}
+
+/* QR 고르기: 권역별 접기 */
+details.area{border:1px solid #EFE4DA;border-radius:14px;margin:8px 0;background:#FFFCF8;overflow:hidden}
+details.area>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;font-weight:800;font-size:15px}
+details.area>summary::-webkit-details-marker{display:none}
+details.area>summary::after{content:"▾";margin-left:8px;color:#B9A89A;transition:transform .2s}
+details.area[open]>summary::after{transform:rotate(180deg)}
+details.area>summary .cnt{margin-left:auto;font-size:12px;color:#8C7B6E;background:#F3EAE1;border-radius:99px;padding:2px 9px}
+details.area .chips{padding:0 12px 12px}
+details.area .chip small{display:block;font-size:10.5px;font-weight:600;color:#9A8A7E;margin-top:1px}
+details.area .chip.st{border-color:#F2C6B4}
