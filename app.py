@@ -77,7 +77,7 @@ def admin_panel():
     kv, kn = L.secret_status("kma")
     tv, tn = L.secret_status("tour")
     gv, gn = SH.google_key()
-    st.caption("🤖 Claude: " + ("연결됨 ✅" if L.llm_ready() else "키 없음 → 규칙 AI"))
+    st.caption("🤖 AI 문장: " + {"claude": "Claude 연결됨 ✅", "gemini": "Gemini(무료) 연결됨 ✅"}.get(L.llm_provider(), "키 없음 → 규칙 AI"))
     st.caption("🌦️ 기상청: " + ("있음 ✅" if kv else f"없음 · {kn}"))
     st.caption("🏪 TourAPI: " + ("있음 ✅" if tv else f"없음 · {tn}"))
     st.caption("⭐ Google Places: " + ("있음 ✅" if gv else "없음"))

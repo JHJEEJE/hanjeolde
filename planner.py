@@ -207,7 +207,7 @@ def understand(choice: dict, places, data, use_llm: bool = True) -> dict:
         ft["must"] = llm["want"] + [p for p in ft["must"] if p not in llm["want"] and p not in llm["avoid"]]
         avoid = list(dict.fromkeys(llm["avoid"] + avoid))
         prefs["summary"] = llm["summary"]
-        prefs["parsed_by"] = "claude"
+        prefs["parsed_by"] = L.llm_provider() or "claude"
     prefs["avoid"] = avoid
     for q, eff in effects:
         for k, v in EFFECT_W.get(eff, {}).items():
@@ -602,6 +602,17 @@ def agent_pick(cands, prefs, cond, choice, places, data, budget, lang) -> dict |
               f'{{"plan_id": "P1", "reason": "고른 이유 2문장, {I.LLM_LANG[lang]}로"}}')
     msgs = [{"role": "user", "content": f"일행 {choice.get('who')}, {choice.get('minutes')}분, 걷기 {choice.get('level')}, "
                                          f"관심사 {choice.get('interests')}, 요청: {choice.get('free') or '없음'}"}]
+    if L.llm_provider() == "gemini":   # 도구 대신 후보·조건을 한 번에 건네요
+        msgs[0]["content"] += ("\n\n[후보 순례길]\n" + json.dumps(run("find_routes", {}), ensure_ascii=False) +
+                               "\n\n[조건]\n" + json.dumps(run("get_conditions", {}), ensure_ascii=False))
+        res = L.call_claude(msgs, system.replace("도구로 후보와 조건을 확인하고", "주어진 후보와 조건을 보고"), max_tokens=500)
+        t = L._text_of(res) if res else ""
+        try:
+            d = json.loads(t[t.find("{"): t.rfind("}") + 1])
+            chosen = next(c for c in cands if c["id"] == d["plan_id"])
+            return {"plan": chosen, "reason": str(d.get("reason", ""))[:300]}
+        except Exception:
+            return None
     for _ in range(5):
         res = L.call_claude(msgs, system, tools=tools, max_tokens=700)
         if not res:

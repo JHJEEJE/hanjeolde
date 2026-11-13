@@ -34,7 +34,7 @@ const TX = {
     qr_demo: "🧭 시연: QR 찍은 사찰 고르기",
     qr_here: "📍 QR을 찍은 곳",
     qr_from: "여기서 시작해 사찰 1~3곳을 더 잇는 순례길을 짜 드려요.",
-    qr_other: "다른 사찰 QR", u_t_ai: "Claude가 이렇게 이해했어요", u_t_rule: "이렇게 이해했어요 (규칙 AI)", u_must: "꼭 넣을 곳", u_avoid: "뺄 곳", qr_area_s: "경주시 어느 쪽인지 눌러서 펼쳐요. ✨는 이야기가 준비된 곳이에요.", qr_none: "찾는 절이 없어요. 이름을 다시 확인해 주세요.", qr_change: "🔄 절 바꾸기", qr_rescan: "📷 다시 찍기", qr_clear: "선택 취소", qr_wrong: "잘못 고른 절이면 바꿔 주세요.", start_chg: "📍 {n}에서 출발 · 바꾸기", pc_write: "✍️ 엽서에 쓸 말", pc_write_s: "직접 고쳐 쓰면 엽서에 바로 바뀌어요. 7줄까지 들어가요.", pc_ai: "✨ AI로 다듬기", pc_reset: "↺ 처음 문장", pc_aidone: "AI가 다듬었어요. 마음에 안 들면 다시 고쳐 써도 돼요.", pc_noai: "AI 키가 없어 띄어쓰기·문장부호만 다듬었어요.", pc_empty: "먼저 엽서에 쓸 말을 적어 주세요.",
+    qr_other: "다른 사찰 QR", u_t_ai: "AI가 이렇게 이해했어요", u_t_rule: "이렇게 이해했어요 (규칙 AI)", u_must: "꼭 넣을 곳", u_avoid: "뺄 곳", qr_area_s: "경주시 어느 쪽인지 눌러서 펼쳐요. ✨는 이야기가 준비된 곳이에요.", qr_none: "찾는 절이 없어요. 이름을 다시 확인해 주세요.", qr_change: "🔄 절 바꾸기", qr_rescan: "📷 다시 찍기", qr_clear: "선택 취소", qr_wrong: "잘못 고른 절이면 바꿔 주세요.", start_chg: "📍 {n}에서 출발 · 바꾸기", pc_write: "✍️ 엽서에 쓸 말", pc_write_s: "직접 고쳐 쓰면 엽서에 바로 바뀌어요. 7줄까지 들어가요.", pc_ai: "✨ AI로 다듬기", pc_reset: "↺ 처음 문장", pc_aidone: "AI가 다듬었어요. 마음에 안 들면 다시 고쳐 써도 돼요.", pc_noai: "AI 키가 없어 띄어쓰기·문장부호만 다듬었어요.", pc_empty: "먼저 엽서에 쓸 말을 적어 주세요.",
     qr_need: "먼저 사찰 QR을 찍어 주세요",
     qr_nocam: "이 브라우저는 앱 안에서 QR을 못 읽어요. 휴대폰 기본 카메라로 사찰 QR을 찍으면 이 앱이 그 사찰로 바로 열려요.",
     qr_scanning: "QR을 네모 안에 맞춰 주세요",
@@ -66,7 +66,7 @@ const TX = {
     pc: "📮 순례 엽서", pc_s: "사진을 골라 엽서로 만들어요", pc_pick: "엽서에 넣을 사진", pc_none: "사진이 없으면 그림 엽서로 만들어 드려요", pc_dl: "📥 엽서 저장하기", pc_share: "공유하기",
     pc_to: "To. 다음의 나에게", pc_from: "From. 한 절 더 순례자", pc_greet: "경주에서,", pc_msg1: "오늘은 {n}곳, {km}km를 걸었어.", pc_msg2: "다음엔, 한 절 더.",
     pc_hold: "저장이 안 되면 이미지를 길게 눌러 저장하세요",
-    story_by_ai: "Claude가 다듬은 이야기", story_rule: "오늘 남긴 기록으로 엮은 이야기",
+    story_by_ai: "AI가 다듬은 이야기", story_rule: "오늘 남긴 기록으로 엮은 이야기",
     cmp: "상황별 AI 추천 비교", cmp_s: "같은 취향이라도 시각·날씨에 따라 AI가 고르는 길이 달라져요.", cmp_go: "지금 취향으로 비교해 보기",
     cmp_base: "기준", cmp_left: "쓸 수 있는 시간 {m}분 · 일몰 {s}", cmp_changed: "맑음과 달라요", cmp_rules: "AI가 지키는 규칙",
     rule_rain: "☔ 비 → 실내 마무리 가산, 오르막 감점", rule_cold: "🥶 영하 → 1~2곳만, 따뜻한 실내", rule_hot: "🥵 폭염 → 그늘·숲길 가산, 오르막 감점", rule_sun: "🌇 해 질 녘 → 일몰 20분 전에 끝나게",
@@ -109,7 +109,7 @@ const TX = {
     qr_demo: "🧭 Demo: pick the scanned temple",
     qr_here: "📍 Where you scanned",
     qr_from: "Starts here and links 1–3 more temples on foot.",
-    qr_other: "Other temple QR", u_t_ai: "How Claude understood you", u_t_rule: "How we understood you (rule AI)", u_must: "Must include", u_avoid: "Skip", qr_area_s: "Tap an area of Gyeongju to open it. ✨ = stories ready.", qr_none: "No match. Check the name.", qr_change: "🔄 Change temple", qr_rescan: "📷 Scan again", qr_clear: "Clear", qr_wrong: "Picked the wrong temple? Change it here.", start_chg: "📍 Starting at {n} · change", pc_write: "✍️ Your message", pc_write_s: "Edit it and the postcard updates. Up to 7 lines fit.", pc_ai: "✨ Polish with AI", pc_reset: "↺ Original text", pc_aidone: "AI polished it. Feel free to edit again.", pc_noai: "No AI key, so only spacing and punctuation were tidied.", pc_empty: "Write your message first.",
+    qr_other: "Other temple QR", u_t_ai: "How the AI understood you", u_t_rule: "How we understood you (rule AI)", u_must: "Must include", u_avoid: "Skip", qr_area_s: "Tap an area of Gyeongju to open it. ✨ = stories ready.", qr_none: "No match. Check the name.", qr_change: "🔄 Change temple", qr_rescan: "📷 Scan again", qr_clear: "Clear", qr_wrong: "Picked the wrong temple? Change it here.", start_chg: "📍 Starting at {n} · change", pc_write: "✍️ Your message", pc_write_s: "Edit it and the postcard updates. Up to 7 lines fit.", pc_ai: "✨ Polish with AI", pc_reset: "↺ Original text", pc_aidone: "AI polished it. Feel free to edit again.", pc_noai: "No AI key, so only spacing and punctuation were tidied.", pc_empty: "Write your message first.",
     qr_need: "Please scan a temple QR first",
     qr_nocam: "This browser can't read QR inside the app. Scan the temple QR with your phone camera and the app opens at that temple.",
     qr_scanning: "Fit the QR inside the square",
@@ -141,7 +141,7 @@ const TX = {
     pc: "📮 Pilgrimage postcard", pc_s: "Pick a photo and turn it into a postcard", pc_pick: "Photo for the postcard", pc_none: "No photo? We'll paint an illustrated card", pc_dl: "📥 Save postcard", pc_share: "Share",
     pc_to: "To. my future self", pc_from: "From. a Han Jeol Deo walker", pc_greet: "From Gyeongju,", pc_msg1: "Today I walked {km} km through {n} places.", pc_msg2: "Next time, one more temple.",
     pc_hold: "If saving fails, long-press the image to save it",
-    story_by_ai: "Polished by Claude", story_rule: "Woven from what you left today",
+    story_by_ai: "Polished by AI", story_rule: "Woven from what you left today",
     cmp: "AI routes by situation", cmp_s: "Same taste, different time and weather — AI picks different routes.", cmp_go: "Compare with my choices",
     cmp_base: "Based on", cmp_left: "{m} min available · sunset {s}", cmp_changed: "differs from sunny", cmp_rules: "Rules AI follows",
     rule_rain: "☔ Rain → indoor ending bonus, climbs penalized", rule_cold: "🥶 Below zero → only 1–2 stops, warm indoors", rule_hot: "🥵 Heatwave → shade bonus, climbs penalized", rule_sun: "🌇 Late day → finish 20 min before sunset",
@@ -184,7 +184,7 @@ const TX = {
     qr_demo: "🧭 デモ：QRを読んだ寺を選ぶ",
     qr_here: "📍 QRを読んだ場所",
     qr_from: "ここから始めて、さらに1〜3か所の寺を歩いてつなぎます。",
-    qr_other: "別の寺のQR", u_t_ai: "Claudeはこう理解しました", u_t_rule: "こう理解しました（ルールAI）", u_must: "必ず入れる", u_avoid: "外す", qr_area_s: "慶州のエリアを押すと開きます。✨は物語がある場所です。", qr_none: "見つかりません。名前を確認してください。", qr_change: "🔄 寺を変える", qr_rescan: "📷 もう一度読む", qr_clear: "選択を消す", qr_wrong: "選んだ寺が違うときはここで変えられます。", start_chg: "📍 {n}から出発 · 変える", pc_write: "✍️ はがきのメッセージ", pc_write_s: "書き直すとはがきにすぐ反映されます。7行まで入ります。", pc_ai: "✨ AIで整える", pc_reset: "↺ 最初の文", pc_aidone: "AIが整えました。気に入らなければ書き直せます。", pc_noai: "AIキーがないので、空白と句読点だけ整えました。", pc_empty: "先にメッセージを書いてください。",
+    qr_other: "別の寺のQR", u_t_ai: "AIはこう理解しました", u_t_rule: "こう理解しました（ルールAI）", u_must: "必ず入れる", u_avoid: "外す", qr_area_s: "慶州のエリアを押すと開きます。✨は物語がある場所です。", qr_none: "見つかりません。名前を確認してください。", qr_change: "🔄 寺を変える", qr_rescan: "📷 もう一度読む", qr_clear: "選択を消す", qr_wrong: "選んだ寺が違うときはここで変えられます。", start_chg: "📍 {n}から出発 · 変える", pc_write: "✍️ はがきのメッセージ", pc_write_s: "書き直すとはがきにすぐ反映されます。7行まで入ります。", pc_ai: "✨ AIで整える", pc_reset: "↺ 最初の文", pc_aidone: "AIが整えました。気に入らなければ書き直せます。", pc_noai: "AIキーがないので、空白と句読点だけ整えました。", pc_empty: "先にメッセージを書いてください。",
     qr_need: "まず寺のQRを読み取ってください",
     qr_nocam: "このブラウザはアプリ内でQRを読めません。スマホのカメラで寺のQRを読むと、その寺でアプリが開きます。",
     qr_scanning: "QRを枠の中に合わせてください",
@@ -216,7 +216,7 @@ const TX = {
     pc: "📮 巡礼はがき", pc_s: "写真を選んではがきにします", pc_pick: "はがきに入れる写真", pc_none: "写真がなければイラストのはがきにします", pc_dl: "📥 はがきを保存", pc_share: "共有",
     pc_to: "To. 未来のわたしへ", pc_from: "From. ハン・ジョル・ド巡礼者", pc_greet: "慶州より、", pc_msg1: "今日は{n}か所、{km}km歩いたよ。", pc_msg2: "次は、もう一寺。",
     pc_hold: "保存できないときは画像を長押しして保存してください",
-    story_by_ai: "Claudeが整えた物語", story_rule: "今日の記録から紡いだ物語",
+    story_by_ai: "AIが整えた物語", story_rule: "今日の記録から紡いだ物語",
     cmp: "状況別AIおすすめ比較", cmp_s: "同じ好みでも、時刻と天気でAIが選ぶ道が変わります。", cmp_go: "今の好みで比べる",
     cmp_base: "条件", cmp_left: "使える時間{m}分 · 日の入り{s}", cmp_changed: "晴れと違う", cmp_rules: "AIが守るルール",
     rule_rain: "☔ 雨 → 屋内で締めくくり加点、坂は減点", rule_cold: "🥶 氷点下 → 1〜2か所、暖かい屋内", rule_hot: "🥵 猛暑 → 木陰・森の道に加点", rule_sun: "🌇 夕方 → 日の入り20分前に終了",
@@ -259,7 +259,7 @@ const TX = {
     qr_demo: "🧭 演示：选择扫码的寺院",
     qr_here: "📍 扫码地点",
     qr_from: "从这里出发，步行再连起1~3座寺院。",
-    qr_other: "其他寺院二维码", u_t_ai: "Claude是这样理解的", u_t_rule: "这样理解（规则AI）", u_must: "一定要去", u_avoid: "不去", qr_area_s: "点开庆州的区域查看。✨表示已有故事。", qr_none: "没有找到，请确认名称。", qr_change: "🔄 换寺院", qr_rescan: "📷 重新扫码", qr_clear: "取消选择", qr_wrong: "选错寺院了？在这里更换。", start_chg: "📍 从{n}出发 · 更换", pc_write: "✍️ 明信片留言", pc_write_s: "修改后明信片会立即更新，最多7行。", pc_ai: "✨ 用AI润色", pc_reset: "↺ 原来的文字", pc_aidone: "AI已润色，不满意可以再改。", pc_noai: "没有AI密钥，只整理了空格和标点。", pc_empty: "请先写下留言。",
+    qr_other: "其他寺院二维码", u_t_ai: "AI是这样理解的", u_t_rule: "这样理解（规则AI）", u_must: "一定要去", u_avoid: "不去", qr_area_s: "点开庆州的区域查看。✨表示已有故事。", qr_none: "没有找到，请确认名称。", qr_change: "🔄 换寺院", qr_rescan: "📷 重新扫码", qr_clear: "取消选择", qr_wrong: "选错寺院了？在这里更换。", start_chg: "📍 从{n}出发 · 更换", pc_write: "✍️ 明信片留言", pc_write_s: "修改后明信片会立即更新，最多7行。", pc_ai: "✨ 用AI润色", pc_reset: "↺ 原来的文字", pc_aidone: "AI已润色，不满意可以再改。", pc_noai: "没有AI密钥，只整理了空格和标点。", pc_empty: "请先写下留言。",
     qr_need: "请先扫描寺院二维码",
     qr_nocam: "此浏览器无法在应用内识别二维码。用手机相机扫描寺院二维码，就会直接打开该寺院页面。",
     qr_scanning: "请把二维码对准方框",
@@ -291,7 +291,7 @@ const TX = {
     pc: "📮 巡礼明信片", pc_s: "选一张照片做成明信片", pc_pick: "放进明信片的照片", pc_none: "没有照片就做成插画明信片", pc_dl: "📥 保存明信片", pc_share: "分享",
     pc_to: "To. 未来的我", pc_from: "From. 再一寺巡礼者", pc_greet: "来自庆州，", pc_msg1: "今天走了{n}处、{km}公里。", pc_msg2: "下次，再多走一寺。",
     pc_hold: "无法保存时，请长按图片保存",
-    story_by_ai: "由Claude润色的故事", story_rule: "用今天的记录编成的故事",
+    story_by_ai: "由AI润色的故事", story_rule: "用今天的记录编成的故事",
     cmp: "不同情况下的AI推荐对比", cmp_s: "同样的喜好，时间和天气不同，AI选的路线也不同。", cmp_go: "用当前喜好来对比",
     cmp_base: "条件", cmp_left: "可用时间{m}分钟 · 日落{s}", cmp_changed: "与晴天不同", cmp_rules: "AI遵守的规则",
     rule_rain: "☔ 下雨 → 室内结束加分，上坡减分", rule_cold: "🥶 零下 → 只去1~2处，温暖室内", rule_hot: "🥵 酷暑 → 树荫林路加分，上坡减分", rule_sun: "🌇 傍晚 → 日落前20分钟结束",
@@ -559,7 +559,7 @@ function planView() {
   const ws = pl.prefs.weights.map(([k, v]) => `<div class="wbar"><span class="lb">${esc(k)}</span><div class="bg"><div class="fg" style="width:${Math.min(100, v * 250)}%"></div></div><span>${Math.round(v * 100)}%</span></div>`).join("");
   const pool = pl.process.pool.map(([id, n, u, th]) => `<tr><td>${icon(P(id).kind, 15)} ${esc(n)}</td><td style="text-align:right">${u.toFixed(2)}</td><td>&nbsp;${esc(th || "-")}</td></tr>`).join("");
   const starts = pl.process.starts.length ? `<div class="pline">${esc(x("starts"))}</div><div>${pl.process.starts.map(([n, u, pt]) => `<span class="tag lav">${esc(n)} ${pt.toFixed(1)}</span>`).join("")}</div>` : "";
-  const by = pl.prefs.by === "claude" ? t("by_claude") : t("by_rule");
+  const by = pl.prefs.by === "claude" || pl.prefs.by === "gemini" ? t("by_claude") : t("by_rule");
   return `${header()}
   <div class="backbar"><button data-act="back">${esc(x("back"))}</button>
     ${S.qr ? `<button class="mini" style="margin-left:auto" data-act="qrchange">${esc(x("start_chg", { n: pname(S.qr) }))}</button>` : ""}</div>
@@ -592,7 +592,7 @@ function understood(pl) {
   const parts = [];
   if ((p.must || []).length) parts.push(`<span class="tag coral">📍 ${esc(x("u_must"))}: ${p.must.map(esc).join(", ")}</span>`);
   if ((p.avoid || []).length) parts.push(`<span class="tag">🚫 ${esc(x("u_avoid"))}: ${p.avoid.map(esc).join(", ")}</span>`);
-  return `<div class="aiq" style="background:#F4F0FF;border-color:#DCD2FF">🧠 <b>${esc(p.by === "claude" ? x("u_t_ai") : x("u_t_rule"))}</b><br>
+  return `<div class="aiq" style="background:#F4F0FF;border-color:#DCD2FF">🧠 <b>${esc(p.by === "claude" || p.by === "gemini" ? x("u_t_ai") : x("u_t_rule"))}</b><br>
     ${p.summary ? esc(p.summary) : `‘${esc(S.choice.free)}’`}${parts.length ? `<div style="margin-top:6px">${parts.join("")}</div>` : ""}</div>`;
 }
 

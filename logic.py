@@ -792,11 +792,57 @@ def _secret(name: str, default=None):
     return os.environ.get(name, default)
 
 
+def llm_provider() -> str | None:
+    """'claude' (ANTHROPIC_API_KEY) → 'gemini' (GEMINI_API_KEY, 무료 등급 가능) → None (규칙 AI)"""
+    if _secret("ANTHROPIC_API_KEY"):
+        return "claude"
+    if _secret("GEMINI_API_KEY") or _secret("GOOGLE_AI_KEY"):
+        return "gemini"
+    return None
+
+
 def llm_ready() -> bool:
-    return bool(_secret("ANTHROPIC_API_KEY"))
+    return llm_provider() is not None
+
+
+GEMINI_MODELS = ("gemini-3.5-flash", "gemini-flash-latest", "gemini-2.5-flash")
+
+
+def _call_gemini(messages, system, max_tokens=600) -> dict | None:
+    """Gemini를 Claude 응답 모양({content:[{type:text}]})으로 바꿔 돌려줘요. 도구(tools)는 안 써요."""
+    key = _secret("GEMINI_API_KEY") or _secret("GOOGLE_AI_KEY")
+    contents = []
+    for m in messages:
+        c = m["content"]
+        text = c if isinstance(c, str) else "\n".join(b.get("text", "") or b.get("content", "") for b in c if isinstance(b, dict))
+        contents.append({"role": "model" if m["role"] == "assistant" else "user", "parts": [{"text": text}]})
+    body = {"system_instruction": {"parts": [{"text": system}]}, "contents": contents,
+            "generationConfig": {"maxOutputTokens": max(1024, max_tokens * 4), "temperature": 0.6}}
+    models = [_secret("GEMINI_MODEL")] if _secret("GEMINI_MODEL") else list(GEMINI_MODELS)
+    for model in models:
+        try:
+            r = requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                              timeout=25, json=body, headers={"x-goog-api-key": key, "content-type": "application/json"})
+        except Exception:
+            continue
+        if r.status_code == 404:
+            continue   # 모델 이름이 바뀐 경우 다음 이름으로
+        if r.status_code != 200:
+            return None
+        try:
+            parts = r.json()["candidates"][0]["content"]["parts"]
+            text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
+        except Exception:
+            return None
+        return {"content": [{"type": "text", "text": text}], "stop_reason": "end_turn", "provider": "gemini"}
+    return None
 
 
 def call_claude(messages, system, model=None, tools=None, max_tokens=600) -> dict | None:
+    """AI 한 번 부르기. Claude 키가 있으면 Claude, 없으면 Gemini(무료), 둘 다 없으면 None."""
+    prov = llm_provider()
+    if prov == "gemini":
+        return None if tools else _call_gemini(messages, system, max_tokens)
     key = _secret("ANTHROPIC_API_KEY")
     if not key:
         return None
