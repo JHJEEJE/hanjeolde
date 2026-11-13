@@ -111,17 +111,18 @@ def _walk_route(lat1, lon1, lat2, lon2):
 
 
 # ---------------------------------------------------------------- 길 하나의 내용 (지도·구간·이야기·가게)
-def _shops(places, stops, lang, keys):
-    key = (tuple(stops), lang, keys)
+def _shops(places, stops, lang, keys, points=()):
+    key = (tuple(stops), lang, keys, tuple(points))
     cache = st.session_state.setdefault("shop_cache", {})
     if key not in cache:
         tour_ok, google_ok = keys
-        cache[key] = SH.gather(places, list(stops), lang, tour_ok, google_ok, not (tour_ok or google_ok), L.load_rest_spots())[0]
+        cache[key] = SH.gather(places, list(stops), lang, tour_ok, google_ok, not (tour_ok or google_ok or L.data_key()),
+                               L.load_rest_spots(), points=points)[0]
     return cache[key]
 
 
 def _shop_json(s, lang, origin=None):
-    src = {"google": "src_google", "tour": "src_tour", "csv": "src_csv", "example": "src_example", "naver": "src_naver"}[s["source"]]
+    src = {"google": "src_google", "tour": "src_tour", "csv": "src_csv", "example": "src_example", "naver": "src_naver", "gj": "src_gj"}[s["source"]]
     return {"id": s.get("id"), "name": s["name"], "kind": s["kind"], "kindLabel": I.lab("shop_kind", s["kind"], lang),
             "lat": s["lat"], "lon": s["lon"], "why": s.get("why", []), "src": I.t(src, lang), "rating": s.get("rating"),
             "reviews": s.get("reviews"), "partner": s.get("partner"), "coupon": s.get("coupon"),
@@ -339,17 +340,27 @@ def do_compare(payload, lang):
 
 
 def do_nearby(payload, cond, lang):
-    """걷는 중 '주변 쉬어 갈 곳'을 직접 눌렀을 때만 (권하지 않고, 원할 때 보여 줘요)"""
+    """걷는 중 '근처 쉬어 갈 곳'을 눌렀을 때만: 지금 내 위치(GPS) 둘레 600m + 지금 걷는 길 300m 안쪽"""
     places, data = L.load_places(), L.load_all()
     pid = payload.get("pid")
     if pid not in places.index:
         return {"near": []}
+    nxt = payload.get("next") if payload.get("next") in places.index else None
+    a = (float(places.loc[pid, "lat"]), float(places.loc[pid, "lon"]))
+    b = (float(places.loc[nxt, "lat"]), float(places.loc[nxt, "lon"])) if nxt else a
+    pos = payload.get("pos")
+    me = (float(pos[0]), float(pos[1])) if pos else a
+    mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+    pts = [(round(me[0], 3), round(me[1], 3))] + ([(round(mid[0], 3), round(mid[1], 3))] if nxt else [])
+    stops = [pid] + ([nxt] if nxt else [])
     prefs = st.session_state.get("prefs") or {}
-    pool = _shops(places, [pid], lang, keys_status())
-    near = SH.around(pool, places, pid, shop_ctx(cond, prefs, payload.get("who")), lang, limit=6, radius_km=0.5)
-    o = {"name": places.loc[pid, "name"], "lat": float(places.loc[pid, "lat"]), "lon": float(places.loc[pid, "lon"]),
-         "label": L.place_name(pid, places, data, lang)}
-    return {"pid": pid, "near": [_shop_json(x, lang, o) for x in near]}
+    pool = _shops(places, stops, lang, keys_status(), points=tuple(pts))
+    near = SH.around_point(pool, me[0], me[1], shop_ctx(cond, prefs, payload.get("who")), lang, leg=(a, b) if nxt else None)
+    here = "내 위치" if pos else L.place_name(pid, places, data, lang)
+    here = {"ko": "내 위치", "en": "my location", "ja": "現在地", "zh": "我的位置"}[lang] if pos else here
+    o = {"name": here if pos else places.loc[pid, "name"], "lat": me[0], "lon": me[1], "label": here}
+    return {"pid": pid, "pos": list(me), "near": [_shop_json(x, lang, o) for x in near],
+            "search": "https://map.naver.com/p/search/" + quote("경주 " + L.place_name(pid, places, data, "ko") + " 카페")}
 
 
 HANDLERS = {"plan", "route", "alts", "finish", "compare", "nearby"}

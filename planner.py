@@ -184,8 +184,28 @@ def understand(choice: dict, places, data, use_llm: bool = True) -> dict:
 
 
 # ---------------------------------------------------------------- 2) 장소 점수
+EXTRA_TAGS = {"t": {"temple_life": 0.8, "rest": 0.6, "nature": 0.35, "history": 0.2, "architecture": 0.3, "photo": 0.3,
+                   "buddha_art": 0.3, "kids": 0.15, "people": 0.05}, "quiet": 1, "stay": 15}
+
+
 def tags_of(data, pid) -> dict:
-    return data.get("ptags", {}).get("places", {}).get(pid, {"t": {}, "stay": 15})
+    got = data.get("ptags", {}).get("places", {}).get(pid)
+    if got:
+        return got
+    if L.is_extra(pid):   # 종교시설 현황에서 더한 절: 조용한 절집으로 보고, 주소가 '산 ○○'이면 산길로 봐요
+        try:
+            addr = str(L.load_places().loc[pid, "address"])
+        except Exception:
+            addr = ""
+        hill = bool(re.search(r"산\d|산길|골길|계곡", addr))
+        t = dict(EXTRA_TAGS["t"], nature=0.6 if hill else 0.35)
+        try:
+            if "심인당" in str(L.load_places().loc[pid, "name"]):   # 도심 법당(진각종)
+                t.update(temple_life=0.4, nature=0.1, rest=0.4)
+        except Exception:
+            pass
+        return dict(EXTRA_TAGS, t=t, hill=hill, shade=hill)
+    return {"t": {}, "stay": 15}
 
 
 def stay_min(data, pid, who) -> int:
@@ -257,6 +277,9 @@ def place_utility(pid, prefs, cond, data, minutes_to_sunset=None) -> tuple[float
             parts["shade"] = True
         if tg.get("hill"):
             u -= 0.2
+    if L.is_extra(pid):   # 이야기 조각이 아직 없는 절은 이야기가 있는 유적 다음 순서로
+        u -= 0.3
+        parts["extra"] = True
     # ---- 시간대 · 날씨에 따라 '지금 가기 좋은 곳'이 달라져요
     dp = daypart(cond, minutes_to_sunset)
     sk = "indoor" if tg.get("indoor") else ("other" if tg.get("shade") else site_kind(pid))
@@ -341,6 +364,8 @@ def search(start: str, choice: dict, prefs: dict, cond: dict, places, data, elev
     start_stay = stay_min(data, start, who)
     for k in range(0 if start_util else 1, max_extra + 1):   # AI 출발지 모드에서는 '한 곳만 깊게'도 후보
         for combo in itertools.combinations(pool, k):
+            if sum(1 for p in combo if L.is_extra(p)) > 2:   # 이야기 없는 절은 한 길에 2곳까지
+                continue
             for perm in itertools.permutations(combo):
                 evaluated += 1
                 seq = (start,) + perm

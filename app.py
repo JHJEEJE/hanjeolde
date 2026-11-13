@@ -80,6 +80,29 @@ with st.sidebar:
     st.caption("⭐ Google Places: " + ("있음 ✅" if gv else "없음"))
     st.caption("🟢 네이버 검색: " + ("있음 ✅" if SH.naver_keys()[0] else "없음"))
     st.markdown("---")
+    st.markdown("**📡 경주시 공공데이터 (가게 추천)**")
+    st.caption("공공데이터포털 키(DATA_GO_KR_KEY)로 불러와요. 마이페이지 › 활용신청 현황에 나온 '요청주소(End Point)'를 넣어 주세요.")
+    st.text_input("전망 좋은 카페 요청주소", key="gj_view_cafe_url_input", placeholder=SH.GJ_SOURCES["view_cafe"][1])
+    st.text_input("디저트점 현황 요청주소", key="gj_dessert_url_input", placeholder="https://apis.data.go.kr/5050000/…")
+    st.text_input("이색체험 정보 요청주소", key="gj_experience_url_input", placeholder="https://apis.data.go.kr/5050000/…")
+    if st.button("불러오기 확인"):
+        got = SH.gj_all()
+        from collections import Counter
+        st.caption(f"받은 곳: {len(got)}곳 · " + ", ".join(f"{k} {v}" for k, v in Counter(g['gj'] for g in got).items()) if got else "받은 곳이 없어요. 키·요청주소·활용신청 승인을 확인해 주세요.")
+    st.markdown("---")
+    st.markdown("**🛕 사찰 좌표 만들기 (종교시설 현황)**")
+    n_extra = int(L.load_places().index.str.startswith("tp").sum())
+    st.caption(f"지금 앱에 들어 있는 곳: {len(L.load_places())}곳 (종교시설 현황에서 더한 절 {n_extra}곳)")
+    st.text_input("카카오 REST API 키 (없으면 OpenStreetMap으로 5~6분)", key="kakao_rest_input", type="password")
+    if st.button("주소 → 좌표 변환 시작"):
+        import geocode
+        bar = st.progress(0.0, text="시작해요")
+        ok, total = geocode.run(st.session_state.get("kakao_rest_input") or None,
+                                lambda i, n, nm, hit: bar.progress(i / n, text=f"{i}/{n} {'✓' if hit else '✗'} {nm}"))
+        st.cache_data.clear()
+        st.success(f"{ok}/{total}곳 좌표를 찾았어요. 아래 파일을 GitHub의 data 폴더에 올리면 계속 써요.")
+        st.download_button("temples_geo.csv 내려받기", (W.WEB.parent / "data" / "temples_geo.csv").read_bytes(), file_name="temples_geo.csv")
+    st.markdown("---")
     st.markdown("**🖨️ QR 만들기**")
     url = st.text_input("앱 주소", placeholder="https://○○○.streamlit.app")
     places = L.load_places()

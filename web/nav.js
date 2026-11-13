@@ -4,19 +4,19 @@ const NAV_TX = {
   ko: { start: "🧭 지도로 길 안내 시작", to: "{n}까지", left: "남은 거리 {d} · 약 {m}분", eta: "{t} 도착 예정", me: "내 위치", sim: "▶ 시연: 따라 걷기",
         simstop: "⏸ 시연 멈춤", gps_wait: "내 위치를 찾고 있어요… (위치 권한을 허용해 주세요)", gps_no: "위치를 쓸 수 없어요. 휴대폰 설정에서 위치 권한을 켜거나, 시연으로 따라 걸어 보세요.",
         off: "길에서 벗어났어요. 새 길을 찾는 중…", rerouted: "새 길로 안내할게요", arrived: "📍 {n}에 도착했어요!", then: "그다음", near_t: "☕ 근처 쉬어 갈 곳", close: "안내 끝내기",
-        arrive_btn: "도착했어요", acc: "GPS 정확도 ±{m}m", follow: "따라가기" },
+        arrive_btn: "도착했어요", near_none: "걸어갈 만한 가게를 아직 못 찾았어요.", near_more: "네이버 지도에서 근처 카페 더 보기", acc: "GPS 정확도 ±{m}m", follow: "따라가기" },
   en: { start: "🧭 Start live navigation", to: "to {n}", left: "{d} left · about {m} min", eta: "Arrive around {t}", me: "My location", sim: "▶ Demo: walk the route",
         simstop: "⏸ Stop demo", gps_wait: "Finding your location… (please allow location access)", gps_no: "Location unavailable. Turn on location permission, or try the demo walk.",
         off: "You're off the route. Finding a new one…", rerouted: "New route ready", arrived: "📍 You've arrived at {n}!", then: "Then", near_t: "☕ Places to rest nearby", close: "End navigation",
-        arrive_btn: "I'm here", acc: "GPS accuracy ±{m} m", follow: "Follow" },
+        arrive_btn: "I'm here", near_none: "No shops found within walking distance yet.", near_more: "More cafés nearby on Naver Map", acc: "GPS accuracy ±{m} m", follow: "Follow" },
   ja: { start: "🧭 地図で道案内を開始", to: "{n}まで", left: "残り{d} · 約{m}分", eta: "{t}到着予定", me: "現在地", sim: "▶ デモ：ルートを歩く",
         simstop: "⏸ デモ停止", gps_wait: "現在地を探しています…（位置情報を許可してください）", gps_no: "位置情報が使えません。位置情報の許可をオンにするか、デモで歩いてみてください。",
         off: "ルートから外れました。新しい道を探しています…", rerouted: "新しい道で案内します", arrived: "📍 {n}に到着しました！", then: "その次", near_t: "☕ 近くの休憩スポット", close: "案内を終了",
-        arrive_btn: "着きました", acc: "GPS精度 ±{m}m", follow: "追従" },
+        arrive_btn: "着きました", near_none: "歩いて行ける店がまだ見つかりません。", near_more: "NAVER地図で近くのカフェをもっと見る", acc: "GPS精度 ±{m}m", follow: "追従" },
   zh: { start: "🧭 开始地图导航", to: "前往{n}", left: "剩余{d} · 约{m}分钟", eta: "预计{t}到达", me: "我的位置", sim: "▶ 演示：沿路线走",
         simstop: "⏸ 停止演示", gps_wait: "正在定位…（请允许位置权限）", gps_no: "无法使用位置。请开启定位权限，或试试演示。",
         off: "已偏离路线，正在重新规划…", rerouted: "已为您规划新路线", arrived: "📍 已到达{n}！", then: "然后", near_t: "☕ 附近可休息的地方", close: "结束导航",
-        arrive_btn: "我到了", acc: "GPS精度 ±{m}米", follow: "跟随" },
+        arrive_btn: "我到了", near_none: "附近暂未找到步行可达的店。", near_more: "在NAVER地图查看更多附近咖啡馆", acc: "GPS精度 ±{m}米", follow: "跟随" },
 };
 const Nav = (() => {
   let map = null, me = null, meRing = null, line = null, doneLine = null, watchId = null, simTimer = null, follow = true, wake = null;
@@ -165,6 +165,21 @@ const Nav = (() => {
       if (arrivedFlag || prog > total + 30) { clearInterval(simTimer); simTimer = null; }
     }, 500);
   }
+  let shopLayer = null;
+  function clearShops() { if (shopLayer && map) { map.removeLayer(shopLayer); } shopLayer = null; }
+  function showNearby(d) {
+    if (!map) return false;
+    clearShops();
+    shopLayer = L.layerGroup().addTo(map);
+    (d.near || []).forEach((s) => L.marker([s.lat, s.lon], { icon: L.divIcon({ html: `<div class="shopdot">${KIND_EMOJI[s.kind] || "📍"}</div>`, className: "", iconSize: [24, 24], iconAnchor: [12, 12] }) }).bindTooltip(s.name).addTo(shopLayer));
+    let sh = $("#navnear");
+    if (!sh) { sh = document.createElement("div"); sh.id = "navnear"; sh.className = "navnear"; $("#nav").appendChild(sh); }
+    sh.innerHTML = `<div class="between"><b>${esc(T("near_t"))}</b><button class="mini" data-nav="nearclose">✕</button></div>
+      ${d.near && d.near.length ? d.near.map(shopCard).join("") : `<p class="sub">${esc(T("near_none"))}</p>`}
+      ${d.search ? `<a class="mini" href="${esc(d.search)}" target="_blank" rel="noopener">N ${esc(T("near_more"))} ›</a>` : ""}`;
+    return true;
+  }
+  function isOpen() { return !!map; }
   function close() {
     if (watchId != null) { try { navigator.geolocation.clearWatch(watchId); } catch (e) { /* */ } watchId = null; }
     if (simTimer) { clearInterval(simTimer); simTimer = null; }
@@ -182,7 +197,12 @@ const Nav = (() => {
     else if (a === "me") { follow = true; if (me) map.setView(me.getLatLng(), 17); }
     else if (a === "sim") simulate();
     else if (a === "arrive") arrivedAuto();
-    else if (a === "near") { close(); ask("nearby", { pid: S.walk.stops[S.walk.idx], who: S.walk.who }); }
+    else if (a === "near") {   // 길 안내는 그대로 두고, 지금 위치 둘레 가게를 아래에 띄워요
+      const w = S.walk;
+      const pos = me ? [me.getLatLng().lat, me.getLatLng().lng] : null;
+      ask("nearby", { pid: w.stops[w.idx], next: w.stops[w.idx + 1] || null, pos, who: w.who });
+    }
+    else if (a === "nearclose") { const sh = $("#navnear"); if (sh) sh.remove(); clearShops(); }
   });
-  return { open, close, T };
+  return { open, close, T, showNearby, isOpen };
 })();

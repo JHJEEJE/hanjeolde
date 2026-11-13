@@ -72,6 +72,105 @@ def _naver(query, cid, sec):
         return None
 
 
+# ---------------------------------------------------------------- 경주시 공공데이터 (전망 좋은 카페 · 디저트점 · 이색체험)
+GJ_SOURCES = {
+    # 이름: (Secrets 이름, 기본 주소, 종류, 화면에 보일 이유)
+    "view_cafe": ("GJ_VIEW_CAFE_URL", "https://apis.data.go.kr/5050000/niceViewCafeService", "cafe",
+                  {"ko": "경주시 '전망 좋은 카페'", "en": "Gyeongju 'great-view café'", "ja": "慶州市「眺めのいいカフェ」", "zh": "庆州市“景观咖啡馆”"}),
+    "dessert": ("GJ_DESSERT_URL", "", "cafe",
+                {"ko": "경주시 디저트점", "en": "Gyeongju dessert shop", "ja": "慶州市のデザート店", "zh": "庆州市甜品店"}),
+    "experience": ("GJ_EXPERIENCE_URL", "", "culture",
+                   {"ko": "경주시 이색체험", "en": "Gyeongju unique experience", "ja": "慶州市のユニーク体験", "zh": "庆州市特色体验"}),
+}
+
+
+def gj_url(src):
+    name, default = GJ_SOURCES[src][0], GJ_SOURCES[src][1]
+    typed = str(st.session_state.get(f"{name.lower()}_input", "") or "").strip()
+    if typed:
+        return typed
+    try:
+        for full, v in L._walk_secrets(st.secrets):
+            if full.split(".")[-1].upper() == name and str(v).strip():
+                return str(v).strip()
+    except Exception:
+        pass
+    return default
+
+
+def _pick(d, *pats):
+    """응답 칸 이름이 기관마다 달라서, 이름 조각으로 찾아요."""
+    for k, v in d.items():
+        ku = k.upper()
+        if any(_re.search(p, ku) for p in pats) and str(v).strip() not in ("", "None", "null"):
+            return str(v).strip()
+    return ""
+
+
+def _items(obj):
+    """JSON 어디에 있든 가게 한 줄(dict)들을 찾아요."""
+    if isinstance(obj, list):
+        out = []
+        for x in obj:
+            out += _items(x) if not (isinstance(x, dict) and len([v for v in x.values() if not isinstance(v, (dict, list))]) >= 3) else [x]
+        return out
+    if isinstance(obj, dict):
+        flat = [v for v in obj.values() if not isinstance(v, (dict, list))]
+        if len(flat) >= 3 and _pick(obj, r"NM$|NAME|TITLE|명$"):
+            return [obj]
+        out = []
+        for v in obj.values():
+            if isinstance(v, (dict, list)):
+                out += _items(v)
+        return out
+    return []
+
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def _gj_fetch(url, key, src):
+    out = []
+    for page in range(1, 6):
+        try:
+            r = requests.get(url, timeout=8, params={"serviceKey": key, "pageNo": page, "numOfRows": 100, "type": "json", "_type": "json"})
+            rows = _items(r.json())
+        except Exception:
+            break
+        for it in rows:
+            name = _pick(it, r"CAFE_NM|SHOP_NM|BSSH_NM|FCLTY_NM|EXPRN_NM|_NM$|NAME|TITLE|명$")
+            lat = _pick(it, r"^LA$|^LAT|LATITUDE|_LA$|YCRD|Y_CRD|MAP_Y|^Y$|위도")
+            lon = _pick(it, r"^LO$|^LOT|^LON|LONGITUDE|_LO$|XCRD|X_CRD|MAP_X|^X$|경도")
+            try:
+                la, lo = float(lat), float(lon)
+                if la > 100:   # 경도·위도가 바뀌어 오는 경우
+                    la, lo = lo, la
+            except ValueError:
+                continue
+            if not name or not (35.5 < la < 36.2 and 128.9 < lo < 129.6):
+                continue
+            kind = GJ_SOURCES[src][2]
+            if src == "experience" and _re.search(r"공방|만들기|도자|공예|클래스|체험관", name):
+                kind = "craft"
+            out.append({"id": f"gj_{src}_{_norm(name)}", "name": name, "kind": kind, "lat": la, "lon": lo, "rating": None,
+                        "reviews": None, "open_now": None, "url": _pick(it, r"HMPG|HOMEPAGE|URL"), "img": _pick(it, r"IMG|IMAGE|PHOTO"),
+                        "source": "gj", "gj": src, "partner": "", "coupon": "",
+                        "view": _pick(it, r"VIEW|SCENE|조망|특징|FEATURE|INTRCN|DESC")[:40]})
+        if len(rows) < 100:
+            break
+    return out
+
+
+def gj_all():
+    key = L.data_key()
+    if not key:
+        return []
+    out = []
+    for src in GJ_SOURCES:
+        url = gj_url(src)
+        if url:
+            out += _gj_fetch(url, key, src) or []
+    return out
+
+
 # ---------------------------------------------------------------- 1) 모으기
 @st.cache_data(ttl=86400, show_spinner=False)
 def _tour(lat, lon, radius, ctype, key):
@@ -156,9 +255,14 @@ def _norm(s):
     return "".join(ch for ch in str(s).lower() if ch.isalnum())
 
 
-def gather(places, stop_ids, lang, use_tour=True, use_google=True, example=False, csv=None, use_naver=True) -> tuple[list, dict]:
-    """(가게 목록, 출처별 개수)"""
-    shops, stat = [], {"csv": 0, "tour": 0, "google": 0, "example": 0, "naver": 0}
+def gather(places, stop_ids, lang, use_tour=True, use_google=True, example=False, csv=None, use_naver=True, points=()) -> tuple[list, dict]:
+    """(가게 목록, 출처별 개수). points: 사찰 말고도 둘러볼 지점 [(위도, 경도)] — 걷는 길 한가운데, 지금 내 위치"""
+    shops, stat = [], {"csv": 0, "tour": 0, "google": 0, "example": 0, "naver": 0, "gj": 0}
+    got = gj_all()   # 경주시 공공데이터는 시 전체를 한 번에 받아 두고 가까운 곳만 써요
+    centers = [(float(places.loc[s_, "lat"]), float(places.loc[s_, "lon"])) for s_ in stop_ids] + list(points)
+    got = [g for g in got if any(L.haversine_km(g["lat"], g["lon"], a, b) < 1.5 for a, b in centers)]
+    stat["gj"] = len(got)
+    shops += got
     if csv is not None and not csv.empty:
         for _, s in csv.iterrows():
             shops.append({"id": f"csv_{s.get('id')}", "name": s["name"], "kind": classify(s["name"], CSV_KIND.get(s.get("type", ""), "meal")),
@@ -168,15 +272,16 @@ def gather(places, stop_ids, lang, use_tour=True, use_google=True, example=False
         stat["csv"] = len(shops)
     gkey = google_key()[0] if use_google else None
     tkey = L.tour_key() if use_tour else None
-    for sid in dict.fromkeys(stop_ids):
-        p = places.loc[sid]
-        lat, lon = round(float(p.lat), 5), round(float(p.lon), 5)
+    spots = [(sid, round(float(places.loc[sid].lat), 5), round(float(places.loc[sid].lon), 5)) for sid in dict.fromkeys(stop_ids)]
+    spots += [(None, round(a, 4), round(b, 4)) for a, b in points]
+    for sid, lat, lon in spots:
+        p = places.loc[sid] if sid else {"name": ""}
         if gkey:
             got = _google(lat, lon, 800, gkey, lang) or []
             stat["google"] += len(got)
             shops += got
         ncid, nsec = naver_keys() if use_naver else (None, None)
-        if ncid:
+        if ncid and sid:
             for word in ("카페", "맛집"):
                 got = _naver(f"경주 {p['name'].split(' ')[0]} {word}", ncid, nsec) or []
                 stat["naver"] += len(got)
@@ -233,6 +338,9 @@ def score(s, a, b, ctx, lang) -> tuple[float, list]:
         bq = bayes(float(s["rating"]), int(s["reviews"]))
         q = 0.7 * max(0, min(1, (bq - 3.5) / 1.5)) + 0.3 * min(1, math.log10(int(s["reviews"]) + 1) / 3)
         why.append(I.t("s_rating", lang, r=f"{s['rating']:.1f}", n=f"{int(s['reviews']):,}"))
+    elif s.get("source") == "gj":
+        q = 0.66   # 경주시가 골라 공개한 목록
+        why.append(GJ_SOURCES[s["gj"]][3].get(lang, GJ_SOURCES[s["gj"]][3]["ko"]) + (f" · {s['view']}" if s.get("view") else ""))
     elif s.get("source") == "naver" and s.get("rank") is not None:
         q = 0.8 - 0.07 * s["rank"]   # 네이버 '리뷰 많은 순' 순위
         why.append({"ko": f"네이버 리뷰 많은 순 {s['rank'] + 1}위", "en": f"#{s['rank'] + 1} by Naver review count",
@@ -332,6 +440,28 @@ def around(shops, places, pid, ctx, lang, exclude=(), limit=3, kinds=None, radiu
 
 
 # ---------------------------------------------------------------- 4) '볼 게 없어요' 대체 추천
+def around_point(shops, lat, lon, ctx, lang, leg=None, limit=6, radius_km=0.6) -> list:
+    """지금 내 위치 둘레 + 지금 걷는 길(leg: (a, b)) 300m 안쪽 가게, 가까운 순"""
+    out = []
+    for s in shops:
+        if s.get("open_now") is False:
+            continue
+        if s.get("rating") is not None and s.get("reviews") and int(s["reviews"]) >= 5 and float(s["rating"]) < 3.5:
+            continue
+        d = L.haversine_km(lat, lon, s["lat"], s["lon"]) * 1000
+        on_leg = leg and seg_dist_m(s["lat"], s["lon"], leg[0], leg[1]) <= 300
+        if d > radius_km * 1000 and not on_leg:
+            continue
+        sc, why = score(s, (lat, lon), (lat, lon), ctx, lang)
+        out.append(dict(s, score=sc - d / 3000, why=why, dist_m=d))
+    out.sort(key=lambda x: -x["score"])
+    cafe = next((c for c in out if c["kind"] == "cafe"), None)
+    if cafe:
+        out.remove(cafe)
+        out.insert(0, cafe)
+    return out[:limit]
+
+
 def alternatives(cur, plan_stops, prefs, cond, places, data, lang, limit=3) -> list:
     to_sunset = int((cond["sunset"] - cond["now"]).total_seconds() // 60)
     out = []

@@ -5,6 +5,7 @@
 const TX = {
   ko: {
     how: "이렇게 이용해요",
+    qr_search: "절 이름으로 찾기 (예: 보리사)",
     end_t: "순례가 끝난 곳에서 걸어갈 만한 가게", end_s: "{n}에서 반경 500m · 걸어서 7분 안쪽", nv: "네이버 리뷰 보기", walkd: "걸어서 {m}분 · {d}m", all: "전체",
     dir_t: "🧭 자세한 길 안내", dir_rough: "지도 데이터로 어림한 방향이에요. 정확한 길은 카카오맵 도보 길찾기로 확인해요.", from_here: "{n}에서 길찾기",
     map_big: "크게 보기", map_close: "닫기",
@@ -67,6 +68,7 @@ const TX = {
   },
   en: {
     how: "How it works",
+    qr_search: "Search by temple name",
     end_t: "Shops within walking distance of where you finished", end_s: "Within 500 m of {n} · about 7 min on foot", nv: "Naver reviews", walkd: "{m} min walk · {d} m", all: "All",
     dir_t: "🧭 Step-by-step directions", dir_rough: "Rough direction only — check Kakao Map walking directions for the exact path.", from_here: "Directions from {n}",
     map_big: "Full screen", map_close: "Close",
@@ -129,6 +131,7 @@ const TX = {
   },
   ja: {
     how: "使い方",
+    qr_search: "寺の名前で検索",
     end_t: "巡礼を終えた場所から歩いて行ける店", end_s: "{n}から半径500m・徒歩7分以内", nv: "NAVERのレビュー", walkd: "徒歩{m}分 · {d}m", all: "すべて",
     dir_t: "🧭 詳しい道案内", dir_rough: "おおよその方向です。正確な道はカカオマップの徒歩ルートで確認してください。", from_here: "{n}から道案内",
     map_big: "大きく見る", map_close: "閉じる",
@@ -191,6 +194,7 @@ const TX = {
   },
   zh: {
     how: "使用方法",
+    qr_search: "按寺名搜索",
     end_t: "从巡礼终点步行可达的店", end_s: "{n}周边500米 · 步行7分钟内", nv: "NAVER评价", walkd: "步行{m}分钟 · {d}米", all: "全部",
     dir_t: "🧭 详细路线指引", dir_rough: "这是大致方向，准确路线请用Kakao地图步行导航确认。", from_here: "从{n}导航",
     map_big: "放大查看", map_close: "关闭",
@@ -355,6 +359,7 @@ function onResp(resp) {
       if (opts.toast) toast(opts.toast);
     }
   } else if (kind === "nearby") {
+    if (Nav.isOpen() && Nav.showNearby(d)) return true;
     S.nearby = d;
     setTimeout(() => { const el = $("#nearbybox"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }, 80);
   } else if (kind === "alts") {
@@ -591,7 +596,8 @@ function walkView() {
 function nearbyPanel() {
   const n = S.nearby;
   return `<div class="card" id="nearbybox" style="margin-top:10px"><div class="between"><h2>${esc(Nav.T("near_t"))}</h2><button class="mini" data-act="nearbyclose">✕</button></div>
-    ${n.near.length ? n.near.map(shopCard).join("") : `<p class="sub">-</p>`}</div>`;
+    ${n.near.length ? n.near.map(shopCard).join("") : `<p class="sub">${esc(Nav.T("near_none"))}</p>`}
+    ${n.search ? `<a class="mini" href="${esc(n.search)}" target="_blank" rel="noopener">N ${esc(Nav.T("near_more"))} ›</a>` : ""}</div>`;
 }
 function boredPanel() {
   const b = S.bored, w = S.walk;
@@ -809,9 +815,10 @@ function renderSheet() {
   } else if (S.sheet === "qr") {
     const groups = B.pins.legend.filter((k) => k !== "start").map((k) => {
       const ps = B.places.filter((p) => p.kind === k && p.id !== "campus");
-      return ps.length ? `<div class="pline">${icon(k, 16)} ${esc(lab("icon", k))}</div><div class="chips wrap">${ps.map((p) => `<button class="chip sm ${S.qr === p.id ? "on" : ""}" data-act="qrpick" data-v="${p.id}">${esc(p.name)}</button>`).join("")}</div>` : "";
+      return ps.length ? `<div class="pline">${icon(k, 16)} ${esc(lab("icon", k))}</div><div class="chips wrap">${ps.map((p) => `<button class="chip sm ${S.qr === p.id ? "on" : ""}" data-act="qrpick" data-v="${p.id}" data-name="${esc(p.name)}">${esc(p.name)}</button>`).join("")}</div>` : "";
     }).join("");
-    body = `<h2>📷 ${esc(x("qr_list"))}</h2><button class="btn coral sm" data-act="scan">${esc(x("qr_cam"))}</button><div id="qrcam"></div>${groups}`;
+    body = `<h2>📷 ${esc(x("qr_list"))}</h2><button class="btn coral sm" data-act="scan">${esc(x("qr_cam"))}</button><div id="qrcam"></div>
+      <input type="text" id="qrq" placeholder="🔍 ${esc(x("qr_search"))}" style="margin-top:10px">${groups}`;
   } else if (S.sheet === "stop") {
     body = `<h2>${esc(x("stop_q"))}</h2>${B.opts.stop.map((k) => `<button class="btn ghost" style="margin-bottom:8px;justify-content:flex-start" data-act="stopwhy" data-v="${esc(k)}">${esc(lab("stop", k))}</button>`).join("")}`;
   }
@@ -953,7 +960,7 @@ document.addEventListener("click", (e) => {
     case "compare": ask("compare", { choice: c, start: v, month: DEMO.month || null, mode: S.cmpMode }); return;
     case "cmpmode": S.cmpMode = v; break;
     case "navstart": Nav.open(); return;
-    case "nearby": if (S.nearby && S.nearby.pid === S.walk.stops[S.walk.idx]) { S.nearby = null; break; } ask("nearby", { pid: S.walk.stops[S.walk.idx], who: S.walk.who }); return;
+    case "nearby": if (S.nearby && S.nearby.pid === S.walk.stops[S.walk.idx]) { S.nearby = null; break; } ask("nearby", { pid: S.walk.stops[S.walk.idx], next: S.walk.stops[S.walk.idx + 1] || null, who: S.walk.who }); return;
     case "nearbyclose": S.nearby = null; break;
     case "endkind": S.endKind = v; break;
     case "mapfull": {

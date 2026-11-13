@@ -66,10 +66,35 @@ def _json(name: str, default):
 
 @st.cache_data
 def load_places() -> pd.DataFrame:
+    """35곳(이야기 조각이 있는 곳) + data/temples_geo.csv(경주시 종교시설 현황의 사찰, geocode.py로 좌표를 만든 것)"""
     df = pd.read_csv(data_path("places.csv"), encoding="utf-8-sig")
     df["lat"] = df["lat"].astype(float)
     df["lon"] = df["lon"].astype(float)
+    extra_p = data_path("temples_geo.csv")
+    if extra_p.exists():
+        try:
+            ex = pd.read_csv(extra_p, encoding="utf-8-sig", dtype=str).fillna("")
+            ex = ex[(ex["lat"] != "") & (ex["lon"] != "")]
+            ex["lat"] = ex["lat"].astype(float)
+            ex["lon"] = ex["lon"].astype(float)
+            keep = []
+            for _, r in ex.iterrows():   # 이미 있는 35곳(분황사·불국사 등)과 같은 절이면 빼요
+                nm = r["name"].replace(" ", "")
+                dup = any((nm in str(n).replace(" ", "") or str(n).replace(" ", "") in nm)
+                          and haversine_km(r["lat"], r["lon"], la, lo) < 1.0 for n, la, lo in zip(df["name"], df["lat"], df["lon"]))
+                near_dup = any(haversine_km(r["lat"], r["lon"], k["lat"], k["lon"]) < 0.03 and k["name"] == r["name"] for k in keep)
+                if not dup and not near_dup:
+                    keep.append(r)
+            if keep:
+                df = pd.concat([df, pd.DataFrame(keep)[df.columns.intersection(ex.columns)]], ignore_index=True)
+        except Exception:
+            pass
     return df.set_index("id", drop=False)
+
+
+def is_extra(pid) -> bool:
+    """종교시설 현황에서 더한 사찰 (이야기 조각 없음)"""
+    return str(pid).startswith("tp")
 
 
 @st.cache_data
@@ -423,7 +448,8 @@ def _walk_secrets(obj, prefix=""):
 def secret_status(service: str = "common") -> tuple[str | None, str]:
     """(키, 어디서 찾았는지). service: 'kma' · 'tour' · 'common'.
     Secrets에 [섹션] 아래 넣었거나 이름을 조금 다르게 써도 찾아요."""
-    typed = str(st.session_state.get(SESSION_KEY.get(service, ""), "") or "").strip()
+    sk = SESSION_KEY.get(service)
+    typed = str(st.session_state.get(sk, "") or "").strip() if sk else ""
     if typed:
         return typed, "사이드바 입력칸"
     order = (KEY_NAMES[service] + KEY_NAMES["common"]) if service in ("kma", "tour") else KEY_NAMES["common"]
@@ -564,12 +590,16 @@ def weather_lines(c: dict, lang: str) -> list:
 # ---------------------------------------------------------------- ③ 고도 · 토블러
 @st.cache_data(ttl=86400, show_spinner=False)
 def fetch_elevations(ids: tuple, lats: tuple, lons: tuple) -> dict:
-    try:
-        r = requests.get("https://api.open-meteo.com/v1/elevation", timeout=6, params={
-            "latitude": ",".join(f"{x:.6f}" for x in lats), "longitude": ",".join(f"{x:.6f}" for x in lons)})
-        return dict(zip(ids, [float(v) for v in r.json()["elevation"]]))
-    except Exception:
-        return {}
+    out = {}
+    for k in range(0, len(ids), 100):   # Open-Meteo는 한 번에 100곳까지
+        try:
+            r = requests.get("https://api.open-meteo.com/v1/elevation", timeout=6, params={
+                "latitude": ",".join(f"{x:.6f}" for x in lats[k:k + 100]), "longitude": ",".join(f"{x:.6f}" for x in lons[k:k + 100])})
+            out.update(dict(zip(ids[k:k + 100], [float(v) for v in r.json()["elevation"]])))
+        except Exception:
+            if k == 0:
+                return {}
+    return out
 
 
 def elevations(places: pd.DataFrame) -> dict:
