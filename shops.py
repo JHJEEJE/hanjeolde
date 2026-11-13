@@ -38,11 +38,12 @@ def google_key():
     return None, "없음"
 
 
-NAVER_URL = "https://openapi.naver.com/v1/search/local.json"
+NAVER_HUB_URL = "https://naverapihub.apigw.ntruss.com/search/v1/local"   # 2026.7~ 새 키 (네이버 클라우드 NAVER API HUB)
+NAVER_URL = "https://openapi.naver.com/v1/search/local.json"            # 예전 개발자센터 키 (2027.6까지)
 
 
 def naver_keys():
-    """네이버 검색 API (developers.naver.com) Client ID · Secret — 선택"""
+    """네이버 지역 검색 Client ID · Secret — NAVER API HUB 키든 예전 개발자센터 키든 돼요."""
     try:
         pairs = dict((k.split(".")[-1].upper(), str(v).strip()) for k, v in L._walk_secrets(st.secrets))
     except Exception:
@@ -52,24 +53,56 @@ def naver_keys():
     return (cid, sec) if cid and sec else (None, None)
 
 
+def _naver_call(query, cid, sec):
+    """새 API HUB 먼저, 안 되면 예전 주소로. (items, 어디서) 반환."""
+    params = {"query": query, "display": 5, "sort": "comment"}
+    for url, hd, scale in ((NAVER_HUB_URL, {"X-NCP-APIGW-API-KEY-ID": cid, "X-NCP-APIGW-API-KEY": sec}, None),
+                           (NAVER_URL, {"X-Naver-Client-Id": cid, "X-Naver-Client-Secret": sec}, 1e7)):
+        try:
+            r = requests.get(url, timeout=6, params=params, headers=hd)
+            if r.status_code == 200 and "items" in r.json():
+                return r.json()["items"], scale, url
+        except Exception:
+            continue
+    return None, None, None
+
+
+def _coord(v, scale, lo, hi):
+    x = float(v)
+    if scale:
+        return x / scale
+    return x if lo < x < hi else x / 1e7   # WGS84 소수 또는 정수×1e7 둘 다 받아요
+
+
 @st.cache_data(ttl=21600, show_spinner=False)
 def _naver(query, cid, sec):
     """네이버 지역 검색: 평점·리뷰 수는 주지 않지만 sort=comment로 '리뷰 많은 순' 상위 5곳을 줘요."""
-    try:
-        r = requests.get(NAVER_URL, timeout=6, params={"query": query, "display": 5, "sort": "comment"},
-                         headers={"X-Naver-Client-Id": cid, "X-Naver-Client-Secret": sec})
-        out = []
-        for rank, it in enumerate(r.json().get("items", [])):
-            name = _re.sub(r"<[^>]+>", "", it.get("title", ""))
-            lon, lat = float(it["mapx"]) / 1e7, float(it["mapy"]) / 1e7
-            cat = it.get("category", "")
-            kind = classify(name + " " + cat, "cafe" if ("카페" in cat or "디저트" in cat or "베이커리" in cat) else "meal")
-            out.append({"id": f"nv_{_norm(name)}_{lat:.4f}", "name": name, "kind": kind, "lat": lat, "lon": lon,
-                        "rating": None, "reviews": None, "open_now": None, "url": it.get("link", ""), "img": "",
-                        "source": "naver", "partner": "", "coupon": "", "rank": rank, "cat": cat})
-        return out
-    except Exception:
+    items, scale, _ = _naver_call(query, cid, sec)
+    if items is None:
         return None
+    out = []
+    for rank, it in enumerate(items):
+        try:
+            name = _re.sub(r"<[^>]+>", "", it.get("title", ""))
+            lon, lat = _coord(it["mapx"], scale, 120, 135), _coord(it["mapy"], scale, 30, 40)
+        except (KeyError, ValueError, TypeError):
+            continue
+        cat = it.get("category", "")
+        kind = classify(name + " " + cat, "cafe" if ("카페" in cat or "디저트" in cat or "베이커리" in cat) else "meal")
+        out.append({"id": f"nv_{_norm(name)}_{lat:.4f}", "name": name, "kind": kind, "lat": lat, "lon": lon,
+                    "rating": None, "reviews": None, "open_now": None, "url": it.get("link", ""), "img": "",
+                    "source": "naver", "partner": "", "coupon": "", "rank": rank, "cat": cat})
+    return out
+
+
+def naver_check():
+    cid, sec = naver_keys()
+    if not cid:
+        return "없음"
+    items, _, url = _naver_call("경주 황리단길 카페", cid, sec)
+    if items is None:
+        return "키는 있는데 연결 실패 ❌ (API HUB에서 '지역' API를 골랐는지 확인)"
+    return f"연결됨 ✅ ({'API HUB' if 'ntruss' in url else '개발자센터'} · {len(items)}곳)"
 
 
 # ---------------------------------------------------------------- 경주시 공공데이터 (전망 좋은 카페 · 디저트점 · 이색체험)
