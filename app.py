@@ -41,7 +41,11 @@ st.set_page_config(page_title="한 절 더 · Han Jeol Deo", page_icon="🪷", l
 st.markdown("""<style>
   header[data-testid="stHeader"]{background:transparent;height:0;pointer-events:none}
   header[data-testid="stHeader"] button{pointer-events:auto}
-  [data-testid="stToolbar"],[data-testid="stDecoration"],footer{display:none!important}
+  [data-testid="stSidebarCollapsedControl"],[data-testid="stExpandSidebarButton"]{position:fixed!important;top:6px;left:6px;z-index:1000000!important;
+    background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.2);opacity:.85}
+  [data-testid="stToolbarActions"],[data-testid="stMainMenu"],[data-testid="stAppDeployButton"],[data-testid="stStatusWidget"],[data-testid="stDecoration"],footer{display:none!important}
+  [data-testid="stToolbar"]{background:transparent!important;pointer-events:none}
+  [data-testid="stToolbar"] button{pointer-events:auto}
   .block-container{padding:0!important;max-width:100%!important}
   [data-testid="stMainBlockContainer"]{padding:0!important}
   [data-testid="stVerticalBlock"]{gap:0!important}
@@ -62,8 +66,8 @@ if "sid" not in SS:
 
 _app = components.declare_component("hanjeolde", path=str(W.WEB))
 
-# ---- 사이드바: 키 (발표·테스트용, 화면 왼쪽 위 > 버튼)
-with st.sidebar:
+# ---- 관리 화면: 키 · 공공데이터 · 사찰 좌표 · QR (사이드바, 또는 주소 끝에 ?admin=1)
+def admin_panel():
     st.markdown("### 🔑 API 키 (선택)")
     st.caption("보통은 Streamlit Secrets에 넣어요. 여기 넣으면 지금 접속에서만 써요.")
     st.text_input("기상청 단기예보 키", key="kma_key_input", type="password")
@@ -118,6 +122,18 @@ with st.sidebar:
         st.image(buf.getvalue(), width=160)
         st.caption(link)
         st.download_button("QR 내려받기", buf.getvalue(), file_name=f"qr_{qr_place}_{qr_lang}.png", mime="image/png")
+
+
+
+ADMIN = st.query_params.get("admin") in ("1", "true", "yes")
+if ADMIN:
+    st.markdown("<style>.block-container{padding:2rem 1.2rem!important;max-width:760px!important}</style>", unsafe_allow_html=True)
+    st.title("🛠️ 한 절 더 · 관리 화면")
+    st.caption("앱 화면으로 돌아가려면 주소 끝의 ?admin=1 을 지우세요.")
+    admin_panel()
+    st.stop()
+with st.sidebar:
+    admin_panel()
 
 # ---- 화면에서 온 요청 처리
 req = SS.get("hj")
