@@ -65,6 +65,17 @@ def _json(name: str, default):
 
 
 @st.cache_data
+def _fix_josa(t: str) -> str:
+    import re as _r
+
+    def rep(m):
+        w, a, b = m.group(1), m.group(2), m.group(3)
+        ch = w[-1]
+        has = (ord(ch) - 0xAC00) % 28 != 0 if "가" <= ch <= "힣" else False
+        return w + (a if has else b)
+    return _r.sub(r"(\S)(은|이|을|과)\((는|가|를|와)\)", rep, str(t))
+
+
 def load_places() -> pd.DataFrame:
     """35곳(이야기 조각이 있는 곳) + data/temples_geo.csv(경주시 종교시설 현황의 사찰, geocode.py로 좌표를 만든 것)"""
     df = pd.read_csv(data_path("places.csv"), encoding="utf-8-sig")
@@ -77,6 +88,9 @@ def load_places() -> pd.DataFrame:
             ex = ex[(ex["lat"] != "") & (ex["lon"] != "")]
             ex["lat"] = ex["lat"].astype(float)
             ex["lon"] = ex["lon"].astype(float)
+            for c in ("story", "tip"):   # "심인당은(는)" → "심인당은", "원해사은(는)" → "원해사는"
+                if c in ex:
+                    ex[c] = ex[c].map(_fix_josa)
             keep = []
             for _, r in ex.iterrows():   # 이미 있는 35곳(분황사·불국사 등)과 같은 절이면 빼요
                 nm = r["name"].replace(" ", "")
@@ -450,9 +464,12 @@ def secret_status(service: str = "common") -> tuple[str | None, str]:
     Secrets에 [섹션] 아래 넣었거나 이름을 조금 다르게 써도 찾아요."""
     sk = SESSION_KEY.get(service)
     typed = str(st.session_state.get(sk, "") or "").strip() if sk else ""
+    if not typed and service == "common":
+        typed = str(st.session_state.get("tour_key_input", "") or st.session_state.get("kma_key_input", "") or "").strip()
     if typed:
         return typed, "사이드바 입력칸"
-    order = (KEY_NAMES[service] + KEY_NAMES["common"]) if service in ("kma", "tour") else KEY_NAMES["common"]
+    # 공공데이터포털 키는 한 사람당 하나라서, 공통 키가 없으면 기상청·TourAPI 키를 같이 써요.
+    order = (KEY_NAMES[service] + KEY_NAMES["common"]) if service in ("kma", "tour") else KEY_NAMES["common"] + KEY_NAMES["tour"] + KEY_NAMES["kma"]
     try:
         pairs = list(_walk_secrets(st.secrets))
     except Exception as e:   # secrets.toml 형식 오류
