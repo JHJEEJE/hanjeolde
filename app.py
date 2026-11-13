@@ -41,8 +41,7 @@ st.set_page_config(page_title="한 절 더 · Han Jeol Deo", page_icon="🪷", l
 st.markdown("""<style>
   header[data-testid="stHeader"]{background:transparent;height:0;pointer-events:none}
   header[data-testid="stHeader"] button{pointer-events:auto}
-  [data-testid="stSidebarCollapsedControl"],[data-testid="stExpandSidebarButton"]{position:fixed!important;top:6px;left:6px;z-index:1000000!important;
-    background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.2);opacity:.85}
+  [data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"],[data-testid="stExpandSidebarButton"]{display:none!important}
   [data-testid="stToolbarActions"],[data-testid="stMainMenu"],[data-testid="stAppDeployButton"],[data-testid="stStatusWidget"],[data-testid="stDecoration"],footer{display:none!important}
   [data-testid="stToolbar"]{background:transparent!important;pointer-events:none}
   [data-testid="stToolbar"] button{pointer-events:auto}
@@ -100,21 +99,25 @@ def admin_panel():
         bar = st.progress(0.0, text="준비 중…")
         ok, n, total = SH.gj_build_geo(lambda f, nm: bar.progress(min(1.0, f), text=f"{nm} 찾는 중…"))
         st.success(f"새로 찾은 곳 {ok}/{n} · 저장된 좌표 {total}곳")
-        if SH.GJ_GEO_FILE.exists():
-            st.download_button("gj_geo.json 받기 (GitHub data 폴더에 올리면 계속 유지돼요)", SH.GJ_GEO_FILE.read_bytes(), "gj_geo.json", "application/json")
+    if SH.GJ_GEO_FILE.exists():
+        st.download_button("⬇️ gj_geo.json 받기 (GitHub data 폴더에 올리면 계속 유지돼요)", SH.GJ_GEO_FILE.read_bytes(),
+                           "gj_geo.json", "application/json", on_click="ignore", key="dl_gj")
     st.markdown("---")
     st.markdown("**🛕 사찰 좌표 만들기 (종교시설 현황)**")
     n_extra = int(L.load_places().index.str.startswith("tp").sum())
     st.caption(f"지금 앱에 들어 있는 곳: {len(L.load_places())}곳 (종교시설 현황에서 더한 절 {n_extra}곳)")
-    st.text_input("카카오 REST API 키 (Secrets에 KAKAO_REST_KEY가 있으면 비워도 돼요)", key="kakao_rest_input", type="password")
-    if st.button("주소 → 좌표 변환 시작"):
-        import geocode
-        bar = st.progress(0.0, text="시작해요")
-        ok, total = geocode.run(SH.kakao_key(),
-                                lambda i, n, nm, hit: bar.progress(i / n, text=f"{i}/{n} {'✓' if hit else '✗'} {nm}"))
-        st.cache_data.clear()
-        st.success(f"{ok}/{total}곳 좌표를 찾았어요. 아래 파일을 GitHub의 data 폴더에 올리면 계속 써요.")
-        st.download_button("temples_geo.csv 내려받기", (W.WEB.parent / "data" / "temples_geo.csv").read_bytes(), file_name="temples_geo.csv")
+    with st.expander("다시 만들 때만 열기 (이미 GitHub에 올렸으면 안 해도 돼요)"):
+        st.text_input("카카오 REST API 키 (Secrets에 KAKAO_REST_KEY가 있으면 비워도 돼요)", key="kakao_rest_input", type="password")
+        if st.button("주소 → 좌표 변환 시작"):
+            import geocode
+            bar = st.progress(0.0, text="시작해요")
+            ok, total = geocode.run(SH.kakao_key(),
+                                    lambda i, n, nm, hit: bar.progress(i / n, text=f"{i}/{n} {'✓' if hit else '✗'} {nm}"))
+            st.cache_data.clear()
+            st.success(f"{ok}/{total}곳 좌표를 찾았어요. 아래 파일을 GitHub의 data 폴더에 올리면 계속 써요.")
+        tg = W.WEB.parent / "data" / "temples_geo.csv"
+        if tg.exists():
+            st.download_button("⬇️ temples_geo.csv 내려받기", tg.read_bytes(), file_name="temples_geo.csv", on_click="ignore", key="dl_tg")
     st.markdown("---")
     st.markdown("**🖨️ QR 만들기**")
     url = st.text_input("앱 주소", placeholder="https://○○○.streamlit.app")
@@ -141,8 +144,6 @@ if ADMIN:
     st.caption("앱 화면으로 돌아가려면 주소 끝의 ?admin=1 을 지우세요.")
     admin_panel()
     st.stop()
-with st.sidebar:
-    admin_panel()
 
 # ---- 화면에서 온 요청 처리
 req = SS.get("hj")

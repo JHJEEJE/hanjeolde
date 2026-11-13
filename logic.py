@@ -64,7 +64,6 @@ def _json(name: str, default):
     return json.loads(p.read_text(encoding="utf-8"))
 
 
-@st.cache_data
 def _fix_josa(t: str) -> str:
     import re as _r
 
@@ -76,6 +75,7 @@ def _fix_josa(t: str) -> str:
     return _r.sub(r"(\S)(은|이|을|과)\((는|가|를|와)\)", rep, str(t))
 
 
+@st.cache_data
 def load_places() -> pd.DataFrame:
     """35곳(이야기 조각이 있는 곳) + data/temples_geo.csv(경주시 종교시설 현황의 사찰, geocode.py로 좌표를 만든 것)"""
     df = pd.read_csv(data_path("places.csv"), encoding="utf-8-sig")
