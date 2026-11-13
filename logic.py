@@ -853,11 +853,14 @@ def call_claude(messages, system, model=None, tools=None, max_tokens=600) -> dic
     try:
         r = requests.post("https://api.anthropic.com/v1/messages", timeout=25, json=body, headers={
             "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"})
-        if r.status_code != 200:
-            return None
-        return r.json()
+        if r.status_code == 200:
+            return r.json()
     except Exception:
-        return None
+        pass
+    # 크레딧이 떨어졌거나 잠깐 막히면 Gemini 키가 있을 때 Gemini로, 없으면 규칙 AI로
+    if not tools and (_secret("GEMINI_API_KEY") or _secret("GOOGLE_AI_KEY")):
+        return _call_gemini(messages, system, max_tokens)
+    return None
 
 
 def _text_of(res: dict) -> str:
