@@ -462,6 +462,53 @@ def around_point(shops, lat, lon, ctx, lang, leg=None, limit=6, radius_km=0.6) -
     return out[:limit]
 
 
+DESSERT_RE = _re.compile(r"디저트|베이커리|bakery|빵|케이크|cake|젤라또|아이스크림|과자|호떡|황남빵|찰보리|마카롱|도넛|dessert", _re.I)
+GROUP_ORDER = {   # 멈춘 이유에 따라 먼저 보여 줄 종류
+    "체력": ["cafe", "dessert", "meal", "exp"], "시간": ["cafe", "dessert", "meal", "exp"],
+    "날씨": ["cafe", "exp", "dessert", "meal"], "흥미": ["exp", "cafe", "dessert", "meal"],
+}
+
+
+def group_of(s) -> str:
+    if s["kind"] in ("craft", "culture"):
+        return "exp"
+    if s.get("gj") == "dessert" or DESSERT_RE.search(str(s.get("name", ""))):
+        return "dessert"
+    return s["kind"]
+
+
+def by_type(shops, lat, lon, ctx, lang, reason=None, per=2, max_km=1.5) -> dict:
+    """멈춘 곳(또는 끝난 곳) 둘레 상권에서 종류별로 가까운 곳 per곳씩.
+    500m → 1km → 1.5km 순서로 넓혀 가며, 종류마다 모자랄 때만 더 멀리 봐요. 힘들어서 멈췄으면 1km까지만."""
+    if reason == "체력":
+        max_km = min(max_km, 1.0)
+    hour = ctx["now"].hour
+    order = GROUP_ORDER.get(reason) or (["meal", "cafe", "dessert", "exp"] if (11 <= hour < 14 or 17 <= hour < 20) else ["cafe", "dessert", "meal", "exp"])
+    cands = []
+    for s in shops:
+        if s.get("open_now") is False:
+            continue
+        if s.get("rating") is not None and s.get("reviews") and int(s["reviews"]) >= 5 and float(s["rating"]) < 3.5:
+            continue
+        d = L.haversine_km(lat, lon, s["lat"], s["lon"])
+        if d > max_km:
+            continue
+        sc, why = score(s, (lat, lon), (lat, lon), ctx, lang)
+        cands.append(dict(s, score=sc, why=why, dist_m=d * 1000, group=group_of(s)))
+    out = {}
+    for g in order:
+        picked = []
+        for ring in (0.5, 1.0, 1.5):
+            if ring > max_km + 1e-9 or len(picked) >= per:
+                break
+            pool = [c for c in cands if c["group"] == g and c["dist_m"] <= ring * 1000 and c not in picked]
+            pool.sort(key=lambda c: (c["dist_m"] - 250 * c["score"]))   # 가까운 곳 먼저, 비슷하면 점수 높은 곳
+            picked += pool[: per - len(picked)]
+        if picked:
+            out[g] = picked
+    return out
+
+
 def alternatives(cur, plan_stops, prefs, cond, places, data, lang, limit=3) -> list:
     to_sunset = int((cond["sunset"] - cond["now"]).total_seconds() // 60)
     out = []

@@ -130,6 +130,7 @@ def _shop_json(s, lang, origin=None):
                     else s.get("url") or L.kakao_to(s["name"], s["lat"], s["lon"])),
             "from": origin["label"] if origin else None, "gmap": s.get("url") or "",
             "naver": "https://map.naver.com/p/search/" + quote("경주 " + str(s["name"])),
+            "group": SH.group_of(s),
             "walkMin": round(L.haversine_km(origin["lat"], origin["lon"], s["lat"], s["lon"]) * 1000 * L.PATH_FACTOR / 75) if origin else None,
             "distM": round(L.haversine_km(origin["lat"], origin["lon"], s["lat"], s["lon"]) * 1000) if origin else None}
 
@@ -271,13 +272,13 @@ def do_finish(payload, cond, lang):
             recs.append({"kind": k, "title": title, "sub": sub, "stops": c["stops"], "reason": rec[k]["reason"]})
     prefs = st.session_state.get("prefs") or {}
     end = w["arrived"][-1]
-    pool = _shops(places, [end], lang, keys_status())
+    pool = _shops(places, [end], lang, keys_status(), points=((round(float(places.loc[end, "lat"]) + 0.006, 3), round(float(places.loc[end, "lon"]), 3)),
+                                                         (round(float(places.loc[end, "lat"]) - 0.006, 3), round(float(places.loc[end, "lon"]), 3))))
     ctx_ = shop_ctx(cond, prefs, walk["user"]["who"])
-    near = SH.around(pool, places, end, ctx_, lang, limit=8, radius_km=0.5)
-    radius = 500
-    if len(near) < 3:   # 500m 안에 가게가 적으면 1km까지 넓혀요
-        near = SH.around(pool, places, end, ctx_, lang, limit=8, radius_km=1.0)
-        radius = 1000
+    elat, elon = float(places.loc[end, "lat"]), float(places.loc[end, "lon"])
+    groups = SH.by_type(pool, elat, elon, ctx_, lang, reason=w.get("stopped"))
+    near = [x for g in groups.values() for x in g]
+    radius = max([500] + [int(-(-x["dist_m"] // 500) * 500) for x in near])
     try:
         L.log_event(st.session_state.get("sid", "web"), "finish" if not w.get("stopped") else "stop",
                     stops=w["stops"], arrived=w["arrived"], reason=w.get("stopped"), lang=lang)
@@ -286,6 +287,9 @@ def do_finish(payload, cond, lang):
     return {"story": polished or story, "byClaude": bool(polished), "stats": s,
             "badges": [{"key": b, "label": I.lab("badge", b, lang), "emoji": I.BADGE_EMOJI.get(b, "")} for b in bs],
             "end": {"id": end, "lat": float(places.loc[end, "lat"]), "lon": float(places.loc[end, "lon"]), "radius": radius},
+            "groups": [[g, [_shop_json(x, lang, {"name": places.loc[end, "name"], "lat": elat, "lon": elon,
+                                                 "label": L.place_name(end, places, data, lang)}) for x in lst]] for g, lst in groups.items()],
+            "stopped": w.get("stopped"),
             "recs": recs, "near": [_shop_json(x, lang, {"name": places.loc[w["arrived"][-1], "name"], "lat": float(places.loc[w["arrived"][-1], "lat"]),
                                                   "lon": float(places.loc[w["arrived"][-1], "lon"]),
                                                   "label": L.place_name(w["arrived"][-1], places, data, lang)}) for x in near]}

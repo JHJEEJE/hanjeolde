@@ -302,3 +302,5 @@ details.dirs .sn{flex:none;width:18px;height:18px;border-radius:50%;background:#
 .medot i{width:14px;height:14px;border-radius:50%;background:#2F7BD8;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 
 .navnear{position:absolute;left:0;right:0;bottom:0;z-index:1100;max-height:55%;overflow:auto;background:#fff;border-radius:22px 22px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -8px 24px rgba(0,0,0,.18)}
+
+.grp{margin-top:12px}.grph{font-weight:900;font-size:15px;margin-bottom:2px}

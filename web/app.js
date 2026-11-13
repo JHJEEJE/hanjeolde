@@ -5,6 +5,18 @@
 const TX = {
   ko: {
     how: "이렇게 이용해요",
+    "stop_t": "여기서 쉬어 가요 — 가까운 곳을 종류별로 골랐어요",
+    "end_s2": "{n} 둘레 {r} 안, 종류마다 가까운 2곳",
+    "nearest": "가까운 순",
+    "g_cafe": "카페·찻집",
+    "g_dessert": "디저트·빵",
+    "g_meal": "식사",
+    "g_exp": "체험·공방",
+    "why_체력": "힘들어서 멈추셨으니 걸어서 가장 가까운 쉼터부터, 1km 안에서만 골랐어요.",
+    "why_시간": "시간이 빠듯하니 바로 앞 가까운 곳부터 골랐어요.",
+    "why_날씨": "날씨가 궂으니 안에서 쉴 수 있는 카페·체험 공간부터 골랐어요.",
+    "why_흥미": "다른 재미를 찾으시는 것 같아 체험·공방부터 골랐어요.",
+
     qr_search: "절 이름으로 찾기 (예: 보리사)",
     end_t: "순례가 끝난 곳에서 걸어갈 만한 가게", end_s: "{n}에서 반경 500m · 걸어서 7분 안쪽", nv: "네이버 리뷰 보기", walkd: "걸어서 {m}분 · {d}m", all: "전체",
     dir_t: "🧭 자세한 길 안내", dir_rough: "지도 데이터로 어림한 방향이에요. 정확한 길은 카카오맵 도보 길찾기로 확인해요.", from_here: "{n}에서 길찾기",
@@ -68,6 +80,18 @@ const TX = {
   },
   en: {
     how: "How it works",
+    "stop_t": "Take a rest — nearby places by type",
+    "end_s2": "Within {r} of {n}, the 2 closest per type",
+    "nearest": "closest first",
+    "g_cafe": "Café & tea",
+    "g_dessert": "Dessert & bakery",
+    "g_meal": "Meal",
+    "g_exp": "Experience & crafts",
+    "why_체력": "You stopped because you were tired, so these are the closest rest spots, within 1 km.",
+    "why_시간": "Short on time, so the nearest places come first.",
+    "why_날씨": "The weather turned, so indoor cafés and experience spaces come first.",
+    "why_흥미": "Looking for something different? Experiences and crafts first.",
+
     qr_search: "Search by temple name",
     end_t: "Shops within walking distance of where you finished", end_s: "Within 500 m of {n} · about 7 min on foot", nv: "Naver reviews", walkd: "{m} min walk · {d} m", all: "All",
     dir_t: "🧭 Step-by-step directions", dir_rough: "Rough direction only — check Kakao Map walking directions for the exact path.", from_here: "Directions from {n}",
@@ -131,6 +155,18 @@ const TX = {
   },
   ja: {
     how: "使い方",
+    "stop_t": "ここで休みましょう — 近い店を種類別に",
+    "end_s2": "{n}の周り{r}以内、種類ごとに近い2か所",
+    "nearest": "近い順",
+    "g_cafe": "カフェ・茶房",
+    "g_dessert": "デザート・パン",
+    "g_meal": "食事",
+    "g_exp": "体験・工房",
+    "why_체력": "疲れてやめたので、歩いて一番近い休憩所から、1km以内で選びました。",
+    "why_시간": "時間が少ないので、すぐ近くの店から選びました。",
+    "why_날씨": "天気が悪いので、屋内で休めるカフェ・体験スペースから選びました。",
+    "why_흥미": "別の楽しみを探しているようなので、体験・工房から選びました。",
+
     qr_search: "寺の名前で検索",
     end_t: "巡礼を終えた場所から歩いて行ける店", end_s: "{n}から半径500m・徒歩7分以内", nv: "NAVERのレビュー", walkd: "徒歩{m}分 · {d}m", all: "すべて",
     dir_t: "🧭 詳しい道案内", dir_rough: "おおよその方向です。正確な道はカカオマップの徒歩ルートで確認してください。", from_here: "{n}から道案内",
@@ -194,6 +230,18 @@ const TX = {
   },
   zh: {
     how: "使用方法",
+    "stop_t": "在这里歇一歇——按类型挑了附近的地方",
+    "end_s2": "{n}周边{r}内，每类最近的2处",
+    "nearest": "由近到远",
+    "g_cafe": "咖啡·茶馆",
+    "g_dessert": "甜品·面包",
+    "g_meal": "用餐",
+    "g_exp": "体验·工坊",
+    "why_체력": "因为累了才停下，所以只在1公里内挑了步行最近的休息处。",
+    "why_시간": "时间紧，先挑了最近的地方。",
+    "why_날씨": "天气不好，先挑了可以在室内休息的咖啡馆和体验空间。",
+    "why_흥미": "看来想找点别的乐趣，先挑了体验和工坊。",
+
     qr_search: "按寺名搜索",
     end_t: "从巡礼终点步行可达的店", end_s: "{n}周边500米 · 步行7分钟内", nv: "NAVER评价", walkd: "步行{m}分钟 · {d}米", all: "全部",
     dir_t: "🧭 详细路线指引", dir_rough: "这是大致方向，准确路线请用Kakao地图步行导航确认。", from_here: "从{n}导航",
@@ -319,7 +367,7 @@ function pinHtml(kind, n, grey) {
   const badge = n != null ? `<div style="position:absolute;top:-8px;right:-9px;min-width:17px;height:17px;border-radius:9px;background:#3B312D;color:#fff;font:800 10.5px/17px sans-serif;text-align:center;border:2px solid #fff;padding:0 2px">${n}</div>` : "";
   return `<div style="position:relative;width:34px;height:44px;filter:drop-shadow(0 3px 4px rgba(90,60,40,.3))"><svg width="34" height="44" viewBox="0 0 36 46"><path d="M18 45 C18 45 3 28.5 3 17 A15 15 0 1 1 33 17 C33 28.5 18 45 18 45 Z" fill="${c}" stroke="#fff" stroke-width="2.5"/><g transform="translate(8,7)">${B.pins.inner[kind] || ""}</g></svg>${badge}</div>`;
 }
-const KIND_EMOJI = { cafe: "☕", meal: "🍚", craft: "🎨", culture: "🏛️" };
+const KIND_EMOJI = { cafe: "☕", meal: "🍚", craft: "🎨", culture: "🏛️", dessert: "🍰", exp: "🎨" };
 function toast(msg) {
   const o = document.createElement("div");
   o.className = "toast";
@@ -700,13 +748,16 @@ function doneView() {
   <button class="btn ghost" data-act="home">${esc(x("home"))}</button><div style="height:8px"></div>`;
 }
 function endShops(d) {
-  const kinds = ["all"].concat(["cafe", "meal", "craft", "culture"].filter((k) => d.near.some((s) => s.kind === k)));
-  const f = S.endKind || "all";
-  const list = d.near.filter((s) => f === "all" || s.kind === f).sort((a, b) => (a.walkMin || 0) - (b.walkMin || 0));
-  return `<div class="card"><h2>${esc(x("end_t"))}</h2><p class="sub">${esc(x("end_s", { n: pname(d.end.id) }))}</p>
-    <div class="chips" style="margin:8px 0">${kinds.map((k) => `<button class="chip sm ${f === k ? "on" : ""}" data-act="endkind" data-v="${k}">${k === "all" ? esc(x("all")) : (KIND_EMOJI[k] + " " + esc(lab("shop_kind", k)))}</button>`).join("")}</div>
-    <div class="map" id="map-end" style="height:260px"></div>${list.map(shopCard).join("")}</div>`;
+  const groups = d.groups || [];
+  const why = d.stopped ? x("why_" + d.stopped) : "";
+  const sec = groups.map(([g, list]) => `<div class="grp"><div class="grph">${GROUP_EMOJI[g] || "📍"} ${esc(x("g_" + g))} <span class="muted small">${esc(x("nearest"))}</span></div>
+    ${list.map(shopCard).join("")}</div>`).join("");
+  return `<div class="card"><h2>${esc(d.stopped ? x("stop_t") : x("end_t"))}</h2>
+    <p class="sub">${esc(x("end_s2", { n: pname(d.end.id), r: d.end.radius >= 1000 ? (d.end.radius / 1000).toFixed(1) + "km" : d.end.radius + "m" }))}</p>
+    ${why && why !== "why_" + d.stopped ? `<div class="reason"><i>💡</i><span>${esc(why)}</span></div>` : ""}
+    <div class="map" id="map-end" style="height:260px;margin:8px 0"></div>${sec}</div>`;
 }
+const GROUP_EMOJI = { cafe: "☕", dessert: "🍰", meal: "🍚", exp: "🎨" };
 async function drawCard() {
   const cv = $("#pc");
   if (!cv || !S.done) return;
@@ -885,16 +936,15 @@ function endMap() {
   const d = S.done, e = d.end, p = P(e.id);
   const m = baseMap("map-end");
   L.circle([e.lat, e.lon], { radius: e.radius, color: "#E8795A", weight: 2, dashArray: "6 6", fillColor: "#E8795A", fillOpacity: 0.07 }).addTo(m);
-  const f = S.endKind || "all";
   const pts = [[e.lat, e.lon]];
-  d.near.filter((s) => f === "all" || s.kind === f).forEach((s) => {
+  d.near.forEach((s) => {
     pts.push([s.lat, s.lon]);
-    L.marker([s.lat, s.lon], { icon: L.divIcon({ html: `<div class="shopdot">${KIND_EMOJI[s.kind] || "📍"}</div>`, className: "", iconSize: [22, 22], iconAnchor: [11, 11] }) })
+    L.marker([s.lat, s.lon], { icon: L.divIcon({ html: `<div class="shopdot">${GROUP_EMOJI[s.group] || KIND_EMOJI[s.kind] || "📍"}</div>`, className: "", iconSize: [22, 22], iconAnchor: [11, 11] }) })
       .bindTooltip(`${s.name} · ${x("walkd", { m: Math.max(1, s.walkMin || 1), d: s.distM || 0 })}`).addTo(m);
   });
   L.marker([e.lat, e.lon], { icon: L.divIcon({ html: pinHtml(p.kind, null, false), className: "", iconSize: [34, 44], iconAnchor: [17, 43] }) }).bindTooltip(p.name).addTo(m);
   document.getElementById("map-end")._pts = pts;
-  m.fitBounds(L.latLng(e.lat, e.lon).toBounds(e.radius * 2.05), { padding: [4, 4] });
+  if (pts.length > 1) m.fitBounds(pts, { padding: [30, 30], maxZoom: 17 }); else m.setView([e.lat, e.lon], 16);
 }
 function allMap() {
   const kinds = S.mapKinds || B.pins.legend;
