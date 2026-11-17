@@ -1,19 +1,19 @@
 /* 실시간 길 안내 — 지도 앱처럼 내 위치(GPS)를 따라가며 다음 사찰까지 안내하고, 도착하면 이야기를 들려줘요. */
 "use strict";
 const NAV_TX = {
-  ko: { start: "🧭 지도로 길 안내 시작", to: "{n}까지", left: "남은 거리 {d} · 약 {m}분", eta: "{t} 도착 예정", me: "내 위치", sim: "▶ 시연: 따라 걷기",
+  ko: { near_wait: "주변 가게를 찾고 있어요… 지도는 계속 쓸 수 있어요.", pins: "🏪 가게 핀", pins_off: "🏪 핀 끄기", spd: ["🐢 천천히", "🚶 보통", "🏃 빠르게"], walk_n: "걸어서 {m}분 · {d}", dir: "길찾기", rev: "리뷰", start: "🧭 지도로 길 안내 시작", to: "{n}까지", left: "남은 거리 {d} · 약 {m}분", eta: "{t} 도착 예정", me: "내 위치", sim: "▶ 시연: 따라 걷기",
         simstop: "⏸ 시연 멈춤", gps_wait: "내 위치를 찾고 있어요… (위치 권한을 허용해 주세요)", gps_no: "위치를 쓸 수 없어요. 휴대폰 설정에서 위치 권한을 켜거나, 시연으로 따라 걸어 보세요.",
         off: "길에서 벗어났어요. 새 길을 찾는 중…", rerouted: "새 길로 안내할게요", arrived: "📍 {n}에 도착했어요!", then: "그다음", near_t: "☕ 근처 쉬어 갈 곳", close: "안내 끝내기",
         arrive_btn: "도착했어요", near_none: "걸어갈 만한 가게를 아직 못 찾았어요.", near_more: "네이버 지도에서 근처 카페 더 보기", acc: "GPS 정확도 ±{m}m", follow: "따라가기" },
-  en: { start: "🧭 Start live navigation", to: "to {n}", left: "{d} left · about {m} min", eta: "Arrive around {t}", me: "My location", sim: "▶ Demo: walk the route",
+  en: { near_wait: "Looking for places nearby… you can keep using the map.", pins: "🏪 Shop pins", pins_off: "🏪 Hide pins", spd: ["🐢 Slow", "🚶 Normal", "🏃 Fast"], walk_n: "{m} min walk · {d}", dir: "Directions", rev: "Reviews", start: "🧭 Start live navigation", to: "to {n}", left: "{d} left · about {m} min", eta: "Arrive around {t}", me: "My location", sim: "▶ Demo: walk the route",
         simstop: "⏸ Stop demo", gps_wait: "Finding your location… (please allow location access)", gps_no: "Location unavailable. Turn on location permission, or try the demo walk.",
         off: "You're off the route. Finding a new one…", rerouted: "New route ready", arrived: "📍 You've arrived at {n}!", then: "Then", near_t: "☕ Places to rest nearby", close: "End navigation",
         arrive_btn: "I'm here", near_none: "No shops found within walking distance yet.", near_more: "More cafés nearby on Naver Map", acc: "GPS accuracy ±{m} m", follow: "Follow" },
-  ja: { start: "🧭 地図で道案内を開始", to: "{n}まで", left: "残り{d} · 約{m}分", eta: "{t}到着予定", me: "現在地", sim: "▶ デモ：ルートを歩く",
+  ja: { near_wait: "近くの店を探しています…地図はそのまま使えます。", pins: "🏪 店のピン", pins_off: "🏪 ピンを消す", spd: ["🐢 ゆっくり", "🚶 ふつう", "🏃 速く"], walk_n: "徒歩{m}分 · {d}", dir: "道案内", rev: "口コミ", start: "🧭 地図で道案内を開始", to: "{n}まで", left: "残り{d} · 約{m}分", eta: "{t}到着予定", me: "現在地", sim: "▶ デモ：ルートを歩く",
         simstop: "⏸ デモ停止", gps_wait: "現在地を探しています…（位置情報を許可してください）", gps_no: "位置情報が使えません。位置情報の許可をオンにするか、デモで歩いてみてください。",
         off: "ルートから外れました。新しい道を探しています…", rerouted: "新しい道で案内します", arrived: "📍 {n}に到着しました！", then: "その次", near_t: "☕ 近くの休憩スポット", close: "案内を終了",
         arrive_btn: "着きました", near_none: "歩いて行ける店がまだ見つかりません。", near_more: "NAVER地図で近くのカフェをもっと見る", acc: "GPS精度 ±{m}m", follow: "追従" },
-  zh: { start: "🧭 开始地图导航", to: "前往{n}", left: "剩余{d} · 约{m}分钟", eta: "预计{t}到达", me: "我的位置", sim: "▶ 演示：沿路线走",
+  zh: { near_wait: "正在查找附近的店…地图可以继续使用。", pins: "🏪 店铺标记", pins_off: "🏪 隐藏标记", spd: ["🐢 慢", "🚶 正常", "🏃 快"], walk_n: "步行{m}分钟 · {d}", dir: "导航", rev: "评价", start: "🧭 开始地图导航", to: "前往{n}", left: "剩余{d} · 约{m}分钟", eta: "预计{t}到达", me: "我的位置", sim: "▶ 演示：沿路线走",
         simstop: "⏸ 停止演示", gps_wait: "正在定位…（请允许位置权限）", gps_no: "无法使用位置。请开启定位权限，或试试演示。",
         off: "已偏离路线，正在重新规划…", rerouted: "已为您规划新路线", arrived: "📍 已到达{n}！", then: "然后", near_t: "☕ 附近可休息的地方", close: "结束导航",
         arrive_btn: "我到了", near_none: "附近暂未找到步行可达的店。", near_more: "在NAVER地图查看更多附近咖啡馆", acc: "GPS精度 ±{m}米", follow: "跟随" },
@@ -21,6 +21,8 @@ const NAV_TX = {
 const Nav = (() => {
   let map = null, me = null, meRing = null, line = null, doneLine = null, watchId = null, simTimer = null, follow = true, wake = null;
   let pts = [], cum = [], total = 0, man = [], dest = null, destName = "", offCount = 0, rerouting = false, lastProg = 0, arrivedFlag = false;
+  let simSpeed = 1, pinsOn = true, lastShopPos = null, lastShopT = 0;
+  const SPEEDS = [4, 8, 16];   // 시연 걸음: 초당 m (천천히 · 보통 · 빠르게)
   const T = (k, kw) => { const d = NAV_TX[lang()] || NAV_TX.ko; let s = d[k] || NAV_TX.ko[k] || k; if (kw) for (const q in kw) s = s.split("{" + q + "}").join(kw[q]); return s; };
   const R = 6371000;
   function xy(lat, lon, lat0) { return [(lon * Math.PI / 180) * R * Math.cos(lat0 * Math.PI / 180), (lat * Math.PI / 180) * R]; }
@@ -56,6 +58,7 @@ const Nav = (() => {
     if (!lg) return;
     const a = P(lg.from), b = P(lg.to);
     dest = [b.lat, b.lon]; destName = b.name; arrivedFlag = false; offCount = 0; follow = true; lastProg = 0;
+    lastShopPos = null; lastShopT = 0;
     setLine(lg.coords && lg.coords.length > 1 ? lg.coords : [[a.lat, a.lon], [b.lat, b.lon]]);
     man = (lg.steps || []).filter((s) => s && s.lat != null).map((s) => Object.assign({}, s, { prog: project([s.lat, s.lon]).prog }));
     const ov = document.createElement("div");
@@ -65,8 +68,8 @@ const Nav = (() => {
       <div id="navmap"></div>
       <div class="navpanel"><div class="navnext"><span class="navarrow" id="navarrow">↑</span><div><div class="navin" id="navin">${esc(T("gps_wait"))}</div><div class="navthen" id="navthen"></div></div></div>
         <div class="navleft" id="navleft"></div>
-        <div class="navbtns"><button class="mini" data-nav="me">◎ ${esc(T("me"))}</button><button class="mini" data-nav="sim" id="navsim">${esc(T("sim"))}</button>
-          <button class="mini" data-nav="near">${esc(T("near_t"))}</button><button class="mini coral" data-nav="arrive">${esc(T("arrive_btn"))}</button></div></div>`;
+        <div class="navbtns"><button class="mini" data-nav="me">◎ ${esc(T("me"))}</button><button class="mini" data-nav="sim" id="navsim">${esc(T("sim"))}</button><button class="mini" data-nav="spd" id="navspd">${esc(T("spd")[simSpeed])}</button>
+          <button class="mini" data-nav="near">${esc(T("near_t"))}</button><button class="mini" data-nav="pins" id="navpins">${esc(pinsOn ? T("pins_off") : T("pins"))}</button><button class="mini coral" data-nav="arrive">${esc(T("arrive_btn"))}</button></div></div>`;
     $("#frame").appendChild(ov);
     map = L.map("navmap", { zoomControl: false, attributionControl: true });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
@@ -105,6 +108,21 @@ const Nav = (() => {
     if (dist(p, dest) < 35 || total - prog < 20) { arrivedAuto(); return; }
     if (pr.d > 45 && (!acc || acc < 60)) { offCount++; if (offCount >= 3) reroute(p); } else offCount = 0;
     updatePanel(prog, p);
+    if (pinsOn && (!lastShopPos || dist(p, lastShopPos) > 150) && Date.now() - lastShopT > 8000) requestShops(false, p);
+  }
+  function requestShops(panel, p) {   // 지금 위치 둘레 가게: 움직이면 자동으로 지도 핀만, 버튼을 누르면 목록까지
+    const w = S.walk;
+    if (!w) return;
+    const pos = p || (me ? [me.getLatLng().lat, me.getLatLng().lng] : pointAt(lastProg));
+    const sent = ask("nearby", { pid: w.stops[w.idx], next: w.stops[w.idx + 1] || null, pos, who: w.who }, { silent: true, panel });
+    if (sent === false && !panel) return;
+    lastShopPos = pos; lastShopT = Date.now();
+    if (panel) panelHtml(`<p class="sub" style="margin:10px 2px">🪷 ${esc(T("near_wait"))}</p>`);
+  }
+  function panelHtml(inner) {
+    let sh = $("#navnear");
+    if (!sh) { sh = document.createElement("div"); sh.id = "navnear"; sh.className = "navnear"; $("#nav").appendChild(sh); }
+    sh.innerHTML = `<div class="between"><b>${esc(T("near_t"))}</b><button class="mini" data-nav="nearclose">✕</button></div>${inner}`;
   }
   function arrowFor(text) {
     if (/왼쪽|left|左/.test(text)) return /살짝|Bear|やや|稍/.test(text) ? "↖" : "↰";
@@ -159,7 +177,7 @@ const Nav = (() => {
     btn.textContent = T("simstop");
     let prog = lastProg;
     simTimer = setInterval(() => {
-      prog += 14;
+      prog += SPEEDS[simSpeed] * 0.5;
       const q = pointAt(prog);
       onPos(q[0] + (Math.random() - 0.5) * 0.00003, q[1] + (Math.random() - 0.5) * 0.00003, 8, null);
       if (arrivedFlag || prog > total + 30) { clearInterval(simTimer); simTimer = null; }
@@ -167,16 +185,27 @@ const Nav = (() => {
   }
   let shopLayer = null;
   function clearShops() { if (shopLayer && map) { map.removeLayer(shopLayer); } shopLayer = null; }
-  function showNearby(d) {
+  function showNearby(d, opts = {}) {
     if (!map) return false;
-    clearShops();
-    shopLayer = L.layerGroup().addTo(map);
-    (d.near || []).forEach((s) => L.marker([s.lat, s.lon], { icon: L.divIcon({ html: `<div class="shopdot">${GROUP_EMOJI[s.group] || KIND_EMOJI[s.kind] || "📍"}</div>`, className: "", iconSize: [24, 24], iconAnchor: [12, 12] }) }).bindTooltip(s.name).addTo(shopLayer));
-    let sh = $("#navnear");
-    if (!sh) { sh = document.createElement("div"); sh.id = "navnear"; sh.className = "navnear"; $("#nav").appendChild(sh); }
-    sh.innerHTML = `<div class="between"><b>${esc(T("near_t"))}</b><button class="mini" data-nav="nearclose">✕</button></div>
-      ${d.near && d.near.length ? groupedShops(d.groups, d.near) : `<p class="sub">${esc(T("near_none"))}</p>`}
-      ${d.search ? `<a class="mini" href="${esc(d.search)}" target="_blank" rel="noopener">N ${esc(T("near_more"))} ›</a>` : ""}`;
+    if ((d.near || []).length || opts.panel) {
+      clearShops();
+      if (pinsOn || opts.panel) {
+        shopLayer = L.layerGroup().addTo(map);
+        (d.near || []).forEach((s) => {
+          const pop = `<b>${esc(s.name)}</b><div class="small muted">${esc(s.kindLabel)}${s.walkMin != null ? " · " + esc(T("walk_n", { m: Math.max(1, s.walkMin), d: fmtD(s.distM) })) : ""}</div>
+            <div style="margin-top:6px;display:flex;gap:6px"><a class="mini sage" href="${esc(s.url)}" target="_blank" rel="noopener">🧭 ${esc(T("dir"))}</a>
+            <a class="mini" href="${esc(s.naver)}" target="_blank" rel="noopener">N ${esc(T("rev"))}</a></div>`;
+          L.marker([s.lat, s.lon], { icon: L.divIcon({ html: `<div class="shoppin g-${esc(s.group || "cafe")}">${GROUP_EMOJI[s.group] || KIND_EMOJI[s.kind] || "📍"}</div>`, className: "", iconSize: [30, 30], iconAnchor: [15, 15] }) })
+            .bindPopup(pop, { maxWidth: 230, autoPanPadding: [16, 90] })
+            .on("click", () => { follow = false; })   // 가게를 누르면 지도가 나를 따라가지 않게 (◎ 내 위치로 다시)
+            .addTo(shopLayer);
+        });
+      }
+    }
+    if (opts.panel) {
+      panelHtml(`${d.near && d.near.length ? groupedShops(d.groups, d.near) : `<p class="sub">${esc(T("near_none"))}</p>`}
+        ${d.search ? `<a class="mini" href="${esc(d.search)}" target="_blank" rel="noopener">N ${esc(T("near_more"))} ›</a>` : ""}`);
+    }
     return true;
   }
   function isOpen() { return !!map; }
@@ -197,10 +226,14 @@ const Nav = (() => {
     else if (a === "me") { follow = true; if (me) map.setView(me.getLatLng(), 17); }
     else if (a === "sim") simulate();
     else if (a === "arrive") arrivedAuto();
-    else if (a === "near") {   // 길 안내는 그대로 두고, 지금 위치 둘레 가게를 아래에 띄워요
-      const w = S.walk;
-      const pos = me ? [me.getLatLng().lat, me.getLatLng().lng] : null;
-      ask("nearby", { pid: w.stops[w.idx], next: w.stops[w.idx + 1] || null, pos, who: w.who });
+    else if (a === "near") requestShops(true);   // 길 안내는 그대로 두고, 지금 위치 둘레 가게를 아래에 띄워요
+    else if (a === "pins") {
+      pinsOn = !pinsOn; el.textContent = pinsOn ? T("pins_off") : T("pins");
+      if (!pinsOn) clearShops(); else { lastShopPos = null; lastShopT = 0; requestShops(false); }
+    }
+    else if (a === "spd") {
+      simSpeed = (simSpeed + 1) % SPEEDS.length; el.textContent = T("spd")[simSpeed];
+      if (simTimer) { simulate(); simulate(); }   // 걷는 중이면 새 속도로 이어서
     }
     else if (a === "nearclose") { const sh = $("#navnear"); if (sh) sh.remove(); clearShops(); }
   });

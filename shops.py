@@ -432,14 +432,49 @@ def _norm(s):
     return "".join(ch for ch in str(s).lower() if ch.isalnum())
 
 
-def gather(places, stop_ids, lang, use_tour=True, use_google=True, example=False, csv=None, use_naver=True, points=()) -> tuple[list, dict]:
+def gather(places, stop_ids, lang, use_tour=True, use_google=True, example=False, csv=None, use_naver=True, points=(),
+           deadline=7.0) -> tuple[list, dict]:
     """(가게 목록, 출처별 개수). points: 사찰 말고도 둘러볼 지점 [(위도, 경도)] — 걷는 길 한가운데, 지금 내 위치"""
     shops, stat = [], {"csv": 0, "tour": 0, "google": 0, "example": 0, "naver": 0, "gj": 0}
-    got = gj_all()   # 경주시 공공데이터는 시 전체를 한 번에 받아 두고 가까운 곳만 써요
+    # 바깥 API는 한꺼번에(병렬로) 부르고, deadline 초 안에 온 것만 써요. 늦게 온 것도 캐시에 남아 다음엔 바로 나와요.
+    from concurrent.futures import ThreadPoolExecutor, wait
+    jobs = []   # (출처, 함수, 인자)
+    kk = kakao_key()
+    for src in GJ_SOURCES:   # 경주시 공공데이터는 시 전체를 한 번에 받아 두고 가까운 곳만 써요
+        u, k = gj_url(src), gj_key(src)
+        if u and k:
+            jobs.append(("gj", _gj_fetch, (u, k, src, kk)))
+    gkey = google_key()[0] if use_google else None
+    tkey = L.tour_key() if use_tour else None
+    ncid, nsec = naver_keys() if use_naver else (None, None)
+    spots = [(sid, round(float(places.loc[sid].lat), 5), round(float(places.loc[sid].lon), 5)) for sid in dict.fromkeys(stop_ids)]
+    spots += [(None, round(a, 3), round(b, 3)) for a, b in points]   # 100m 단위로 묶어 캐시가 잘 맞게
+    for sid, lat, lon in spots:
+        if gkey:
+            jobs.append(("google", _google, (lat, lon, 800, gkey, lang)))
+        if ncid and sid:
+            nm = str(places.loc[sid]["name"]).split(" ")[0]
+            for word in ("카페", "맛집"):
+                jobs.append(("naver", _naver, (f"경주 {nm} {word}", ncid, nsec)))
+        if tkey:
+            for ctype in (39, 38, 14):
+                jobs.append(("tour", _tour, (lat, lon, 800, ctype, tkey)))
     centers = [(float(places.loc[s_, "lat"]), float(places.loc[s_, "lon"])) for s_ in stop_ids] + list(points)
-    got = [g for g in got if any(L.haversine_km(g["lat"], g["lon"], a, b) < 1.5 for a, b in centers)]
-    stat["gj"] = len(got)
-    shops += got
+    if jobs:
+        ex = ThreadPoolExecutor(max_workers=12)
+        futs = {ex.submit(fn, *args): src for src, fn, args in jobs}
+        done, late = wait(futs, timeout=deadline)
+        stat["late"] = len(late)
+        ex.shutdown(wait=False, cancel_futures=False)
+        for f in done:
+            try:
+                got = f.result() or []
+            except Exception:
+                continue
+            if futs[f] == "gj":
+                got = [g for g in got if any(L.haversine_km(g["lat"], g["lon"], a, b) < 1.5 for a, b in centers)]
+            stat[futs[f]] += len(got)
+            shops += got
     if csv is not None and not csv.empty:
         for _, s in csv.iterrows():
             shops.append({"id": f"csv_{s.get('id')}", "name": s["name"], "kind": classify(s["name"], CSV_KIND.get(s.get("type", ""), "meal")),
@@ -447,27 +482,6 @@ def gather(places, stop_ids, lang, use_tour=True, use_google=True, example=False
                           "open_now": L.open_now(s, L.datetime.now(L.KST)) if s.get("open") else None, "url": "",
                           "img": "", "source": "csv", "partner": s.get("partner", ""), "coupon": s.get("coupon", "")})
         stat["csv"] = len(shops)
-    gkey = google_key()[0] if use_google else None
-    tkey = L.tour_key() if use_tour else None
-    spots = [(sid, round(float(places.loc[sid].lat), 5), round(float(places.loc[sid].lon), 5)) for sid in dict.fromkeys(stop_ids)]
-    spots += [(None, round(a, 4), round(b, 4)) for a, b in points]
-    for sid, lat, lon in spots:
-        p = places.loc[sid] if sid else {"name": ""}
-        if gkey:
-            got = _google(lat, lon, 800, gkey, lang) or []
-            stat["google"] += len(got)
-            shops += got
-        ncid, nsec = naver_keys() if use_naver else (None, None)
-        if ncid and sid:
-            for word in ("카페", "맛집"):
-                got = _naver(f"경주 {p['name'].split(' ')[0]} {word}", ncid, nsec) or []
-                stat["naver"] += len(got)
-                shops += got
-        if tkey:
-            for ctype in (39, 38, 14):
-                got = _tour(lat, lon, 800, ctype, tkey) or []
-                stat["tour"] += len(got)
-                shops += got
     # 같은 가게 합치기 (이름이 같고 60m 안이면 하나로, 평점 있는 쪽 우선)
     merged = []
     for s in sorted(shops, key=lambda x: (x["rating"] is None, x["source"] != "csv")):

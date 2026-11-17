@@ -117,11 +117,14 @@ def _walk_route(lat1, lon1, lat2, lon2):
 def _shops(places, stops, lang, keys, points=()):
     key = (tuple(stops), lang, keys, tuple(points))
     cache = st.session_state.setdefault("shop_cache", {})
-    if key not in cache:
-        tour_ok, google_ok = keys
-        cache[key] = SH.gather(places, list(stops), lang, tour_ok, google_ok, not (tour_ok or google_ok or L.data_key()),
-                               L.load_rest_spots(), points=points)[0]
-    return cache[key]
+    if key in cache:
+        return cache[key]
+    tour_ok, google_ok = keys
+    got, stat = SH.gather(places, list(stops), lang, tour_ok, google_ok, not (tour_ok or google_ok or L.data_key()),
+                          L.load_rest_spots(), points=points)
+    if not stat.get("late"):   # 늦게 온 응답이 있으면 기억하지 않고 다음에 다시 (그땐 캐시라 빨라요)
+        cache[key] = got
+    return got
 
 
 def _shop_json(s, lang, origin=None):

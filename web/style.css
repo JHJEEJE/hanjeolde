@@ -325,3 +325,9 @@ details.area .chip.st{border-color:#F2C6B4}
   html.hosted .tabbar{padding-bottom:calc(46px + env(safe-area-inset-bottom))}
   html.hosted #scroll{padding-bottom:140px}
 }
+
+/* 길 안내 중 주변 가게 핀 (움직이면 자동으로 바뀌어요) */
+.shoppin{width:30px;height:30px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);border:2px solid #E8795A}
+.shoppin.g-dessert{border-color:#E59BB5}.shoppin.g-meal{border-color:#E8B04A}.shoppin.g-exp{border-color:#8C7BE0}
+.leaflet-popup-content .mini{text-decoration:none}

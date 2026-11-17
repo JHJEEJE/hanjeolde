@@ -384,18 +384,23 @@ function demoTime() { return DEMO && DEMO.time && DEMO.time !== "지금"; }
 /* ------------------------------------------------------------------ 요청 (파이썬에 계산 부탁) */
 let reqSeq = 0;
 function ask(kind, payload, opts = {}) {
+  if (opts.silent && S.pending && !S.pending.opts.silent) return false;   // 조용한 요청(지도 핀)은 다른 일을 끊지 않아요
   const id = `${Date.now().toString(36)}-${++reqSeq}`;
   S.pending = { id, kind, opts };
-  showLoading(kind);
+  if (!opts.silent) showLoading(kind);
   ST.value({ id, kind, payload: payload || {} });
 }
 function onResp(resp) {
   if (!resp || !S.pending || resp.id !== S.pending.id) return false;
   const { kind, opts } = S.pending;
   S.pending = null;
-  hideLoading();
+  if (!opts.silent) hideLoading();
   const d = resp.data || {};
-  if (d.error) { toast(x("err") + " · " + d.error.slice(0, 80)); console.error(d.error); return true; }
+  if (d.error) {
+    console.error(d.error);
+    if (kind === "nearby" && Nav.isOpen()) { Nav.showNearby({ near: [], groups: [] }, opts); return true; }
+    toast(x("err") + " · " + d.error.slice(0, 80)); return true;
+  }
   if (kind === "plan") {
     S.plan = d; S.cand = Math.max(0, d.cands.findIndex((c) => c.picked)); S.screen = "plan"; S.tab = "walk";
     if (opts.keepWalk && S.walk) { /* 언어만 바뀐 경우 */ }
@@ -407,7 +412,7 @@ function onResp(resp) {
       if (opts.toast) toast(opts.toast);
     }
   } else if (kind === "nearby") {
-    if (Nav.isOpen() && Nav.showNearby(d)) return true;
+    if (Nav.isOpen() && Nav.showNearby(d, opts)) return true;
     S.nearby = d;
     setTimeout(() => { const el = $("#nearbybox"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }, 80);
   } else if (kind === "alts") {
