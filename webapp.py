@@ -17,6 +17,7 @@ import streamlit as st
 import i18n as I
 import journal as J
 import areas as AR
+import romanize as RZ
 import logic as L
 import pins as PN
 import planner as P
@@ -44,6 +45,8 @@ def bundle(lang: str, _v: int = 3) -> dict:
         desc = L.place_desc(pid, places, data, lang)
         kind = _kind(places, pid)
         ar, town = AR.area_of(p.get("address", ""), float(p.lat), float(p.lon))
+        if lang != "ko" and town:
+            town = RZ.town_name(town)
         pl.append({"id": pid, "name": L.place_name(pid, places, data, lang), "cat": p.category,
                    "catLabel": I.lab("category", p.category, lang), "era": L.era_text(p.era, data, lang),
                    "lat": float(p.lat), "lon": float(p.lon), "desc": desc, "short": L._first_sentence(desc, lang),
@@ -174,6 +177,7 @@ def route_json(stops, who, story_interest, prefs, cond, lang, keys, with_paths=T
     assigned = {}   # 걷는 동안에는 가게를 권하지 않아요 (끝났거나 그만둘 때 둘레 가게를 보여 줘요)
     used = set()
     st_json = []
+    missions = L.route_missions(stops, who, places, data, lang)
     for i, p in enumerate(stops):
         text, sources, status = L.story_for(p, story_interest, places, data, lang)
         now_s, later_s = L.season_for(p, cond["month"], data, lang)
@@ -181,7 +185,7 @@ def route_json(stops, who, story_interest, prefs, cond, lang, keys, with_paths=T
         st_json.append({"id": p, "title": L.piece_title(p, places, data, i + 1, lang), "story": text,
                         "sources": [{"title": (s["title"] if lang == "ko" else s["title"].replace("한국민족문화대백과사전", I.t("encyk", lang)) + I.t("in_korean", lang)),
                                      "url": s["url"]} for s in sources],
-                        "status": status, "mission": L.mission_for(p, who, places, data, lang),
+                        "status": status, "mission": missions.get(p, ""),
                         "seasonNow": now_s, "seasonLater": [{"label": s["label"], "months": I.join_list([I.month_name(m, lang) for m in s["months"]], lang)} for s in later_s],
                         "diff": L.diff_line(stops[i - 1], p, places, data, lang) if i else "",
                         "teaser": L.teaser(p, stops[i + 1], places, data, lang) if i < len(stops) - 1 else "",

@@ -123,6 +123,8 @@ const Nav = (() => {
     let sh = $("#navnear");
     if (!sh) { sh = document.createElement("div"); sh.id = "navnear"; sh.className = "navnear"; $("#nav").appendChild(sh); }
     sh.innerHTML = `<div class="between"><b>${esc(T("near_t"))}</b><button class="mini" data-nav="nearclose">✕</button></div>${inner}`;
+    const pnl = $("#nav .navpanel");   // 아래 안내 칸(도착했어요·핀 버튼)은 가리지 않게 그 위에 띄워요
+    if (pnl) sh.style.bottom = pnl.offsetHeight + "px";
   }
   function arrowFor(text) {
     if (/왼쪽|left|左/.test(text)) return /살짝|Bear|やや|稍/.test(text) ? "↖" : "↰";

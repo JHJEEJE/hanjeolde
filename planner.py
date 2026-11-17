@@ -173,7 +173,7 @@ def _llm_parse_once(text: str) -> dict | None:
                         '형식: {"effects": [["근거 구절", "효과키"]], "want": ["꼭 가고 싶다고 한 장소 이름"], '
                         '"avoid": ["빼 달라거나 싫다고 한 장소 이름"], "summary": "AI가 이해한 요청 한 문장(사용자 언어로)"}\n'
                         "효과키는 아래 목록에서만 골라. 장소 이름은 사용자가 쓴 그대로. 없으면 빈 배열.\n" + eff_list,
-                        model=L._secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=350)
+                        model=L._secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=1000)
     if not res:
         return None
     t = L._text_of(res)
@@ -661,7 +661,7 @@ def clean_reason(t: str) -> str:
 
 def _claude_agent_loop(msgs, system, tools, run, cands):
     for _ in range(5):
-        res = L.call_claude(msgs, system, tools=tools, max_tokens=700)
+        res = L.call_claude(msgs, system, tools=tools, max_tokens=1500)
         if not res:
             return None
         if res.get("stop_reason") == "tool_use":

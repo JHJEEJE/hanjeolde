@@ -136,6 +136,22 @@ def _daypart(dt, lang):
             "zh": {"morning": "早晨", "noon": "正午", "afternoon": "午后", "evening": "傍晚"}}[lang][k]
 
 
+QUIET = {   # 이야기 조각이 아직 없는 절에서
+    "ko": ["{n}[은/는] 아직 이야기 조각이 준비 중인 작은 동네 절이었어요. 법당 앞에서 잠시 숨을 고르며 조용한 마당을 둘러봤어요.",
+           "{n}에는 아직 들려줄 이야기가 없었지만, 풍경 소리와 마당의 고요함이 그 자리를 채워 주었어요.",
+           "{n}의 작은 마당에 서니 바람 소리만 들렸어요. 이야기는 다음에 듣기로 하고, 잠시 마음을 쉬었어요."],
+    "en": ["{n} is a small neighborhood temple whose story is still being prepared. I caught my breath in front of the main hall and looked around the quiet courtyard.",
+           "{n} had no story for me yet, but the wind chimes and the calm courtyard filled the space.",
+           "In the small courtyard of {n}, all I heard was the wind. I saved the story for next time and simply rested."],
+    "ja": ["{n}は、物語がまだ準備中の小さな町のお寺でした。本堂の前でひと息つき、静かな境内を見渡しました。",
+           "{n}にはまだ物語がありませんでしたが、風鈴の音と境内の静けさがその代わりになってくれました。",
+           "{n}の小さな境内に立つと、聞こえるのは風の音だけでした。物語は次の楽しみにして、少し心を休めました。"],
+    "zh": ["{n}是一座故事还在准备中的社区小寺。我在大殿前歇了口气，环顾安静的院子。",
+           "{n}还没有可讲的故事，但风铃声和院子的宁静填满了这里。",
+           "站在{n}小小的院子里，只听得见风声。故事留到下次，我先让心歇一歇。"],
+}
+
+
 def _scene(cond, lang):
     s = cond["season"]
     if cond.get("rain"):
@@ -188,9 +204,16 @@ def story(walk: dict, places, data, cond, lang) -> dict:
                      f"{WHO_PHRASE['zh'].get(who, '我')}决定沿着一千年前新罗人走过的路走一走。第一步，从{name(stops[0])}开始。")
     # ---- 장소마다
     for i, p in enumerate(arrived):
-        text, _, _ = L.story_for(p, user.get("story_interest", "역사"), places, data, lang)
+        text, _, stat = L.story_for(p, user.get("story_interest", "역사"), places, data, lang)
+        quiet = stat == "pending" and L.is_extra(p)   # 이야기가 아직 없는 동네 절: 소개글 대신 그곳에서 한 일을 써요
+        if quiet:
+            text = QUIET[lang][i % len(QUIET[lang])].format(n=name(p))
+            if lang == "ko":
+                text = J_(text)
         bits = []
-        if i == 0:
+        if i == 0 and quiet:
+            bits.append(text)
+        elif i == 0:
             bits.append({"ko": f"{name(p)}에서 들은 첫 이야기는 이랬어요. {text}",
                          "en": f"The first story I heard at {name(p)} went like this: {text}",
                          "ja": f"{name(p)}で聞いた最初の物語は、こんなお話でした。{text}",
@@ -257,7 +280,7 @@ def story(walk: dict, places, data, cond, lang) -> dict:
             bits.append({"ko": f"그 순간 {MOOD_WORD['ko'][mood]}.", "en": f"In that moment, {MOOD_WORD['en'][mood]}.",
                          "ja": f"その瞬間、{MOOD_WORD['ja'][mood]}。", "zh": f"那一刻，{MOOD_WORD['zh'][mood]}。"}[lang])
         if p in walk.get("missions", []):
-            m = L.mission_for(p, who, places, data, lang)
+            m = L.route_missions(stops, who, places, data, lang).get(p) or L.mission_for(p, who, places, data, lang)
             bits.append({"ko": f"‘{_mission_ko(m)}’ 미션도 해냈어요.", "en": f"I even completed the mission: {m[0].lower() + m[1:]}.",
                          "ja": f"「{m}」のミッションもやりとげました。", "zh": f"还完成了任务：{m}。"}[lang])
         if walk.get("photos", {}).get(p):
@@ -322,12 +345,19 @@ def polish(st: dict, lang) -> dict | None:
                         "규칙: 사용자가 남긴 말(따옴표)은 그대로, 장소 이야기에 나온 사실만 쓰고 새 사실은 절대 더하지 마. "
                         "문단 수는 원문과 같게, 각 문단은 2~5문장. 첫 줄은 제목. "
                         f"{I.LLM_LANG[lang]}로 써.",
-                        model=L._secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=1400)
-    t = L._text_of(res) if res else ""
-    lines = [x.strip() for x in t.split("\n") if x.strip()]
-    if len(lines) < 3:
+                        model=L._secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=4000)
+    if not res or L.is_cut(res):   # 중간에 끊긴 글은 쓰지 않고, 끝까지 있는 원래 이야기를 보여 줘요
         return None
-    return {"title": lines[0].strip("# "), "paras": lines[1:]}
+    t = L._text_of(res)
+    lines = [x.strip() for x in t.split("\n") if x.strip()]
+    if len(lines) < 3 or not _ends_ok(lines[-1]) or len(lines) - 1 < max(1, len(st["paras"]) - 1):
+        return None
+    return {"title": lines[0].strip("# *"), "paras": [ln.strip("*") for ln in lines[1:]]}
+
+
+def _ends_ok(t: str) -> bool:
+    """문장이 끝맺음으로 끝나는지 (요. 다. ! ? 。 등)"""
+    return bool(re.search(r"[.!?。！？…\"”’」』)]\s*$", t.strip()))
 
 
 def polish_postcard(text: str, place: str, n: int, lang: str) -> tuple[str, str]:
@@ -341,8 +371,8 @@ def polish_postcard(text: str, place: str, n: int, lang: str) -> tuple[str, str]
                             "3) 따옴표 안의 말은 바꾸지 마. 4) 엽서에 들어가게 짧게: 최대 6줄, 한 줄에 한 문장. "
                             "5) 따뜻하고 자연스럽게, 이모지는 많아야 1개. 6) 설명 없이 다듬은 엽서 문장만 답해. "
                             f"{I.LLM_LANG[lang]}로 써.",
-                            model=L._secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=400)
-        t = L._text_of(res) if res else ""
+                            model=L._secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=1200)
+        t = L._text_of(res) if res and not L.is_cut(res) else ""
         lines = [x.strip().strip("\"'") if not x.strip().startswith(("“", '"')) else x.strip() for x in t.split("\n") if x.strip()]
         if lines:
             return "\n".join(lines[:7]), "claude"

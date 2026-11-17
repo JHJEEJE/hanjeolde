@@ -270,6 +270,18 @@ LABELS = {
                     "中断理由をもっと集めてから再確認します", "收集更多停止原因后再确认")},
 }
 
+EXTRA_MISSIONS = [   # 공공데이터로 더한 동네 절에서 고르는 미션 (기본, 아이와 함께)
+    (_("법당 지붕 끝(처마) 모양을 사진 한 장으로 남기기", "Take one photo of the curved eaves of the main hall",
+       "本堂の軒先の形を写真に1枚残そう", "给大殿屋檐的弧线拍一张照片"),
+     _("아이와 함께 연꽃 무늬를 찾아보기", "Find a lotus pattern with your child", "子どもと一緒に蓮の模様を探そう", "和孩子一起找莲花图案")),
+    (_("범종이나 법고가 있는지 찾아보기", "Look for a temple bell or drum", "梵鐘や太鼓があるか探そう", "找找有没有梵钟或法鼓"),
+     _("아이와 함께 마당에서 가장 큰 나무 찾기", "Find the biggest tree in the courtyard with your child", "子どもと一緒に境内でいちばん大きな木を探そう", "和孩子一起找院子里最大的树")),
+]
+
+ANY_MISSION = (_("이곳에서 가장 마음에 드는 장면을 사진 한 장으로 남기기", "Capture your favorite view here in one photo",
+                   "ここでいちばん気に入った景色を写真に1枚残そう", "用一张照片记下这里你最喜欢的画面"),
+               _("아이와 함께 이곳을 그림 한 장으로 그려 보기", "Draw this place together with your child", "子どもと一緒にこの場所を絵に描いてみよう", "和孩子一起把这里画下来"))
+
 GENERIC_MISSION = {
     "현존 사찰": (_("이 절에서 가장 오래돼 보이는 것 하나 찾아보기", "Find the oldest-looking thing in this temple",
                    "この寺でいちばん古そうなものをひとつ探そう", "找出这座寺里看起来最古老的东西"),

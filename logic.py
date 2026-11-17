@@ -27,6 +27,7 @@ import requests
 import streamlit as st
 
 import i18n as I
+import romanize as RZ
 
 KST = timezone(timedelta(hours=9))
 BASE = Path(__file__).parent
@@ -64,6 +65,20 @@ def _json(name: str, default):
     return json.loads(p.read_text(encoding="utf-8"))
 
 
+def extra_desc(name, address, lat, lon, lang) -> str:
+    """종교시설 현황에서 더한 절의 소개 (이야기는 아직 없어요). 동네 이름은 권역으로 말해요."""
+    import areas as A
+    ak, town = A.area_of(address, float(lat), float(lon))
+    short = A.AREA_SHORT[ak][lang]
+    if lang == "ko":
+        where = f"경주 {short} 쪽 {town}" if town.endswith(("읍", "면", "동")) else f"경주 {short} 쪽"
+        return I.josa(f"{name}[은/는] {where}에 있는 동네 절이에요. 이 절의 이야기 조각은 아직 준비 중이에요. 법당 앞에서 잠시 숨을 고르고 가요.")
+    nm = RZ.temple_name(name, lang)
+    return {"en": f"{nm} is a small neighborhood temple in the {short} area of Gyeongju. Its story pieces are still being prepared. Take a breath in front of the main hall.",
+            "ja": f"{nm}は慶州の{short}あたりにある町の小さなお寺です。このお寺の物語はまだ準備中です。本堂の前でひと息ついていきましょう。",
+            "zh": f"{nm}是庆州{short}一带的社区小寺。这座寺的故事还在准备中。在大殿前稍作休息吧。"}[lang]
+
+
 def _fix_josa(t: str) -> str:
     import re as _r
 
@@ -91,6 +106,10 @@ def load_places() -> pd.DataFrame:
             for c in ("story", "tip"):   # "심인당은(는)" → "심인당은", "원해사은(는)" → "원해사는"
                 if c in ex:
                     ex[c] = ex[c].map(_fix_josa)
+            for k, r in ex.iterrows():   # 공공데이터로 더한 절: 소개글을 동네(권역) 기준으로 다시 쓰고, 영어 이름은 로마자로
+                ex.at[k, "story"] = extra_desc(r["name"], r["address"], r["lat"], r["lon"], "ko")
+                ex.at[k, "desc_en"] = extra_desc(r["name"], r["address"], r["lat"], r["lon"], "en")
+                ex.at[k, "name_en"] = RZ.temple_name(r["name"], "en")
             keep = []
             for _, r in ex.iterrows():   # 이미 있는 35곳(분황사·불국사 등)과 같은 절이면 빼요
                 nm = r["name"].replace(" ", "")
@@ -213,6 +232,8 @@ def place_name(pid, places, data, lang) -> str:
     if lang == "en" and str(p.get("name_en", "")).strip() not in ("", "nan"):
         return str(p["name_en"])
     tr = _tr_place(data, pid, lang)
+    if not tr and lang in ("ja", "zh") and is_extra(pid):
+        return RZ.temple_name(p["name"], lang)
     return tr[0] if tr else str(p["name"])
 
 
@@ -223,6 +244,8 @@ def place_desc(pid, places, data, lang) -> str:
     if lang == "en":
         return str(p.desc_en)
     tr = _tr_place(data, pid, lang)
+    if not tr and is_extra(pid):
+        return extra_desc(p["name"], p.get("address", ""), p.lat, p.lon, lang)
     return tr[1] if tr else str(p.desc_en)
 
 
@@ -836,11 +859,13 @@ def _call_gemini(messages, system, max_tokens=600) -> dict | None:
         if r.status_code != 200:
             return None
         try:
-            parts = r.json()["candidates"][0]["content"]["parts"]
+            cand = r.json()["candidates"][0]
+            parts = cand["content"]["parts"]
             text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
         except Exception:
             return None
-        return {"content": [{"type": "text", "text": text}], "stop_reason": "end_turn", "provider": "gemini"}
+        stop = "max_tokens" if cand.get("finishReason") == "MAX_TOKENS" else "end_turn"
+        return {"content": [{"type": "text", "text": text}], "stop_reason": stop, "provider": "gemini"}
     return None
 
 
@@ -867,6 +892,11 @@ def call_claude(messages, system, model=None, tools=None, max_tokens=600) -> dic
     if not tools and gemini_key():
         return _call_gemini(messages, system, max_tokens)
     return None
+
+
+def is_cut(res: dict | None) -> bool:
+    """AI 답이 글자 한도에 걸려 중간에 끊겼는지"""
+    return bool(res) and res.get("stop_reason") == "max_tokens"
 
 
 def _text_of(res: dict) -> str:
@@ -936,8 +966,8 @@ def retell(text: str, who: str, lang: str = "ko") -> str:
     res = call_claude([{"role": "user", "content": text}],
                       f"아래 글을 '{who}' 일행에게 들려주듯 말투만 바꿔. 사실·숫자·이름은 그대로 두고 새 사실은 절대 더하지 마. "
                       f"3문장 이내, {I.LLM_LANG[lang]}로. 바꾼 글만 답해.",
-                      model=_secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=300)
-    out = _text_of(res) if res else ""
+                      model=_secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=900)
+    out = _text_of(res) if res and not is_cut(res) else ""
     return out or text
 
 
@@ -982,9 +1012,15 @@ def diff_line(prev, cur, places, data, lang: str = "ko") -> str:
     if str(b.era).strip() in ("", "-", "nan") and is_extra(cur):
         import areas as _A
         ak, town = _A.area_of(b.get("address", ""), float(b.lat), float(b.lon))
-        town = town or (_A.AREA_LABEL[ak].get(lang) or _A.AREA_LABEL[ak]["ko"]).split(" · ")[0]
-        return I.t("diff_same_place", lang, a=an, b=bn, c=I.lab("category", b.category, lang), t=town)
-    return I.t("diff_same", lang, a=an, c=I.lab("category", b.category, lang), e=era_text(b.era, data, lang))
+        if lang != "ko" or not town.endswith(("읍", "면", "동")):   # 다른 언어는 한글 동네 이름 대신 권역 이름
+            town = _A.AREA_SHORT[ak][lang]
+        return I.t("diff_same_place", lang, a=an, b=bn, c=_mid(I.lab("category", b.category, lang), lang), t=town)
+    return I.t("diff_same", lang, a=an, c=_mid(I.lab("category", b.category, lang), lang), e=era_text(b.era, data, lang))
+
+
+def _mid(word: str, lang: str) -> str:
+    """영어 문장 가운데 들어가는 낱말은 소문자로 (Living temple → living temple)"""
+    return word[:1].lower() + word[1:] if lang == "en" and word[:1].isupper() and not word[1:2].isupper() else word
 
 
 def teaser(cur, nxt, places, data, lang: str = "ko") -> str:
@@ -1001,14 +1037,36 @@ def teaser(cur, nxt, places, data, lang: str = "ko") -> str:
     return I.t("next_generic", lang, n=place_name(nxt, places, data, lang))
 
 
-def mission_for(pid, who, places, data, lang: str = "ko") -> str:
+def mission_for(pid, who, places, data, lang: str = "ko", avoid: str | None = None) -> str:
     tr = _piece_tr(data, pid, lang)
     if tr and tr.get("mission"):
         m = tr["mission"]
         return m.get(who) or m.get("기본")
-    basic, kid = I.GENERIC_MISSION.get(places.loc[pid, "category"], I.GENERIC_MISSION["명소"])
+    cat = places.loc[pid, "category"]
+    if cat == "현존 사찰" and is_extra(pid):   # 동네 절이 이어지면 같은 미션만 나오지 않게, 절마다 하나씩 골라요
+        opts = [I.GENERIC_MISSION[cat]] + I.EXTRA_MISSIONS
+        k0 = sum(map(ord, pid)) % len(opts)
+        for k in range(len(opts)):   # 바로 앞 절과 같은 미션이면 다음 것으로
+            basic, kid = opts[(k0 + k) % len(opts)]
+            d = kid if who == "아이와 함께" else basic
+            if (d.get(lang) or d["ko"]) != avoid:
+                break
+    else:
+        basic, kid = I.GENERIC_MISSION.get(cat, I.GENERIC_MISSION["명소"])
+        d = kid if who == "아이와 함께" else basic
+        if avoid and (d.get(lang) or d["ko"]) == avoid:
+            basic, kid = I.ANY_MISSION
     d = kid if who == "아이와 함께" else basic
     return d.get(lang) or d["ko"]
+
+
+def route_missions(stops, who, places, data, lang: str = "ko") -> dict:
+    """코스 전체의 미션 (바로 앞 장소와 같은 미션이 겹치지 않게)"""
+    out, prev = {}, None
+    for p in stops:
+        if p in places.index:
+            out[p] = prev = mission_for(p, who, places, data, lang, avoid=prev)
+    return out
 
 
 def season_for(pid, month, data, lang: str = "ko") -> tuple[list, list]:
@@ -1087,8 +1145,8 @@ def polish_journal(lines: list, lang: str = "ko") -> str | None:
         return None
     res = call_claude([{"role": "user", "content": "\n".join(lines)}],
                       f"아래 기록으로 따뜻한 순례 일지를 4문장으로 써. 기록에 없는 사실은 더하지 마. {I.LLM_LANG[lang]}로.",
-                      model=_secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=350)
-    return _text_of(res) if res else None
+                      model=_secret("FAST_MODEL", "claude-haiku-5-5"), max_tokens=1200)
+    return _text_of(res) if res and not is_cut(res) else None
 
 
 def course_of(stops: list, courses: list) -> str | None:

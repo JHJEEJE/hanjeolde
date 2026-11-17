@@ -25,6 +25,21 @@ AREA_ORDER = [a[0] for a in AREAS]
 AREA_LABEL = {a[0]: a[1] for a in AREAS}
 AREA_EMOJI = {a[0]: a[2] for a in AREAS}
 
+# 문장 속에 넣을 짧은 이름
+AREA_SHORT = {
+    "downtown": {"ko": "시내(대릉원)", "en": "downtown", "ja": "市内（大陵苑）", "zh": "市区（大陵苑）"},
+    "hwangnyong": {"ko": "황룡사·분황사", "en": "Hwangnyongsa–Bunhwangsa", "ja": "皇龍寺・芬皇寺", "zh": "皇龙寺·芬皇寺"},
+    "namsan": {"ko": "남산", "en": "Namsan", "ja": "南山", "zh": "南山"},
+    "bulguk": {"ko": "불국사·토함산", "en": "Bulguksa–Tohamsan", "ja": "仏国寺・吐含山", "zh": "佛国寺·吐含山"},
+    "bomun": {"ko": "보문", "en": "Bomun", "ja": "普門", "zh": "普门"},
+    "west_city": {"ko": "서악", "en": "Seoak", "ja": "西岳", "zh": "西岳"},
+    "north_city": {"ko": "시내 북쪽", "en": "north downtown", "ja": "市内北部", "zh": "市区北部"},
+    "east_coast": {"ko": "동해안", "en": "east coast", "ja": "東海岸", "zh": "东海岸"},
+    "north": {"ko": "북부", "en": "northern", "ja": "北部", "zh": "北部"},
+    "west": {"ko": "서부", "en": "western", "ja": "西部", "zh": "西部"},
+    "south": {"ko": "남부", "en": "southern", "ja": "南部", "zh": "南部"},
+}
+
 # 읍·면 → 권역
 TOWN_AREA = {
     "감포읍": "east_coast", "문무대왕면": "east_coast", "양북면": "east_coast", "양남면": "east_coast",
