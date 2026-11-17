@@ -151,8 +151,10 @@ S = {
                 "🧣 気温が0度以下なので1〜2か所の短い順礼にし、暖かい休憩所を入れました。",
                 "🧣 气温在0度以下，已缩短为1～2处的短途巡礼，并加入温暖的休息点。"),
     "diff_generic": _("{a}[이/가] {pa}[이었/였]다면, {b}[은/는] {pb}[이에요/예요].", "{a} was {pa}; {b} is {pb}.", "{a}が{pa}だったのに対し、{b}は{pb}です。", "如果说{a}是{pa}，那么{b}就是{pb}。"),
-    "diff_same": _("{a}[과/와] 같은 {c}지만, 시대와 이야기가 달라요: {e}.", "Like {a}, it's a {c}, but from another time with another story: {e}.",
+    "diff_same": _("{a}[과/와] 같은 {c}[이지만/지만], 시대와 이야기가 달라요: {e}.", "Like {a}, it's a {c}, but from another time with another story: {e}.",
                    "{a}と同じ{c}ですが、時代と物語が違います：{e}。", "和{a}一样是{c}，但时代和故事不同：{e}。"),
+    "diff_same_place": _("{a}[과/와] 같은 {c}[이지만/지만], {b}[은/는] {t} 쪽 동네 절이라 더 한적해요.", "Like {a}, it's a {c}, but {b} is a quieter neighborhood temple in the {t} area.",
+                         "{a}と同じ{c}ですが、{b}は{t}あたりの町の寺で、より静かです。", "和{a}一样是{c}，但{b}是{t}一带的社区寺院，更清静。"),
     "example_spot": _("예시 쉼터 {x} (실제 가게 아님)", "Sample rest stop {x} (not a real shop)", "サンプル休憩所{x}（実在の店ではありません）", "示例休息点{x}（非真实店铺）"),
     # ---------- 지도 탭
     "map_caption": _("사찰·유적 {n}곳 · 좌표: 국가유산청 OpenAPI", "{n} temples & sites · coordinates: Korea Heritage Service OpenAPI",

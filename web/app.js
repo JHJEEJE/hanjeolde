@@ -453,7 +453,17 @@ function showLoading(kind) {
   }
 }
 function hideLoading() { clearInterval(ldTimer); $("#overlay").innerHTML = ""; renderSheet(); }
-function scrollTop() { const s = $("#scroll"); if (s) s.scrollTop = 0; }
+try {
+  const host = (location.hostname || "") + " " + ((location.ancestorOrigins && [...location.ancestorOrigins].join(" ")) || "") + " " + (document.referrer || "");
+  if (/streamlit\.app/.test(host)) document.documentElement.classList.add("hosted");
+} catch (e) { /* */ }
+let resetScroll = false;
+function scrollTop() {   // 화면·탭이 바뀌면 맨 위부터 (부드러운 스크롤이 남아 있어도 바로 0으로)
+  resetScroll = true;
+  const s = $("#scroll");
+  if (s) { s.style.scrollBehavior = "auto"; s.scrollTop = 0; }
+  try { window.scrollTo(0, 0); } catch (e) { /* */ }
+}
 
 /* ------------------------------------------------------------------ 공통 조각 */
 function header() {
@@ -932,7 +942,9 @@ function render() {
   if (!B) return;
   maps.splice(0).forEach((m) => { try { m.remove(); } catch (e) { /* */ } });
   const sc = $("#scroll");
-  const keep = sc.scrollTop;
+  const keep = resetScroll ? 0 : sc.scrollTop;
+  resetScroll = false;
+  sc.style.scrollBehavior = "auto";
   let html = "";
   if (S.tab === "walk") html = S.screen === "plan" && S.plan ? planView() : S.screen === "walk" && S.walk ? walkView() : S.screen === "done" && S.done ? doneView() : setupView();
   else if (S.tab === "map") html = mapView();
@@ -940,6 +952,7 @@ function render() {
   else html = logView();
   sc.innerHTML = html;
   sc.scrollTop = keep;
+  setTimeout(() => { sc.style.scrollBehavior = ""; }, 50);
   $("#tabbar").innerHTML = [["walk", "🚶", x("tab1")], ["map", "🗺️", x("tab2")], ["cmp", "🧪", x("tab3")], ["log", "📊", x("tab4")]]
     .map(([k, i, l]) => `<button class="${S.tab === k ? "on" : ""}" data-act="tab" data-v="${k}"><span class="i">${i}</span>${esc(l)}</button>`).join("");
   document.documentElement.lang = lang();

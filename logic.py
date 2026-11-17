@@ -979,6 +979,11 @@ def diff_line(prev, cur, places, data, lang: str = "ko") -> str:
     an, bn = place_name(prev, places, data, lang), place_name(cur, places, data, lang)
     if a.category != b.category:
         return I.t("diff_generic", lang, a=an, b=bn, pa=I.lab("phrase", a.category, lang), pb=I.lab("phrase", b.category, lang))
+    if str(b.era).strip() in ("", "-", "nan") and is_extra(cur):
+        import areas as _A
+        ak, town = _A.area_of(b.get("address", ""), float(b.lat), float(b.lon))
+        town = town or (_A.AREA_LABEL[ak].get(lang) or _A.AREA_LABEL[ak]["ko"]).split(" · ")[0]
+        return I.t("diff_same_place", lang, a=an, b=bn, c=I.lab("category", b.category, lang), t=town)
     return I.t("diff_same", lang, a=an, c=I.lab("category", b.category, lang), e=era_text(b.era, data, lang))
 
 
