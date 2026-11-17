@@ -607,7 +607,8 @@ def agent_pick(cands, prefs, cond, choice, places, data, budget, lang) -> dict |
                      "place_themes": {p: tags_of(data, p).get("t", {}) for p in c["stops"]}} for c in cands]
         if nm == "get_conditions":
             return {"temp": cond.get("temp"), "rain": cond.get("rain"), "pop": cond.get("pop"),
-                    "sunset": f"{cond['sunset']:%H:%M}", "minutes_available": budget, "season": cond["season"],
+                    "sunset": f"{cond['sunset']:%H:%M}", "user_minutes": choice.get("minutes"),
+                    "minutes_before_dark": budget, "season": cond["season"],
                     "who": choice.get("who"), "free_request": choice.get("free", ""),
                     "weights": {k: round(v, 2) for k, v in prefs["weights"].items() if v > 0.02}}
         if nm == "get_story_preview":
@@ -616,7 +617,13 @@ def agent_pick(cands, prefs, cond, choice, places, data, budget, lang) -> dict |
         return {"error": "unknown tool"}
 
     system = ("너는 경주 사찰 도보 순례길을 고르는 AI 에이전트야. 도구로 후보와 조건을 확인하고 사용자에게 가장 맞는 후보 하나를 골라. "
-              "도구 결과에 없는 사실은 지어내지 마. 마지막 답은 JSON 한 줄만: "
+              "도구 결과에 없는 사실은 지어내지 마.\n"
+              "reason은 경주를 처음 걷는 관광객이 화면에서 읽는 말이야. 규칙:\n"
+              "1) 2문장, 친근한 존댓말(~요). 한 문장은 짧게.\n"
+              "2) 후보 번호(P1 등), 점수·가중치·숫자 지표, id, '도구', '조건 정보', '후보가 하나뿐' 같은 내부 표현은 절대 쓰지 마.\n"
+              "3) 장소 이름과, 사용자에게 의미 있는 이유만 써: 걷는 시간·거리, 오르막이 없는지, 관심사와 맞는 장소의 매력, 날씨나 해 지는 시각.\n"
+              "4) 데이터끼리 안 맞는 점이나 없는 정보(카페 정보 없음 등)는 말하지 마. 해가 곧 지면 '해 지기 전에 마칠 수 있게'처럼 부드럽게 말해.\n"
+              "마지막 답은 JSON 한 줄만: "
               f'{{"plan_id": "P1", "reason": "고른 이유 2문장, {I.LLM_LANG[lang]}로"}}')
     msgs = [{"role": "user", "content": f"일행 {choice.get('who')}, {choice.get('minutes')}분, 걷기 {choice.get('level')}, "
                                          f"관심사 {choice.get('interests')}, 요청: {choice.get('free') or '없음'}"}]
@@ -631,7 +638,7 @@ def agent_pick(cands, prefs, cond, choice, places, data, budget, lang) -> dict |
         try:
             d = json.loads(t[t.find("{"): t.rfind("}") + 1])
             chosen = next(c for c in cands if c["id"] == d["plan_id"])
-            return {"plan": chosen, "reason": str(d.get("reason", ""))[:300], "by": "gemini"}
+            return {"plan": chosen, "reason": clean_reason(str(d.get("reason", "")))[:300], "by": "gemini"}
         except Exception:
             return None
 
@@ -641,6 +648,15 @@ def agent_pick(cands, prefs, cond, choice, places, data, budget, lang) -> dict |
     if got is None and L.gemini_key():   # Claude 크레딧이 떨어졌거나 막히면 Gemini로
         return one_shot()
     return got
+
+
+_INTERNAL = re.compile(r"\bP\d\b|점수|가중치|도구|조건 정보|후보가 하나|place_id|plan_id|minutes|\b0\.\d|score|weight|tool", re.I)
+
+
+def clean_reason(t: str) -> str:
+    """사용자에게 보여 줄 수 없는 내부 표현이 섞이면 버려요 (그때는 규칙 AI의 이유만 보여 줘요)."""
+    t = (t or "").strip()
+    return "" if not t or _INTERNAL.search(t) else t
 
 
 def _claude_agent_loop(msgs, system, tools, run, cands):
@@ -659,7 +675,7 @@ def _claude_agent_loop(msgs, system, tools, run, cands):
         try:
             d = json.loads(t[t.find("{"): t.rfind("}") + 1])
             chosen = next(c for c in cands if c["id"] == d["plan_id"])
-            return {"plan": chosen, "reason": str(d.get("reason", ""))[:300]}
+            return {"plan": chosen, "reason": clean_reason(str(d.get("reason", "")))[:300]}
         except Exception:
             return None
     return None
